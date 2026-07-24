@@ -13,6 +13,7 @@ import {
   BookOpen,
   Mic,
   Activity,
+  Brain,
 } from 'lucide-react';
 
 const iconMap = {
@@ -27,6 +28,7 @@ const iconMap = {
   knowledge: BookOpen,
   voice_agent: Mic,
   analyze: Activity,
+  memory: Brain,
 };
 
 const CATEGORIES = [
@@ -48,7 +50,7 @@ const CATEGORIES = [
   },
   {
     label: 'Intelligence',
-    items: ['analyze'],
+    items: ['analyze', 'memory'],
   },
 ];
 
@@ -63,6 +65,7 @@ const NODE_ITEMS = [
   { type: 'knowledge', label: 'Knowledge', color: 'teal', desc: 'Query knowledge base' },
   { type: 'voice_agent', label: 'Voice Agent', color: 'purple', desc: 'Conversation Relay AI' },
   { type: 'analyze', label: 'Analyze', color: 'indigo', desc: 'Conversation Intelligence' },
+  { type: 'memory', label: 'Memory', color: 'cyan', desc: 'Load customer profile' },
   { type: 'hangup', label: 'Hangup', color: 'red', desc: 'End call' },
 ];
 

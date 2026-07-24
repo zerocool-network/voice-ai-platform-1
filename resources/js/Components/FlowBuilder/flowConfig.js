@@ -1,4 +1,4 @@
-const NODE_TYPES = ['say', 'ask', 'llm', 'condition', 'goto', 'transfer', 'webhook', 'knowledge', 'hangup', 'voice_agent', 'analyze'];
+const NODE_TYPES = ['say', 'ask', 'llm', 'condition', 'goto', 'transfer', 'webhook', 'knowledge', 'hangup', 'voice_agent', 'analyze', 'memory'];
 
 const NODE_DEFAULTS = {
   say: { type: 'say', config: { text: '' }, next: null },
@@ -12,6 +12,7 @@ const NODE_DEFAULTS = {
   hangup: { type: 'hangup', config: {} },
   voice_agent: { type: 'voice_agent', config: { welcome_greeting: 'Hello! How can I help you today?', system_prompt: 'You are a helpful voice assistant.', voice: '21m00Tcm4TlvDq8ikWAM', tts_provider: 'elevenlabs', intelligence_service: '' }, next: null },
   analyze: { type: 'analyze', config: { language_operator: '', redaction_rules: 'none', conversation_profile: '' }, next: null },
+  memory: { type: 'memory', config: { from_number: '' }, next: null },
 };
 
 function generateId() {

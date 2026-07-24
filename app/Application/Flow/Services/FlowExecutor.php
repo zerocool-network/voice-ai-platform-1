@@ -7,6 +7,7 @@ use App\Domain\Flow\Entities\Flow;
 use App\Domain\Flow\Services\AiServiceInterface;
 use App\Domain\Knowledge\Services\KnowledgeRetrievalService;
 use App\Domain\Knowledge\Services\RetrievalType;
+use App\Services\ConversationMemoryService;
 use Illuminate\Support\Facades\Http;
 use Psr\Log\LoggerInterface;
 use Twilio\TwiML\VoiceResponse;
@@ -19,6 +20,7 @@ class FlowExecutor
     public function __construct(
         private readonly AiServiceInterface $aiService,
         private readonly KnowledgeRetrievalService $knowledgeRetrieval,
+        private readonly ConversationMemoryService $memoryService,
         private readonly ?LoggerInterface $logger = null,
     ) {}
 
@@ -44,6 +46,7 @@ class FlowExecutor
             'hangup' => $this->hangupStep(),
             'voice_agent' => $this->voiceAgentStep($step),
             'analyze' => $this->analyzeStep($step, $flow, $call),
+            'memory' => $this->memoryStep($step, $call),
             default => throw new \RuntimeException("Unknown step type: {$stepType}"),
         };
     }
@@ -423,6 +426,48 @@ class FlowExecutor
         return $response;
     }
 
+    /** @param FlowStep $step */
+    private function memoryStep(array $step, ?Call $call): VoiceResponse
+    {
+        $response = new VoiceResponse;
+        $config = $step['config'];
+
+        $phoneNumber = $config['from_number'] ?? ($call?->fromNumber() ?? null);
+
+        if (! $phoneNumber) {
+            $this->logger?->warning('Memory step: no phone number available');
+
+            return $this->sayAndContinue($response, 'Unable to load your profile.');
+        }
+
+        $profile = $this->memoryService->searchProfile(
+            (string) $phoneNumber,
+            accountSid: config('twilio.account_sid'),
+            authToken: config('twilio.auth_token'),
+        );
+
+        if ($profile) {
+            $recall = $this->memoryService->recallProfile(
+                $profile['id'],
+                accountSid: config('twilio.account_sid'),
+                authToken: config('twilio.auth_token'),
+            );
+
+            $traits = $profile['traits'] ?? [];
+            $observations = collect($recall['observations'] ?? [])->take(5)->pluck('text')->join('; ');
+
+            if ($call) {
+                $context = $call->context();
+                $context['customer_name'] = $traits['name'] ?? $traits['display_name'] ?? 'valued customer';
+                $context['customer_context'] = $observations;
+                $context['customer_traits'] = json_encode($traits);
+                $call->setContext($context);
+            }
+        }
+
+        return $response;
+    }
+
     /** @param array<string, mixed> $config */
     private function evaluateCondition(array $config): ?string
     {
@@ -497,6 +542,14 @@ class FlowExecutor
         $response = new VoiceResponse;
         $response->say($message);
         $response->hangup();
+
+        return $response;
+    }
+
+    private function sayAndContinue(VoiceResponse $response, string $message): VoiceResponse
+    {
+        $response->say($message);
+        $response->redirect('/twilio/step');
 
         return $response;
     }

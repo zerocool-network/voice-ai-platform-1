@@ -11,7 +11,7 @@ class StepTypeTest extends TestCase
     {
         $cases = StepType::cases();
 
-        $this->assertCount(11, $cases);
+        $this->assertCount(12, $cases);
     }
 
     public function test_say_case(): void
@@ -62,6 +62,11 @@ class StepTypeTest extends TestCase
     public function test_analyze_case(): void
     {
         $this->assertEquals('analyze', StepType::Analyze->value);
+    }
+
+    public function test_memory_case(): void
+    {
+        $this->assertEquals('memory', StepType::Memory->value);
     }
 
     public function test_from_string(): void

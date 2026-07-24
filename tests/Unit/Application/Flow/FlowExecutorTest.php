@@ -10,6 +10,7 @@ use App\Domain\Flow\Entities\Flow;
 use App\Domain\Flow\Services\AiServiceInterface;
 use App\Domain\Flow\ValueObjects\FlowConfig;
 use App\Domain\Knowledge\Services\KnowledgeRetrievalService;
+use App\Services\ConversationMemoryService;
 use PHPUnit\Framework\TestCase;
 
 class FlowExecutorTest extends TestCase
@@ -19,6 +20,8 @@ class FlowExecutorTest extends TestCase
     private AiServiceInterface $aiService;
 
     private KnowledgeRetrievalService $knowledgeRetrieval;
+
+    private ConversationMemoryService $memoryService;
 
     protected function setUp(): void
     {
@@ -32,7 +35,9 @@ class FlowExecutorTest extends TestCase
 
         $this->knowledgeRetrieval = $this->createMock(KnowledgeRetrievalService::class);
 
-        $this->executor = new FlowExecutor($this->aiService, $this->knowledgeRetrieval);
+        $this->memoryService = $this->createMock(ConversationMemoryService::class);
+
+        $this->executor = new FlowExecutor($this->aiService, $this->knowledgeRetrieval, $this->memoryService);
     }
 
     private function makeFlow(array $steps): Flow
@@ -158,7 +163,7 @@ class FlowExecutorTest extends TestCase
             }
         };
 
-        $executor = new FlowExecutor($aiService, $this->knowledgeRetrieval);
+        $executor = new FlowExecutor($aiService, $this->knowledgeRetrieval, $this->memoryService);
         $flow = $this->makeFlow([
             's1' => ['id' => 's1', 'type' => 'llm', 'config' => ['systemPrompt' => 'You are a bot'], 'next' => 'hangup'],
             'hangup' => ['id' => 'hangup', 'type' => 'hangup'],

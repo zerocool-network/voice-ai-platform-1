@@ -15,4 +15,5 @@ enum StepType: string
     case Hangup = 'hangup';
     case VoiceAgent = 'voice_agent';
     case Analyze = 'analyze';
+    case Memory = 'memory';
 }

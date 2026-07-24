@@ -9,6 +9,7 @@ import WebhookNode from './WebhookNode';
 import KnowledgeNode from './KnowledgeNode';
 import VoiceAgentNode from './VoiceAgentNode';
 import AnalyzeNode from './AnalyzeNode';
+import MemoryNode from './MemoryNode';
 
 const nodeTypes = {
   say: SayNode,
@@ -22,6 +23,7 @@ const nodeTypes = {
   hangup: HangupNode,
   voice_agent: VoiceAgentNode,
   analyze: AnalyzeNode,
+  memory: MemoryNode,
 };
 
 export default nodeTypes;
