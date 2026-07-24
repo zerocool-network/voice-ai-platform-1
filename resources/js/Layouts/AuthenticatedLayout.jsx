@@ -10,6 +10,9 @@ import {
 } from 'lucide-react'
 import SearchBar from '@/Components/SearchBar'
 import { dashboard, logout } from '@/routes'
+import { index as notificationsIndex } from '@/routes/notifications'
+import { index as transcriptsIndex } from '@/routes/transcripts'
+import { index as qualityIndex } from '@/routes/quality'
 import { index as analyticsIndex } from '@/actions/App/Http/Controllers/Web/AnalyticsController'
 import { index as flowsIndex } from '@/actions/App/Http/Controllers/Web/FlowController'
 import { index as callsIndex } from '@/actions/App/Http/Controllers/Web/CallController'
@@ -17,7 +20,9 @@ import { index as monitorIndex } from '@/actions/App/Http/Controllers/Web/Monito
 import { index as apiTokensIndex } from '@/actions/App/Http/Controllers/Web/ApiTokenController'
 import { edit as profileEdit } from '@/routes/profile'
 import { index as teamIndex } from '@/routes/team'
-import { tenant as settingsTenant } from '@/routes/settings'
+import { tenant as settingsTenant, phoneNumbers, roles } from '@/routes/settings'
+import { index as errorsIndex } from '@/routes/settings/errors'
+import { stop as stopImpersonating } from '@/routes/admin/impersonate'
 import { edit as settingsVoice } from '@/actions/App/Http/Controllers/Web/VoiceSettingsController'
 import { index as documentsIndex } from '@/actions/App/Http/Controllers/Web/DocumentsController'
 import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Web/WebhookDestinationController'
@@ -31,12 +36,12 @@ import { index as systemIndex } from '@/actions/App/Http/Controllers/Web/SystemH
 
 const NAV_PRIMARY = [
     { label: 'Dashboard', href: dashboard().url, icon: LayoutDashboard, active: 'dashboard' },
-    { label: 'Notifications', href: '/notifications', icon: Bell, active: 'notifications.*' },
+    { label: 'Notifications', href: notificationsIndex().url, icon: Bell, active: 'notifications.*' },
     { label: 'Analytics', href: analyticsIndex().url, icon: BarChart3, active: 'analytics.*' },
     { label: 'Flows', href: flowsIndex().url, icon: GitBranch, active: 'flows.*' },
     { label: 'Calls', href: callsIndex().url, icon: Phone, active: 'calls.*' },
-    { label: 'Transcripts', href: '/transcripts', icon: MessageSquareText, active: 'transcripts.*' },
-    { label: 'Quality', href: '/quality', icon: Award, active: 'quality.*' },
+    { label: 'Transcripts', href: transcriptsIndex().url, icon: MessageSquareText, active: 'transcripts.*' },
+    { label: 'Quality', href: qualityIndex().url, icon: Award, active: 'quality.*' },
     { label: 'Monitor', href: monitorIndex().url, icon: Radio, active: 'monitor.*' },
     { label: 'SMS', href: smsIndex().url, icon: MessageSquare, active: 'sms.*' },
 ]
@@ -53,11 +58,11 @@ const NAV_DEVELOPMENT = [
     { label: 'Webhook Deliveries', href: webhookDeliveriesIndex().url, icon: Activity, active: 'settings.webhooks.deliveries*' },
     { label: 'Billing', href: billingIndex().url, icon: CreditCard, active: 'billing.*' },
     { label: 'Activity Log', href: activityIndex().url, icon: Activity, active: 'settings.activity.*' },
-    { label: 'Errors', href: '/settings/errors', icon: AlertTriangle, active: 'settings.errors.*' },
+    { label: 'Errors', href: errorsIndex().url, icon: AlertTriangle, active: 'settings.errors.*' },
     { label: 'Agents', href: agentsIndex().url, icon: Bot, active: 'settings.agents.*' },
-    { label: 'Phone Numbers', href: '/settings/phone-numbers', icon: Smartphone, active: 'settings.phone-numbers' },
+    { label: 'Phone Numbers', href: phoneNumbers().url, icon: Smartphone, active: 'settings.phone-numbers' },
     { label: 'System', href: systemIndex().url, icon: Server, active: 'settings.system' },
-    { label: 'Roles', href: '/settings/roles', icon: Shield, active: 'settings.roles' },
+    { label: 'Roles', href: roles().url, icon: Shield, active: 'settings.roles' },
 ]
 
 export default function AuthenticatedLayout({ children }) {
@@ -71,7 +76,7 @@ export default function AuthenticatedLayout({ children }) {
     const [userMenuOpen, setUserMenuOpen] = useState(false)
 
     function stopImpersonating() {
-        router.post('/admin/stop-impersonating', {}, { preserveScroll: true })
+        router.post(stopImpersonating().url, {}, { preserveScroll: true })
     }
 
     function handleLogout(e) {

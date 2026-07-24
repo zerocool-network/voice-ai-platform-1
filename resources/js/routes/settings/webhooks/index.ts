@@ -242,7 +242,7 @@ test.post = (args: { webhook: string | { id: string } } | [webhook: string | { i
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::deliveries
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:15
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:17
 * @route '/settings/webhooks/deliveries'
 */
 export const deliveries = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -257,7 +257,7 @@ deliveries.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::deliveries
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:15
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:17
 * @route '/settings/webhooks/deliveries'
 */
 deliveries.url = (options?: RouteQueryOptions) => {
@@ -266,7 +266,7 @@ deliveries.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::deliveries
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:15
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:17
 * @route '/settings/webhooks/deliveries'
 */
 deliveries.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -276,7 +276,7 @@ deliveries.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::deliveries
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:15
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:17
 * @route '/settings/webhooks/deliveries'
 */
 deliveries.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::unread
-* @see app/Http/Controllers/Web/NotificationController.php:26
+* @see app/Http/Controllers/Web/NotificationController.php:37
 * @route '/notifications/unread'
 */
 export const unread = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -60,7 +60,7 @@ unread.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::unread
-* @see app/Http/Controllers/Web/NotificationController.php:26
+* @see app/Http/Controllers/Web/NotificationController.php:37
 * @route '/notifications/unread'
 */
 unread.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ unread.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::unread
-* @see app/Http/Controllers/Web/NotificationController.php:26
+* @see app/Http/Controllers/Web/NotificationController.php:37
 * @route '/notifications/unread'
 */
 unread.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -79,7 +79,7 @@ unread.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::unread
-* @see app/Http/Controllers/Web/NotificationController.php:26
+* @see app/Http/Controllers/Web/NotificationController.php:37
 * @route '/notifications/unread'
 */
 unread.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -89,7 +89,7 @@ unread.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::markRead
-* @see app/Http/Controllers/Web/NotificationController.php:40
+* @see app/Http/Controllers/Web/NotificationController.php:51
 * @route '/notifications/{id}/read'
 */
 export const markRead = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -104,7 +104,7 @@ markRead.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::markRead
-* @see app/Http/Controllers/Web/NotificationController.php:40
+* @see app/Http/Controllers/Web/NotificationController.php:51
 * @route '/notifications/{id}/read'
 */
 markRead.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -131,7 +131,7 @@ markRead.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::markRead
-* @see app/Http/Controllers/Web/NotificationController.php:40
+* @see app/Http/Controllers/Web/NotificationController.php:51
 * @route '/notifications/{id}/read'
 */
 markRead.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -141,7 +141,7 @@ markRead.post = (args: { id: string | number } | [id: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::markAllRead
-* @see app/Http/Controllers/Web/NotificationController.php:49
+* @see app/Http/Controllers/Web/NotificationController.php:60
 * @route '/notifications/mark-all-read'
 */
 export const markAllRead = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -156,7 +156,7 @@ markAllRead.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::markAllRead
-* @see app/Http/Controllers/Web/NotificationController.php:49
+* @see app/Http/Controllers/Web/NotificationController.php:60
 * @route '/notifications/mark-all-read'
 */
 markAllRead.url = (options?: RouteQueryOptions) => {
@@ -165,7 +165,7 @@ markAllRead.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\NotificationController::markAllRead
-* @see app/Http/Controllers/Web/NotificationController.php:49
+* @see app/Http/Controllers/Web/NotificationController.php:60
 * @route '/notifications/mark-all-read'
 */
 markAllRead.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

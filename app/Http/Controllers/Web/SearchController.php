@@ -62,6 +62,7 @@ class SearchController extends Controller
             ]);
 
         $transcripts = TranscriptModel::search($q)
+            ->query(fn ($q) => $q->whereHas('call', fn ($cq) => $cq->where('tenant_id', $tenantId)))
             ->take(5)
             ->get()
             ->map(fn ($m) => [

@@ -5,7 +5,7 @@ import { Heading } from '@/Components/catalyst/heading'
 import { Text } from '@/Components/catalyst/text'
 import { Badge } from '@/Components/catalyst/badge'
 import { complete } from '@/actions/App/Http/Controllers/Web/GettingStartedController'
-import { tenant as settingsTenant } from '@/routes/settings'
+import { tenant as settingsTenant, phoneNumbers } from '@/routes/settings'
 import { index as flowsIndex } from '@/actions/App/Http/Controllers/Web/FlowController'
 import { Phone, MessageSquare, Headphones, GitBranch, Play, CheckCircle2, ArrowRight } from 'lucide-react'
 
@@ -34,7 +34,7 @@ const STEPS = [
         description: 'Purchase a Twilio phone number for your voice AI.',
         details: 'Your voice AI needs a phone number to receive and make calls. Buy one through your Twilio account and assign it here.',
         icon: Headphones,
-        link: '/settings/phone-numbers',
+        link: phoneNumbers().url,
         linkLabel: 'Manage Phone Numbers',
     },
     {

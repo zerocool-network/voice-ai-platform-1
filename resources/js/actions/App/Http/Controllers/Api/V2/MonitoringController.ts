@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\V2\MonitoringController::health
-* @see app/Http/Controllers/Api/V2/MonitoringController.php:15
+* @see app/Http/Controllers/Api/V2/MonitoringController.php:16
 * @route '/api/v2/monitoring/health'
 */
 export const health = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ health.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\V2\MonitoringController::health
-* @see app/Http/Controllers/Api/V2/MonitoringController.php:15
+* @see app/Http/Controllers/Api/V2/MonitoringController.php:16
 * @route '/api/v2/monitoring/health'
 */
 health.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ health.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\V2\MonitoringController::health
-* @see app/Http/Controllers/Api/V2/MonitoringController.php:15
+* @see app/Http/Controllers/Api/V2/MonitoringController.php:16
 * @route '/api/v2/monitoring/health'
 */
 health.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ health.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\V2\MonitoringController::health
-* @see app/Http/Controllers/Api/V2/MonitoringController.php:15
+* @see app/Http/Controllers/Api/V2/MonitoringController.php:16
 * @route '/api/v2/monitoring/health'
 */
 health.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ health.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\V2\MonitoringController::system
-* @see app/Http/Controllers/Api/V2/MonitoringController.php:28
+* @see app/Http/Controllers/Api/V2/MonitoringController.php:29
 * @route '/api/v2/monitoring/system'
 */
 export const system = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -60,7 +60,7 @@ system.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\V2\MonitoringController::system
-* @see app/Http/Controllers/Api/V2/MonitoringController.php:28
+* @see app/Http/Controllers/Api/V2/MonitoringController.php:29
 * @route '/api/v2/monitoring/system'
 */
 system.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ system.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\V2\MonitoringController::system
-* @see app/Http/Controllers/Api/V2/MonitoringController.php:28
+* @see app/Http/Controllers/Api/V2/MonitoringController.php:29
 * @route '/api/v2/monitoring/system'
 */
 system.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -79,7 +79,7 @@ system.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\V2\MonitoringController::system
-* @see app/Http/Controllers/Api/V2/MonitoringController.php:28
+* @see app/Http/Controllers/Api/V2/MonitoringController.php:29
 * @route '/api/v2/monitoring/system'
 */
 system.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

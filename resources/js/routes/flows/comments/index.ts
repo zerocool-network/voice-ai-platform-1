@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Web\FlowCommentController::index
-* @see app/Http/Controllers/Web/FlowCommentController.php:15
+* @see app/Http/Controllers/Web/FlowCommentController.php:14
 * @route '/flows/{flow}/comments'
 */
 export const index = (args: { flow: string | number } | [flow: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\FlowCommentController::index
-* @see app/Http/Controllers/Web/FlowCommentController.php:15
+* @see app/Http/Controllers/Web/FlowCommentController.php:14
 * @route '/flows/{flow}/comments'
 */
 index.url = (args: { flow: string | number } | [flow: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -43,7 +43,7 @@ index.url = (args: { flow: string | number } | [flow: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Web\FlowCommentController::index
-* @see app/Http/Controllers/Web/FlowCommentController.php:15
+* @see app/Http/Controllers/Web/FlowCommentController.php:14
 * @route '/flows/{flow}/comments'
 */
 index.get = (args: { flow: string | number } | [flow: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ index.get = (args: { flow: string | number } | [flow: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Web\FlowCommentController::index
-* @see app/Http/Controllers/Web/FlowCommentController.php:15
+* @see app/Http/Controllers/Web/FlowCommentController.php:14
 * @route '/flows/{flow}/comments'
 */
 index.head = (args: { flow: string | number } | [flow: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ index.head = (args: { flow: string | number } | [flow: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Web\FlowCommentController::store
-* @see app/Http/Controllers/Web/FlowCommentController.php:32
+* @see app/Http/Controllers/Web/FlowCommentController.php:31
 * @route '/flows/{flow}/comments'
 */
 export const store = (args: { flow: string | number } | [flow: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -78,7 +78,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\FlowCommentController::store
-* @see app/Http/Controllers/Web/FlowCommentController.php:32
+* @see app/Http/Controllers/Web/FlowCommentController.php:31
 * @route '/flows/{flow}/comments'
 */
 store.url = (args: { flow: string | number } | [flow: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ store.url = (args: { flow: string | number } | [flow: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Web\FlowCommentController::store
-* @see app/Http/Controllers/Web/FlowCommentController.php:32
+* @see app/Http/Controllers/Web/FlowCommentController.php:31
 * @route '/flows/{flow}/comments'
 */
 store.post = (args: { flow: string | number } | [flow: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({

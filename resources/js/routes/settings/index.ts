@@ -10,6 +10,7 @@ import elevenlabs from './elevenlabs'
 import agents from './agents'
 import dataProtection0a045c from './data-protection'
 import phoneNumbersCd7706 from './phone-numbers'
+import system0654f6 from './system'
 import rolesF85c84 from './roles'
 /**
 * @see \App\Http\Controllers\Web\TenantSettingsController::tenant
@@ -233,7 +234,7 @@ phoneNumbers.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\SystemHealthController::system
-* @see app/Http/Controllers/Web/SystemHealthController.php:16
+* @see app/Http/Controllers/Web/SystemHealthController.php:19
 * @route '/settings/system'
 */
 export const system = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -248,7 +249,7 @@ system.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\SystemHealthController::system
-* @see app/Http/Controllers/Web/SystemHealthController.php:16
+* @see app/Http/Controllers/Web/SystemHealthController.php:19
 * @route '/settings/system'
 */
 system.url = (options?: RouteQueryOptions) => {
@@ -257,7 +258,7 @@ system.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\SystemHealthController::system
-* @see app/Http/Controllers/Web/SystemHealthController.php:16
+* @see app/Http/Controllers/Web/SystemHealthController.php:19
 * @route '/settings/system'
 */
 system.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -267,7 +268,7 @@ system.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\SystemHealthController::system
-* @see app/Http/Controllers/Web/SystemHealthController.php:16
+* @see app/Http/Controllers/Web/SystemHealthController.php:19
 * @route '/settings/system'
 */
 system.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -332,7 +333,7 @@ const settings = {
     dataProtection: Object.assign(dataProtection, dataProtection0a045c),
     privacy: Object.assign(privacy, privacy),
     phoneNumbers: Object.assign(phoneNumbers, phoneNumbersCd7706),
-    system: Object.assign(system, system),
+    system: Object.assign(system, system0654f6),
     roles: Object.assign(roles, rolesF85c84),
 }
 

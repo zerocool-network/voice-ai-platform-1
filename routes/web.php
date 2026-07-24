@@ -128,6 +128,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/recordings/{call}/play', [RecordingController::class, '__invoke'])->name('recordings.play');
     Route::patch('/calls/{call}/notes', [CallController::class, 'updateNotes'])->name('calls.notes');
     Route::post('/calls/{call}/retry', [CallController::class, 'retry'])->name('calls.retry');
+    Route::delete('/calls/{call}', [CallController::class, 'destroy'])->name('calls.destroy');
 
     Route::get('/monitor', [MonitorController::class, 'index'])->name('monitor.index');
     Route::get('/monitor/active', [MonitorController::class, 'active'])->name('monitor.active');

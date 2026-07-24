@@ -92,6 +92,17 @@ class DashboardController extends Controller
         $callsByDay = $this->callRepository->callsByDay($tenantId, $start, $end);
         $activeCalls = $this->callRepository->countActiveByTenant($tenantId);
         $flowMetrics = $this->callRepository->callsByFlowWithMetrics($tenantId, $start, $end);
+        $avgDurationByDay = $this->callRepository->avgDurationByDay($tenantId, $start, $end);
+        $callsByStatus = $this->callRepository->callsByStatus($tenantId, $start, $end);
+        $activeFlows = $this->flowRepository->countActiveByTenant($tenantId);
+
+        $durationByDate = collect($avgDurationByDay)->keyBy('date')->map(fn ($d) => sprintf('%.1f', $d['avg_seconds']));
+
+        $completedCount = collect($callsByStatus)->firstWhere('status', 'completed')['count'] ?? 0;
+        $totalByStatus = collect($callsByStatus)->sum('count');
+        $overallSuccessRate = $totalByStatus > 0
+            ? sprintf('%.1f%%', ($completedCount / $totalByStatus) * 100)
+            : '0.0%';
 
         $headers = [
             'date', 'total_calls', 'active_calls', 'avg_duration_seconds',
@@ -104,10 +115,10 @@ class DashboardController extends Controller
             $rows[] = [
                 $day['date'],
                 (string) $day['count'],
-                (string) $activeCalls,
-                '',
-                '',
-                '',
+                (string) ($day['date'] === now()->toDateString() ? $activeCalls : ''),
+                $durationByDate->get($day['date'], ''),
+                $overallSuccessRate,
+                (string) $activeFlows,
             ];
         }
 

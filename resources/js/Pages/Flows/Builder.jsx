@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Phone, AlertTriangle, Play } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Phone, Play } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -167,55 +168,96 @@ export default function Builder({ flow }) {
           </div>
         </div>
 
-        {activeTab === 'builder' && (
-          <div className="flex-1 overflow-hidden rounded-xl border border-zinc-950/5 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-            <FlowBuilderComponent
-              ref={builderRef}
-              config={config}
-              onConfigChange={handleConfigChange}
-              onDirty={handleDirty}
-              onSave={handleSave}
-            />
-          </div>
-        )}
+        <div className="flex-1 overflow-hidden rounded-xl border border-zinc-950/5 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+          <AnimatePresence mode="wait">
+            {activeTab === 'builder' && (
+              <motion.div
+                key="builder"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full"
+              >
+                <FlowBuilderComponent
+                  ref={builderRef}
+                  config={config}
+                  onConfigChange={handleConfigChange}
+                  onDirty={handleDirty}
+                  onSave={handleSave}
+                />
+              </motion.div>
+            )}
 
-        {activeTab === 'comments' && (
-          <div className="flex-1 overflow-hidden rounded-xl border border-zinc-950/5 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-            <FlowCommentPanel flowId={flow.id} />
-          </div>
-        )}
+            {activeTab === 'comments' && (
+              <motion.div
+                key="comments"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full"
+              >
+                <FlowCommentPanel flowId={flow.id} />
+              </motion.div>
+            )}
 
-        {activeTab === 'history' && (
-          <div className="flex-1 overflow-hidden rounded-xl border border-zinc-950/5 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-            <FlowVersionPanel flowId={flow.id} />
-          </div>
-        )}
+            {activeTab === 'history' && (
+              <motion.div
+                key="history"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full"
+              >
+                <FlowVersionPanel flowId={flow.id} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      <Alert open={showTestModal} onClose={() => setShowTestModal(false)}>
-        <AlertTitle>Test Flow: {flow.name}</AlertTitle>
-        <AlertDescription>
-          Enter a phone number to call and test this flow.
-        </AlertDescription>
-        <AlertBody>
-          <Input
-            type="tel"
-            placeholder="+1 (555) 123-4567"
-            value={testPhone}
-            onChange={(e) => setTestPhone(e.target.value)}
-          />
-        </AlertBody>
-        <AlertActions>
-          <Button plain onClick={() => setShowTestModal(false)}>Cancel</Button>
-          <Button onClick={handleTestFlow} disabled={testing}>
-            {testing ? 'Calling...' : 'Call Now'}
-          </Button>
-        </AlertActions>
-      </Alert>
+      <AnimatePresence>
+        {showTestModal && (
+          <Alert open={showTestModal} onClose={() => setShowTestModal(false)}>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+            >
+              <AlertTitle>Test Flow: {flow.name}</AlertTitle>
+              <AlertDescription>
+                Enter a phone number to call and test this flow.
+              </AlertDescription>
+              <AlertBody>
+                <Input
+                  type="tel"
+                  placeholder="+1 (555) 123-4567"
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                />
+              </AlertBody>
+              <AlertActions>
+                <Button plain onClick={() => setShowTestModal(false)}>Cancel</Button>
+                <Button onClick={handleTestFlow} disabled={testing}>
+                  {testing ? 'Calling...' : 'Call Now'}
+                </Button>
+              </AlertActions>
+            </motion.div>
+          </Alert>
+        )}
+      </AnimatePresence>
 
-      {simulateResults && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900">
+      <AnimatePresence>
+        {simulateResults && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900"
+            >
             <h3 className="text-lg font-semibold">Simulation Results</h3>
             <Text className="mt-1">{simulateResults.steps_count} steps simulated</Text>
             <div className="mt-4 space-y-2">
@@ -238,9 +280,10 @@ export default function Builder({ flow }) {
             <div className="mt-6 flex justify-end">
               <Button onClick={() => setSimulateResults(null)}>Close</Button>
             </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
     </AuthenticatedLayout>
   );

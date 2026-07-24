@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ActivityFeed from '@/Components/ActivityFeed';
 import { Head, router, usePage } from '@inertiajs/react';
+import dashboard from '@/routes/dashboard';
 import {
   Activity, BarChart3, Clock, Download, GitBranch, Phone, PhoneCall,
   PhoneIncoming, PieChart as PieChartIcon, TrendingUp, Calendar,
@@ -147,8 +148,8 @@ export default function Dashboard({
             </button>
           </div>
 
-          <a
-            href={`/dashboard/export/csv?${params.toString()}`}
+            <a
+            href={dashboard.export.analytics({ query: { start: activeStart ?? '', end: activeEnd ?? '' } }).url}
             className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition-all hover:bg-zinc-50"
           >
             <Download className="size-4" />

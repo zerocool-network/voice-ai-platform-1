@@ -9,6 +9,7 @@ import { Input } from '@/Components/catalyst/input'
 import { Select } from '@/Components/catalyst/select'
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table'
 import { show as callShow } from '@/actions/App/Http/Controllers/Web/CallController'
+import calls from '@/routes/calls'
 import { Phone, Download, Headphones, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const statusColors = {
@@ -34,7 +35,7 @@ export default function CallsIndex({ calls, filters }) {
     }
 
     function exportCalls() {
-        window.open(`/calls/export/csv?search=${search}&status=${filters.status ?? ''}`, '_blank')
+        window.open(calls.export({ query: { search, status: filters.status ?? '' } }).url, '_blank')
     }
 
     const statuses = ['', 'completed', 'failed', 'in_progress', 'initiated', 'ringing', 'busy', 'no-answer', 'cancelled']
@@ -53,7 +54,7 @@ export default function CallsIndex({ calls, filters }) {
                         <Download className="size-4" />
                         Export CSV
                     </Button>
-                    <Link href="/calls/scheduled">
+                    <Link href={calls.scheduled().url}>
                         <Button outline>
                             <Phone className="size-4" />
                             Scheduled

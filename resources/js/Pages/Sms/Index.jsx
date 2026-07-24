@@ -12,6 +12,7 @@ import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset'
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/Components/catalyst/dialog'
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table'
 import { send } from '@/actions/App/Http/Controllers/Web/SmsController'
+import sms from '@/routes/sms'
 import {
     MessageCircle, MessageSquare, Plus, Reply, Megaphone,
     Search, Send, ArrowLeft, Check, CheckCheck, X,
@@ -92,7 +93,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
         setSelectedContact(contact)
         if (!convMessages[contact]) {
             try {
-                const res = await fetch(`/sms/conversation/${encodeURIComponent(contact)}`)
+                const res = await fetch(sms.conversation({ contactNumber: contact }).url)
                 const data = await res.json()
                 setConvMessages((prev) => ({ ...prev, [contact]: data }))
             } catch {
@@ -114,7 +115,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                 body: JSON.stringify({ to: selectedContact, body: replyText, channel: 'sms' }),
             })
             setReplyText('')
-            const res = await fetch(`/sms/conversation/${encodeURIComponent(selectedContact)}`)
+            const res = await fetch(sms.conversation({ contactNumber: selectedContact }).url)
             const data = await res.json()
             setConvMessages((prev) => ({ ...prev, [selectedContact]: data }))
         } catch {
@@ -157,13 +158,13 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                    <Link href="/sms/auto-replies">
+                    <Link href={sms.autoReplies.index().url}>
                         <Button outline>
                             <Reply className="size-4" />
                             Auto-Replies
                         </Button>
                     </Link>
-                    <Link href="/sms/campaigns">
+                    <Link href={sms.campaigns.index().url}>
                         <Button outline>
                             <Megaphone className="size-4" />
                             Campaigns

@@ -1,5 +1,6 @@
 import StripeWebhookController from './StripeWebhookController'
 import DashboardController from './DashboardController'
+import SearchController from './SearchController'
 import FlowController from './FlowController'
 import FlowTestController from './FlowTestController'
 import FlowCommentController from './FlowCommentController'
@@ -41,6 +42,7 @@ import AcceptInviteController from './AcceptInviteController'
 const Web = {
     StripeWebhookController: Object.assign(StripeWebhookController, StripeWebhookController),
     DashboardController: Object.assign(DashboardController, DashboardController),
+    SearchController: Object.assign(SearchController, SearchController),
     FlowController: Object.assign(FlowController, FlowController),
     FlowTestController: Object.assign(FlowTestController, FlowTestController),
     FlowCommentController: Object.assign(FlowCommentController, FlowCommentController),

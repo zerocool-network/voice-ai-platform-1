@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\SmsController::conversation
-* @see app/Http/Controllers/Web/SmsController.php:72
+* @see app/Http/Controllers/Web/SmsController.php:93
 * @route '/sms/conversation/{contactNumber}'
 */
 export const conversation = (args: { contactNumber: string | number } | [contactNumber: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -60,7 +60,7 @@ conversation.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\SmsController::conversation
-* @see app/Http/Controllers/Web/SmsController.php:72
+* @see app/Http/Controllers/Web/SmsController.php:93
 * @route '/sms/conversation/{contactNumber}'
 */
 conversation.url = (args: { contactNumber: string | number } | [contactNumber: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -87,7 +87,7 @@ conversation.url = (args: { contactNumber: string | number } | [contactNumber: s
 
 /**
 * @see \App\Http\Controllers\Web\SmsController::conversation
-* @see app/Http/Controllers/Web/SmsController.php:72
+* @see app/Http/Controllers/Web/SmsController.php:93
 * @route '/sms/conversation/{contactNumber}'
 */
 conversation.get = (args: { contactNumber: string | number } | [contactNumber: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ conversation.get = (args: { contactNumber: string | number } | [contactNumber: s
 
 /**
 * @see \App\Http\Controllers\Web\SmsController::conversation
-* @see app/Http/Controllers/Web/SmsController.php:72
+* @see app/Http/Controllers/Web/SmsController.php:93
 * @route '/sms/conversation/{contactNumber}'
 */
 conversation.head = (args: { contactNumber: string | number } | [contactNumber: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -107,7 +107,7 @@ conversation.head = (args: { contactNumber: string | number } | [contactNumber: 
 
 /**
 * @see \App\Http\Controllers\Web\SmsController::send
-* @see app/Http/Controllers/Web/SmsController.php:88
+* @see app/Http/Controllers/Web/SmsController.php:109
 * @route '/sms/send'
 */
 export const send = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -122,7 +122,7 @@ send.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\SmsController::send
-* @see app/Http/Controllers/Web/SmsController.php:88
+* @see app/Http/Controllers/Web/SmsController.php:109
 * @route '/sms/send'
 */
 send.url = (options?: RouteQueryOptions) => {
@@ -131,7 +131,7 @@ send.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\SmsController::send
-* @see app/Http/Controllers/Web/SmsController.php:88
+* @see app/Http/Controllers/Web/SmsController.php:109
 * @route '/sms/send'
 */
 send.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

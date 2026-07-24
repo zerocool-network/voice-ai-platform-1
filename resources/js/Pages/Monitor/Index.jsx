@@ -7,6 +7,7 @@ import { Badge } from '@/Components/catalyst/badge';
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
 import { show } from '@/actions/App/Http/Controllers/Web/CallController';
 import { active } from '@/actions/App/Http/Controllers/Web/MonitorController';
+import { transcript } from '@/routes/monitor';
 import { Headphones, ChevronDown, ChevronRight } from 'lucide-react';
 
 const statusColors = {
@@ -100,7 +101,7 @@ export default function Monitor({ activeCalls: initial, tenantId }) {
         if (!transcripts[call.id]) {
             setFetchingId(call.id);
             try {
-                const res = await fetch(`/monitor/calls/${call.id}/transcript`);
+                const res = await fetch(transcript({ call: call.id }).url);
                 const data = await res.json();
                 setTranscripts((prev) => ({ ...prev, [call.id]: data }));
             } catch {

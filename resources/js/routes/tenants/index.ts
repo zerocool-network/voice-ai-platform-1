@@ -1,95 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
-* @see \App\Http\Controllers\Api\TenantController::index
-* @see app/Http/Controllers/Api/TenantController.php:19
-* @route '/api/v1/tenants'
-*/
-export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-
-index.definition = {
-    methods: ["get","head"],
-    url: '/api/v1/tenants',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::index
-* @see app/Http/Controllers/Api/TenantController.php:19
-* @route '/api/v1/tenants'
-*/
-index.url = (options?: RouteQueryOptions) => {
-    return index.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::index
-* @see app/Http/Controllers/Api/TenantController.php:19
-* @route '/api/v1/tenants'
-*/
-index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::index
-* @see app/Http/Controllers/Api/TenantController.php:19
-* @route '/api/v1/tenants'
-*/
-index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: index.url(options),
-    method: 'head',
-})
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::index
-* @see app/Http/Controllers/Api/TenantController.php:19
-* @route '/api/v2/tenants'
-*/
-export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-
-index.definition = {
-    methods: ["get","head"],
-    url: '/api/v2/tenants',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::index
-* @see app/Http/Controllers/Api/TenantController.php:19
-* @route '/api/v2/tenants'
-*/
-index.url = (options?: RouteQueryOptions) => {
-    return index.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::index
-* @see app/Http/Controllers/Api/TenantController.php:19
-* @route '/api/v2/tenants'
-*/
-index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: index.url(options),
-    method: 'get',
-})
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::index
-* @see app/Http/Controllers/Api/TenantController.php:19
-* @route '/api/v2/tenants'
-*/
-index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: index.url(options),
-    method: 'head',
-})
-
-/**
 * @see \App\Http\Controllers\Api\TenantController::store
-* @see app/Http/Controllers/Api/TenantController.php:24
+* @see app/Http/Controllers/Api/TenantController.php:19
 * @route '/api/v1/tenants'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -104,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::store
-* @see app/Http/Controllers/Api/TenantController.php:24
+* @see app/Http/Controllers/Api/TenantController.php:19
 * @route '/api/v1/tenants'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -113,7 +25,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::store
-* @see app/Http/Controllers/Api/TenantController.php:24
+* @see app/Http/Controllers/Api/TenantController.php:19
 * @route '/api/v1/tenants'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -123,7 +35,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::store
-* @see app/Http/Controllers/Api/TenantController.php:24
+* @see app/Http/Controllers/Api/TenantController.php:19
 * @route '/api/v2/tenants'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -138,7 +50,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::store
-* @see app/Http/Controllers/Api/TenantController.php:24
+* @see app/Http/Controllers/Api/TenantController.php:19
 * @route '/api/v2/tenants'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -147,7 +59,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::store
-* @see app/Http/Controllers/Api/TenantController.php:24
+* @see app/Http/Controllers/Api/TenantController.php:19
 * @route '/api/v2/tenants'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -157,7 +69,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::show
-* @see app/Http/Controllers/Api/TenantController.php:45
+* @see app/Http/Controllers/Api/TenantController.php:40
 * @route '/api/v1/tenants/{tenant}'
 */
 export const show = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +84,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::show
-* @see app/Http/Controllers/Api/TenantController.php:45
+* @see app/Http/Controllers/Api/TenantController.php:40
 * @route '/api/v1/tenants/{tenant}'
 */
 show.url = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -199,7 +111,7 @@ show.url = (args: { tenant: string | number } | [tenant: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::show
-* @see app/Http/Controllers/Api/TenantController.php:45
+* @see app/Http/Controllers/Api/TenantController.php:40
 * @route '/api/v1/tenants/{tenant}'
 */
 show.get = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -209,7 +121,7 @@ show.get = (args: { tenant: string | number } | [tenant: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::show
-* @see app/Http/Controllers/Api/TenantController.php:45
+* @see app/Http/Controllers/Api/TenantController.php:40
 * @route '/api/v1/tenants/{tenant}'
 */
 show.head = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -219,7 +131,7 @@ show.head = (args: { tenant: string | number } | [tenant: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::show
-* @see app/Http/Controllers/Api/TenantController.php:45
+* @see app/Http/Controllers/Api/TenantController.php:40
 * @route '/api/v2/tenants/{tenant}'
 */
 export const show = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -234,7 +146,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::show
-* @see app/Http/Controllers/Api/TenantController.php:45
+* @see app/Http/Controllers/Api/TenantController.php:40
 * @route '/api/v2/tenants/{tenant}'
 */
 show.url = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -261,7 +173,7 @@ show.url = (args: { tenant: string | number } | [tenant: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::show
-* @see app/Http/Controllers/Api/TenantController.php:45
+* @see app/Http/Controllers/Api/TenantController.php:40
 * @route '/api/v2/tenants/{tenant}'
 */
 show.get = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -271,7 +183,7 @@ show.get = (args: { tenant: string | number } | [tenant: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::show
-* @see app/Http/Controllers/Api/TenantController.php:45
+* @see app/Http/Controllers/Api/TenantController.php:40
 * @route '/api/v2/tenants/{tenant}'
 */
 show.head = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -281,7 +193,7 @@ show.head = (args: { tenant: string | number } | [tenant: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::update
-* @see app/Http/Controllers/Api/TenantController.php:56
+* @see app/Http/Controllers/Api/TenantController.php:51
 * @route '/api/v1/tenants/{tenant}'
 */
 export const update = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -296,7 +208,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::update
-* @see app/Http/Controllers/Api/TenantController.php:56
+* @see app/Http/Controllers/Api/TenantController.php:51
 * @route '/api/v1/tenants/{tenant}'
 */
 update.url = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -323,7 +235,7 @@ update.url = (args: { tenant: string | number } | [tenant: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::update
-* @see app/Http/Controllers/Api/TenantController.php:56
+* @see app/Http/Controllers/Api/TenantController.php:51
 * @route '/api/v1/tenants/{tenant}'
 */
 update.put = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -333,7 +245,7 @@ update.put = (args: { tenant: string | number } | [tenant: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::update
-* @see app/Http/Controllers/Api/TenantController.php:56
+* @see app/Http/Controllers/Api/TenantController.php:51
 * @route '/api/v1/tenants/{tenant}'
 */
 update.patch = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -343,7 +255,7 @@ update.patch = (args: { tenant: string | number } | [tenant: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::update
-* @see app/Http/Controllers/Api/TenantController.php:56
+* @see app/Http/Controllers/Api/TenantController.php:51
 * @route '/api/v2/tenants/{tenant}'
 */
 export const update = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -358,7 +270,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::update
-* @see app/Http/Controllers/Api/TenantController.php:56
+* @see app/Http/Controllers/Api/TenantController.php:51
 * @route '/api/v2/tenants/{tenant}'
 */
 update.url = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -385,7 +297,7 @@ update.url = (args: { tenant: string | number } | [tenant: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::update
-* @see app/Http/Controllers/Api/TenantController.php:56
+* @see app/Http/Controllers/Api/TenantController.php:51
 * @route '/api/v2/tenants/{tenant}'
 */
 update.put = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -395,124 +307,18 @@ update.put = (args: { tenant: string | number } | [tenant: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Api\TenantController::update
-* @see app/Http/Controllers/Api/TenantController.php:56
+* @see app/Http/Controllers/Api/TenantController.php:51
 * @route '/api/v2/tenants/{tenant}'
 */
 update.patch = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: update.url(args, options),
     method: 'patch',
-})
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::destroy
-* @see app/Http/Controllers/Api/TenantController.php:83
-* @route '/api/v1/tenants/{tenant}'
-*/
-export const destroy = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
-    url: destroy.url(args, options),
-    method: 'delete',
-})
-
-destroy.definition = {
-    methods: ["delete"],
-    url: '/api/v1/tenants/{tenant}',
-} satisfies RouteDefinition<["delete"]>
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::destroy
-* @see app/Http/Controllers/Api/TenantController.php:83
-* @route '/api/v1/tenants/{tenant}'
-*/
-destroy.url = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions) => {
-    if (typeof args === 'string' || typeof args === 'number') {
-        args = { tenant: args }
-    }
-
-    if (Array.isArray(args)) {
-        args = {
-            tenant: args[0],
-        }
-    }
-
-    args = applyUrlDefaults(args)
-
-    const parsedArgs = {
-        tenant: args.tenant,
-    }
-
-    return destroy.definition.url
-            .replace('{tenant}', parsedArgs.tenant.toString())
-            .replace(/\/+$/, '') + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::destroy
-* @see app/Http/Controllers/Api/TenantController.php:83
-* @route '/api/v1/tenants/{tenant}'
-*/
-destroy.delete = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
-    url: destroy.url(args, options),
-    method: 'delete',
-})
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::destroy
-* @see app/Http/Controllers/Api/TenantController.php:83
-* @route '/api/v2/tenants/{tenant}'
-*/
-export const destroy = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
-    url: destroy.url(args, options),
-    method: 'delete',
-})
-
-destroy.definition = {
-    methods: ["delete"],
-    url: '/api/v2/tenants/{tenant}',
-} satisfies RouteDefinition<["delete"]>
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::destroy
-* @see app/Http/Controllers/Api/TenantController.php:83
-* @route '/api/v2/tenants/{tenant}'
-*/
-destroy.url = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions) => {
-    if (typeof args === 'string' || typeof args === 'number') {
-        args = { tenant: args }
-    }
-
-    if (Array.isArray(args)) {
-        args = {
-            tenant: args[0],
-        }
-    }
-
-    args = applyUrlDefaults(args)
-
-    const parsedArgs = {
-        tenant: args.tenant,
-    }
-
-    return destroy.definition.url
-            .replace('{tenant}', parsedArgs.tenant.toString())
-            .replace(/\/+$/, '') + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Api\TenantController::destroy
-* @see app/Http/Controllers/Api/TenantController.php:83
-* @route '/api/v2/tenants/{tenant}'
-*/
-destroy.delete = (args: { tenant: string | number } | [tenant: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
-    url: destroy.url(args, options),
-    method: 'delete',
 })
 
 const tenants = {
-    index: Object.assign(index, index),
     store: Object.assign(store, store),
     show: Object.assign(show, show),
     update: Object.assign(update, update),
-    destroy: Object.assign(destroy, destroy),
 }
 
 export default tenants

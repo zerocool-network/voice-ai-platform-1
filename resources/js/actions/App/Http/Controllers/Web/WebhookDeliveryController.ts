@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::index
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:15
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:17
 * @route '/settings/webhooks/deliveries'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::index
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:15
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:17
 * @route '/settings/webhooks/deliveries'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::index
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:15
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:17
 * @route '/settings/webhooks/deliveries'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::index
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:15
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:17
 * @route '/settings/webhooks/deliveries'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::show
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:46
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:67
 * @route '/settings/webhooks/deliveries/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -60,7 +60,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::show
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:46
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:67
 * @route '/settings/webhooks/deliveries/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -87,7 +87,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::show
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:46
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:67
 * @route '/settings/webhooks/deliveries/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Web\WebhookDeliveryController::show
-* @see app/Http/Controllers/Web/WebhookDeliveryController.php:46
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:67
 * @route '/settings/webhooks/deliveries/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -105,6 +105,58 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     method: 'head',
 })
 
-const WebhookDeliveryController = { index, show }
+/**
+* @see \App\Http\Controllers\Web\WebhookDeliveryController::retry
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:77
+* @route '/settings/webhooks/deliveries/{id}/retry'
+*/
+export const retry = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: retry.url(args, options),
+    method: 'post',
+})
+
+retry.definition = {
+    methods: ["post"],
+    url: '/settings/webhooks/deliveries/{id}/retry',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Web\WebhookDeliveryController::retry
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:77
+* @route '/settings/webhooks/deliveries/{id}/retry'
+*/
+retry.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            id: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        id: args.id,
+    }
+
+    return retry.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Web\WebhookDeliveryController::retry
+* @see app/Http/Controllers/Web/WebhookDeliveryController.php:77
+* @route '/settings/webhooks/deliveries/{id}/retry'
+*/
+retry.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: retry.url(args, options),
+    method: 'post',
+})
+
+const WebhookDeliveryController = { index, show, retry }
 
 export default WebhookDeliveryController

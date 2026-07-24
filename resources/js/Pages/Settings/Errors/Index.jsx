@@ -5,6 +5,7 @@ import { Text } from '@/Components/catalyst/text';
 import { Badge } from '@/Components/catalyst/badge';
 import { Button } from '@/Components/catalyst/button';
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
+import { resolve as resolveError } from '@/routes/settings/errors';
 import { ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 
 const filters = [
@@ -27,7 +28,7 @@ function StatCard({ label, value, icon: Icon }) {
 
 export default function Index({ errors, stats, filter }) {
     function resolve(hash) {
-        router.patch(`/settings/errors/${hash}/resolve`, {}, {
+        router.patch(resolveError({ hash }).url, {}, {
             preserveScroll: true,
         });
     }

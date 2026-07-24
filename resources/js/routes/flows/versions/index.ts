@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Web\FlowController::restore
-* @see app/Http/Controllers/Web/FlowController.php:183
+* @see app/Http/Controllers/Web/FlowController.php:182
 * @route '/flows/{flow}/versions/{version}/restore'
 */
 export const restore = (args: { flow: string | number, version: string | number } | [flow: string | number, version: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ restore.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\FlowController::restore
-* @see app/Http/Controllers/Web/FlowController.php:183
+* @see app/Http/Controllers/Web/FlowController.php:182
 * @route '/flows/{flow}/versions/{version}/restore'
 */
 restore.url = (args: { flow: string | number, version: string | number } | [flow: string | number, version: string | number ], options?: RouteQueryOptions) => {
@@ -42,7 +42,7 @@ restore.url = (args: { flow: string | number, version: string | number } | [flow
 
 /**
 * @see \App\Http\Controllers\Web\FlowController::restore
-* @see app/Http/Controllers/Web/FlowController.php:183
+* @see app/Http/Controllers/Web/FlowController.php:182
 * @route '/flows/{flow}/versions/{version}/restore'
 */
 restore.post = (args: { flow: string | number, version: string | number } | [flow: string | number, version: string | number ], options?: RouteQueryOptions): RouteDefinition<'post'> => ({

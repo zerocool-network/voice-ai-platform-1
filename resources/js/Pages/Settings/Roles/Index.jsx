@@ -7,6 +7,7 @@ import { Button } from '@/Components/catalyst/button';
 import { Badge } from '@/Components/catalyst/badge';
 import { Checkbox } from '@/Components/catalyst/checkbox';
 import { Dialog, DialogTitle, DialogDescription, DialogBody, DialogActions } from '@/Components/catalyst/dialog';
+import { update as updateRole } from '@/routes/settings/roles';
 import { Shield } from 'lucide-react';
 
 export default function Index({ roles, allPermissions }) {
@@ -33,7 +34,7 @@ export default function Index({ roles, allPermissions }) {
 
     function saveRole() {
         if (!editingRole) return;
-        router.patch(`/settings/roles/${editingRole.id}`, {
+        router.patch(updateRole({ role: editingRole.id }).url, {
             permissions: selectedPermissions,
         }, {
             onSuccess: () => setEditingRole(null),

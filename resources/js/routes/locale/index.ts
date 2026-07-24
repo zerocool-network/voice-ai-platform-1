@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
-* @see routes/web.php:52
+* @see routes/web.php:53
 * @route '/locale/{locale}'
 */
 export const switchMethod = (args: { locale: string | number } | [locale: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -14,7 +14,7 @@ switchMethod.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:52
+* @see routes/web.php:53
 * @route '/locale/{locale}'
 */
 switchMethod.url = (args: { locale: string | number } | [locale: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -40,7 +40,7 @@ switchMethod.url = (args: { locale: string | number } | [locale: string | number
 }
 
 /**
-* @see routes/web.php:52
+* @see routes/web.php:53
 * @route '/locale/{locale}'
 */
 switchMethod.get = (args: { locale: string | number } | [locale: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -49,7 +49,7 @@ switchMethod.get = (args: { locale: string | number } | [locale: string | number
 })
 
 /**
-* @see routes/web.php:52
+* @see routes/web.php:53
 * @route '/locale/{locale}'
 */
 switchMethod.head = (args: { locale: string | number } | [locale: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({

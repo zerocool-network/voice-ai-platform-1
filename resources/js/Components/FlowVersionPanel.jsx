@@ -59,7 +59,16 @@ export default function FlowVersionPanel({ flowId }) {
   };
 
   if (loading) {
-    return <Text className="p-4 text-sm text-zinc-400">Loading version history...</Text>;
+    return (
+      <div className="space-y-3 p-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="animate-pulse space-y-2">
+            <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700" />
+            <div className="h-3 w-1/2 rounded bg-zinc-100 dark:bg-zinc-800" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (

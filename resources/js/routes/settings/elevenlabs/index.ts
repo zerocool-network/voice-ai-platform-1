@@ -35,7 +35,7 @@ connect.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsConnectController::status
-* @see app/Http/Controllers/Web/ElevenLabsConnectController.php:84
+* @see app/Http/Controllers/Web/ElevenLabsConnectController.php:93
 * @route '/settings/elevenlabs/status'
 */
 export const status = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -50,7 +50,7 @@ status.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsConnectController::status
-* @see app/Http/Controllers/Web/ElevenLabsConnectController.php:84
+* @see app/Http/Controllers/Web/ElevenLabsConnectController.php:93
 * @route '/settings/elevenlabs/status'
 */
 status.url = (options?: RouteQueryOptions) => {
@@ -59,7 +59,7 @@ status.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsConnectController::status
-* @see app/Http/Controllers/Web/ElevenLabsConnectController.php:84
+* @see app/Http/Controllers/Web/ElevenLabsConnectController.php:93
 * @route '/settings/elevenlabs/status'
 */
 status.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -69,7 +69,7 @@ status.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsConnectController::status
-* @see app/Http/Controllers/Web/ElevenLabsConnectController.php:84
+* @see app/Http/Controllers/Web/ElevenLabsConnectController.php:93
 * @route '/settings/elevenlabs/status'
 */
 status.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

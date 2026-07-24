@@ -1,3 +1,49 @@
+import { useState } from 'react';
+import { motion } from 'motion/react';
+import { Search } from 'lucide-react';
+import {
+  MessageSquare,
+  HelpCircle,
+  PhoneOff,
+  GitBranch,
+  ArrowRight,
+  Bot,
+  Webhook,
+  PhoneForwarded,
+  BookOpen,
+} from 'lucide-react';
+
+const iconMap = {
+  say: MessageSquare,
+  ask: HelpCircle,
+  hangup: PhoneOff,
+  condition: GitBranch,
+  goto: ArrowRight,
+  llm: Bot,
+  webhook: Webhook,
+  transfer: PhoneForwarded,
+  knowledge: BookOpen,
+};
+
+const CATEGORIES = [
+  {
+    label: 'Basic',
+    items: ['say', 'ask', 'hangup'],
+  },
+  {
+    label: 'AI',
+    items: ['llm', 'knowledge'],
+  },
+  {
+    label: 'Flow Control',
+    items: ['condition', 'goto'],
+  },
+  {
+    label: 'Actions',
+    items: ['transfer', 'webhook'],
+  },
+];
+
 const NODE_ITEMS = [
   { type: 'say', label: 'Say', color: 'emerald', desc: 'Text-to-speech response' },
   { type: 'ask', label: 'Ask', color: 'violet', desc: 'Gather caller input' },
@@ -23,6 +69,8 @@ const colorMap = {
 };
 
 function DraggableItem({ type, label, color, desc }) {
+  const Icon = iconMap[type];
+
   const onDragStart = (event) => {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
@@ -30,10 +78,11 @@ function DraggableItem({ type, label, color, desc }) {
 
   return (
     <div
-      className={`flex cursor-grab items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-medium transition hover:shadow-xs active:cursor-grabbing ${colorMap[color]}`}
+      className={`flex cursor-grab items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-medium transition hover:shadow-sm hover:scale-[1.02] active:cursor-grabbing active:scale-[0.98] ${colorMap[color]}`}
       draggable
       onDragStart={onDragStart}
     >
+      {Icon && <Icon className="size-3.5 shrink-0" />}
       <span className="text-xs">{label}</span>
       <span className="text-[10px] font-normal opacity-60">{desc}</span>
     </div>
@@ -41,12 +90,60 @@ function DraggableItem({ type, label, color, desc }) {
 }
 
 export default function Toolbox() {
+  const [search, setSearch] = useState('');
+
+  const filteredCategories = CATEGORIES.map((cat) => ({
+    ...cat,
+    items: cat.items.filter((type) => {
+      if (!search.trim()) return true;
+      const item = NODE_ITEMS.find((n) => n.type === type);
+      const q = search.toLowerCase();
+      return (
+        item.label.toLowerCase().includes(q) ||
+        item.desc.toLowerCase().includes(q) ||
+        type.toLowerCase().includes(q)
+      );
+    }),
+  })).filter((cat) => cat.items.length > 0);
+
   return (
     <div className="flex w-56 flex-col gap-2 border-r bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
       <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Steps</div>
-      {NODE_ITEMS.map((item) => (
-        <DraggableItem key={item.type} {...item} />
-      ))}
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-zinc-400" />
+        <input
+          type="text"
+          placeholder="Search nodes..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded-md border border-zinc-200 bg-white py-1.5 pl-7 pr-2 text-xs text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
+        />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {filteredCategories.map((cat, i) => (
+          <motion.div
+            key={cat.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05, duration: 0.2 }}
+          >
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+              {cat.label}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {cat.items.map((type) => {
+                const item = NODE_ITEMS.find((n) => n.type === type);
+                return <DraggableItem key={type} {...item} />;
+              })}
+            </div>
+          </motion.div>
+        ))}
+        {filteredCategories.length === 0 && (
+          <p className="py-4 text-center text-xs text-zinc-400">No matching nodes</p>
+        )}
+      </div>
     </div>
   );
 }

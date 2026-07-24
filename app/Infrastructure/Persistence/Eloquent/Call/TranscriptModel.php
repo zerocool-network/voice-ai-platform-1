@@ -56,4 +56,16 @@ class TranscriptModel extends Model
     {
         return $this->belongsTo(CallModel::class, 'call_id');
     }
+
+    /** @return array<string, mixed> */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'call_id' => $this->call_id,
+            'role' => $this->role,
+            'text' => $this->text,
+            'call_sid' => $this->call_sid,
+        ];
+    }
 }

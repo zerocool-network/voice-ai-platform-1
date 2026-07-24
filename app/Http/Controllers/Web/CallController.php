@@ -8,6 +8,7 @@ use App\Infrastructure\Persistence\Eloquent\Call\CallModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -173,6 +174,23 @@ class CallController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="calls-export-'.now()->format('Y-m-d-His').'.csv"',
         ]);
+    }
+
+    public function destroy(Request $request, string $id): RedirectResponse
+    {
+        $call = CallModel::where('id', $id)
+            ->where('tenant_id', $request->user()->tenant_id)
+            ->firstOrFail();
+
+        DB::transaction(function () use ($call) {
+            $call->transcripts()->delete();
+            $call->callLogs()->delete();
+            $call->qualityScore()->delete();
+            $call->retries()->delete();
+            $call->delete();
+        });
+
+        return redirect()->route('calls.index')->with('success', 'Call deleted.');
     }
 
     /**

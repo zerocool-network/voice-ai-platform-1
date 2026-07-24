@@ -88,8 +88,52 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Http\Controllers\Web\SearchController::__invoke
+* @see app/Http/Controllers/Web/SearchController.php:15
+* @route '/search'
+*/
+export const search = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: search.url(options),
+    method: 'get',
+})
+
+search.definition = {
+    methods: ["get","head"],
+    url: '/search',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Web\SearchController::__invoke
+* @see app/Http/Controllers/Web/SearchController.php:15
+* @route '/search'
+*/
+search.url = (options?: RouteQueryOptions) => {
+    return search.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Web\SearchController::__invoke
+* @see app/Http/Controllers/Web/SearchController.php:15
+* @route '/search'
+*/
+search.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: search.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Web\SearchController::__invoke
+* @see app/Http/Controllers/Web/SearchController.php:15
+* @route '/search'
+*/
+search.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: search.url(options),
+    method: 'head',
+})
+
+/**
 * @see \App\Http\Controllers\Web\GettingStartedController::gettingStarted
-* @see app/Http/Controllers/Web/GettingStartedController.php:15
+* @see app/Http/Controllers/Web/GettingStartedController.php:16
 * @route '/getting-started'
 */
 export const gettingStarted = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -104,7 +148,7 @@ gettingStarted.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\GettingStartedController::gettingStarted
-* @see app/Http/Controllers/Web/GettingStartedController.php:15
+* @see app/Http/Controllers/Web/GettingStartedController.php:16
 * @route '/getting-started'
 */
 gettingStarted.url = (options?: RouteQueryOptions) => {
@@ -113,7 +157,7 @@ gettingStarted.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\GettingStartedController::gettingStarted
-* @see app/Http/Controllers/Web/GettingStartedController.php:15
+* @see app/Http/Controllers/Web/GettingStartedController.php:16
 * @route '/getting-started'
 */
 gettingStarted.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -123,7 +167,7 @@ gettingStarted.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\GettingStartedController::gettingStarted
-* @see app/Http/Controllers/Web/GettingStartedController.php:15
+* @see app/Http/Controllers/Web/GettingStartedController.php:16
 * @route '/getting-started'
 */
 gettingStarted.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

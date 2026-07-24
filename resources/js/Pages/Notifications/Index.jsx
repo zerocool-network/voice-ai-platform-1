@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Heading } from '@/Components/catalyst/heading'
 import { Text } from '@/Components/catalyst/text'
 import { Button } from '@/Components/catalyst/button'
+import { markAllRead as markAllReadRoute } from '@/routes/notifications'
 import {
     Bell, MessageSquare, GitBranch, Users, CreditCard, Server, Check, X, Filter, ChevronLeft, ChevronRight,
 } from 'lucide-react'
@@ -56,7 +57,7 @@ export default function Index({ notifications, types, filters = {} }) {
     const [activeFilter, setActiveFilter] = useState(filters.type ?? '')
 
     function markAllRead() {
-        router.post('/notifications/mark-all-read')
+        router.post(markAllReadRoute().url)
     }
 
     async function markAsRead(id) {

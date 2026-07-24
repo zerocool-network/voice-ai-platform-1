@@ -5,6 +5,7 @@ import { Heading } from '@/Components/catalyst/heading';
 import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Badge } from '@/Components/catalyst/badge';
+import billing from '@/routes/billing';
 
 export default function Index({ tenant, currentPlan, plans, checkout, flash = null }) {
     useEffect(() => {
@@ -14,11 +15,11 @@ export default function Index({ tenant, currentPlan, plans, checkout, flash = nu
     }, []);
 
     function upgrade(planId) {
-        router.post('/billing/checkout', { plan: planId });
+        router.post(billing.checkout().url, { plan: planId });
     }
 
     function manageBilling() {
-        router.post('/billing/portal');
+        router.post(billing.portal().url);
     }
 
     function isCurrent(planId) {
