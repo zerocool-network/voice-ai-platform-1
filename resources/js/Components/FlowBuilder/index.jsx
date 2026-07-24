@@ -12,13 +12,19 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Undo2, Redo2 } from 'lucide-react';
+import { motion } from 'motion/react';
 
 import nodeTypes from './nodes';
+import ConditionEdge from './ConditionEdge';
 import Toolbox from './Toolbox';
 import PropertiesPanel from './PropertiesPanel';
 import { configToReactFlow, reactFlowToConfig, generateId, NODE_DEFAULTS } from './flowConfig';
 import useUndoRedo from './useUndoRedo';
 import useFlowValidation from './useFlowValidation';
+
+const edgeTypes = {
+  'condition-edge': ConditionEdge,
+};
 
 function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
   const reactFlowWrapper = useRef(null);
@@ -241,6 +247,7 @@ function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           deleteKeyCode={['Backspace', 'Delete']}
           className="bg-zinc-50/50 dark:bg-zinc-950/50"
@@ -254,12 +261,14 @@ function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
         </ReactFlow>
       </div>
 
-      <PropertiesPanel
-        node={selectedNode}
-        onUpdate={onNodeUpdate}
-        nodes={nodes}
-        validationErrors={validationErrors}
-      />
+      <motion.div key={selectedNode?.id || 'none'} initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.15 }}>
+        <PropertiesPanel
+          node={selectedNode}
+          onUpdate={onNodeUpdate}
+          nodes={nodes}
+          validationErrors={validationErrors}
+        />
+      </motion.div>
     </div>
   );
 }

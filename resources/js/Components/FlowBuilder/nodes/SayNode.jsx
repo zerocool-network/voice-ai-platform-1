@@ -6,7 +6,7 @@ function SayNode({ data }) {
   const invalid = data._valid === false;
 
   return (
-    <div className={`relative min-w-48 rounded-xl border bg-white shadow-xs dark:bg-zinc-900 ${invalid ? '!border-red-500' : 'border-emerald-200 dark:border-emerald-800'}`}>
+    <div className={`relative min-w-48 rounded-xl border bg-white shadow-xs transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 dark:bg-zinc-900 ${invalid ? '!border-red-500' : 'border-emerald-200 dark:border-emerald-800'}`}>
       <div className="flex items-center gap-2 rounded-t-xl bg-emerald-50 px-3 py-2 dark:bg-emerald-950/30">
         <span className="flex size-5 items-center justify-center rounded bg-emerald-500 text-[10px] font-bold text-white">S</span>
         <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">Say</span>

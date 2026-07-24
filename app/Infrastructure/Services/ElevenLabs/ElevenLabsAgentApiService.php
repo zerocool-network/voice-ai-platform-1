@@ -41,26 +41,58 @@ class ElevenLabsAgentApiService
     }
 
     /**
-     * @param  array{name: string, system_prompt?: string, first_message?: string, language?: string}  $data
+     * @param  array{name: string, system_prompt?: string, first_message?: string, language?: string, llm_model?: string, llm_temperature?: float, llm_max_tokens?: int, tts_voice_id?: string, tts_model?: string, turn_sensitivity?: float, stt_provider?: string}  $data
      * @return array{agent_id: string}
      */
     public function create(array $data): array
     {
-        $payload = [
-            'name' => $data['name'],
-            'conversation_config' => [
-                'agent' => [
-                    'prompt' => [
-                        'prompt' => $data['system_prompt'] ?? 'You are a helpful assistant.',
-                    ],
-                    'first_message' => $data['first_message'] ?? 'Hello! How can I help you?',
-                ],
+        $agent = [
+            'prompt' => [
+                'prompt' => $data['system_prompt'] ?? 'You are a helpful assistant.',
             ],
+            'first_message' => $data['first_message'] ?? 'Hello! How can I help you?',
         ];
 
         if (isset($data['language'])) {
-            $payload['conversation_config']['agent']['language'] = $data['language'];
+            $agent['language'] = $data['language'];
         }
+
+        if (isset($data['llm_model'])) {
+            $agent['llm'] = [
+                'model_id' => $data['llm_model'],
+                'temperature' => $data['llm_temperature'] ?? 0.7,
+                'max_tokens' => $data['llm_max_tokens'] ?? 500,
+            ];
+        }
+
+        if (isset($data['tts_voice_id']) || isset($data['tts_model'])) {
+            $agent['tts'] = [];
+            if (isset($data['tts_voice_id'])) {
+                $agent['tts']['voice_id'] = $data['tts_voice_id'];
+            }
+            if (isset($data['tts_model'])) {
+                $agent['tts']['model_id'] = $data['tts_model'];
+            }
+        }
+
+        if (isset($data['turn_sensitivity'])) {
+            $agent['conversation_turn_detection'] = [
+                'sensitivity' => $data['turn_sensitivity'],
+            ];
+        }
+
+        if (isset($data['stt_provider'])) {
+            $agent['stt'] = [
+                'provider' => $data['stt_provider'],
+            ];
+        }
+
+        $payload = [
+            'name' => $data['name'],
+            'conversation_config' => [
+                'agent' => $agent,
+            ],
+        ];
 
         $response = Http::withHeaders([
             'xi-api-key' => $this->apiKey,
@@ -74,7 +106,7 @@ class ElevenLabsAgentApiService
     }
 
     /**
-     * @param  array{name?: string, system_prompt?: string, first_message?: string}  $data
+     * @param  array{name?: string, system_prompt?: string, first_message?: string, language?: string, llm_model?: string, llm_temperature?: float, llm_max_tokens?: int, tts_voice_id?: string, tts_model?: string, turn_sensitivity?: float, stt_provider?: string}  $data
      * @return array<string, mixed>
      */
     public function update(string $agentId, array $data): array
@@ -85,20 +117,60 @@ class ElevenLabsAgentApiService
             $payload['name'] = $data['name'];
         }
 
-        if (isset($data['system_prompt']) || isset($data['first_message'])) {
-            $payload['conversation_config'] = [
-                'agent' => [],
+        $agent = [];
+
+        if (isset($data['system_prompt'])) {
+            $agent['prompt'] = [
+                'prompt' => $data['system_prompt'],
             ];
+        }
 
-            if (isset($data['system_prompt'])) {
-                $payload['conversation_config']['agent']['prompt'] = [
-                    'prompt' => $data['system_prompt'],
-                ];
-            }
+        if (isset($data['first_message'])) {
+            $agent['first_message'] = $data['first_message'];
+        }
 
-            if (isset($data['first_message'])) {
-                $payload['conversation_config']['agent']['first_message'] = $data['first_message'];
+        if (isset($data['language'])) {
+            $agent['language'] = $data['language'];
+        }
+
+        if (isset($data['llm_model'])) {
+            $llm = ['model_id' => $data['llm_model']];
+            if (isset($data['llm_temperature'])) {
+                $llm['temperature'] = $data['llm_temperature'];
             }
+            if (isset($data['llm_max_tokens'])) {
+                $llm['max_tokens'] = $data['llm_max_tokens'];
+            }
+            $agent['llm'] = $llm;
+        }
+
+        if (isset($data['tts_voice_id']) || isset($data['tts_model'])) {
+            $tts = [];
+            if (isset($data['tts_voice_id'])) {
+                $tts['voice_id'] = $data['tts_voice_id'];
+            }
+            if (isset($data['tts_model'])) {
+                $tts['model_id'] = $data['tts_model'];
+            }
+            $agent['tts'] = $tts;
+        }
+
+        if (isset($data['turn_sensitivity'])) {
+            $agent['conversation_turn_detection'] = [
+                'sensitivity' => $data['turn_sensitivity'],
+            ];
+        }
+
+        if (isset($data['stt_provider'])) {
+            $agent['stt'] = [
+                'provider' => $data['stt_provider'],
+            ];
+        }
+
+        if (! empty($agent)) {
+            $payload['conversation_config'] = [
+                'agent' => $agent,
+            ];
         }
 
         $response = Http::withHeaders([

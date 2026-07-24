@@ -37,6 +37,14 @@ class ElevenLabsAgentController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'system_prompt' => ['nullable', 'string', 'max:10000'],
             'first_message' => ['nullable', 'string', 'max:500'],
+            'language' => ['nullable', 'string', 'max:10'],
+            'llm_model' => ['nullable', 'string', 'max:255'],
+            'llm_temperature' => ['nullable', 'numeric', 'min:0', 'max:2'],
+            'llm_max_tokens' => ['nullable', 'integer', 'min:100', 'max:4096'],
+            'tts_voice_id' => ['nullable', 'string', 'max:255'],
+            'tts_model' => ['nullable', 'string', 'max:255'],
+            'turn_sensitivity' => ['nullable', 'numeric', 'min:0', 'max:1'],
+            'stt_provider' => ['nullable', 'string', 'max:255'],
         ]);
 
         $tenant = $this->tenantRepository->findById($request->user()->tenant_id);
@@ -79,6 +87,14 @@ class ElevenLabsAgentController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'system_prompt' => ['nullable', 'string', 'max:10000'],
             'first_message' => ['nullable', 'string', 'max:500'],
+            'language' => ['nullable', 'string', 'max:10'],
+            'llm_model' => ['nullable', 'string', 'max:255'],
+            'llm_temperature' => ['nullable', 'numeric', 'min:0', 'max:2'],
+            'llm_max_tokens' => ['nullable', 'integer', 'min:100', 'max:4096'],
+            'tts_voice_id' => ['nullable', 'string', 'max:255'],
+            'tts_model' => ['nullable', 'string', 'max:255'],
+            'turn_sensitivity' => ['nullable', 'numeric', 'min:0', 'max:1'],
+            'stt_provider' => ['nullable', 'string', 'max:255'],
         ]);
 
         $tenant = $this->tenantRepository->findById($request->user()->tenant_id);

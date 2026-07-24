@@ -195,4 +195,96 @@ class VoiceController extends Controller
             'requires_verification' => $voice->requiresVerification(),
         ]);
     }
+
+    public function library(Request $request): JsonResponse
+    {
+        $tenant = TenantModel::find($request->user()->tenant_id);
+        $apiKey = $tenant->elevenlabs_api_key;
+
+        if (! $apiKey) {
+            return response()->json(['error' => 'ElevenLabs API key not configured.'], 502);
+        }
+
+        $query = [
+            'page_size' => 20,
+        ];
+
+        if ($request->has('search')) {
+            $query['search'] = $request->input('search');
+        }
+
+        if ($request->has('cursor')) {
+            $query['cursor'] = $request->input('cursor');
+        }
+
+        try {
+            $response = Http::withHeaders(['xi-api-key' => $apiKey])
+                ->timeout(30)
+                ->get('https://api.elevenlabs.io/v1/voices', $query);
+
+            if ($response->failed()) {
+                return response()->json(['error' => 'Failed to fetch voices from ElevenLabs.'], 502);
+            }
+
+            $data = $response->json();
+
+            return response()->json([
+                'data' => $data['voices'] ?? [],
+                'next_cursor' => $data['next_cursor'] ?? null,
+                'has_more' => $data['has_more'] ?? false,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to connect to ElevenLabs.'], 502);
+        }
+    }
+
+    public function addFromLibrary(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'elevenlabs_voice_id' => ['required', 'string'],
+            'name' => ['required', 'string', 'max:255'],
+            'preview_url' => ['nullable', 'url'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'labels' => ['nullable', 'array'],
+        ]);
+
+        $tenantId = $request->user()->tenant_id;
+
+        $existing = CustomVoiceModel::where('tenant_id', $tenantId)
+            ->where('elevenlabs_voice_id', $validated['elevenlabs_voice_id'])
+            ->exists();
+
+        if ($existing) {
+            return redirect()->route('settings.voices.index')
+                ->with('error', 'This voice is already in your collection.');
+        }
+
+        $existingCount = CustomVoiceModel::where('tenant_id', $tenantId)->count();
+
+        $tenant = TenantModel::find($tenantId);
+
+        CustomVoiceModel::create([
+            'tenant_id' => $tenantId,
+            'elevenlabs_voice_id' => $validated['elevenlabs_voice_id'],
+            'name' => $validated['name'],
+            'sample_count' => 0,
+            'description' => $validated['description'] ?? null,
+            'labels' => $validated['labels'] ?? null,
+            'is_default' => $existingCount === 0,
+            'requires_verification' => false,
+            'preview_url' => $validated['preview_url'] ?? null,
+        ]);
+
+        activity()
+            ->event('voice_added_from_library')
+            ->performedOn($tenant)
+            ->withProperties([
+                'voice_id' => $validated['elevenlabs_voice_id'],
+                'name' => $validated['name'],
+            ])
+            ->log("Voice '{$validated['name']}' added from library");
+
+        return redirect()->route('settings.voices.index')
+            ->with('success', "Voice '{$validated['name']}' added to your collection.");
+    }
 }

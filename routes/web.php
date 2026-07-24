@@ -170,6 +170,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/settings/voices', [VoiceController::class, 'index'])->name('settings.voices.index');
     Route::post('/settings/voices', [VoiceController::class, 'store'])->name('settings.voices.store');
+    Route::get('/settings/voices/library', [VoiceController::class, 'library'])->name('settings.voices.library');
+    Route::post('/settings/voices/library', [VoiceController::class, 'addFromLibrary'])->name('settings.voices.add-from-library');
     Route::delete('/settings/voices/{voice}', [VoiceController::class, 'destroy'])->name('settings.voices.destroy');
     Route::get('/settings/voices/{voice}', [VoiceController::class, 'show'])->name('settings.voices.show');
     Route::patch('/settings/voices/{voice}/default', [VoiceController::class, 'setDefault'])->name('settings.voices.set-default');

@@ -9,7 +9,7 @@ function KnowledgeNode({ data }) {
     const invalid = data._valid === false;
 
     return (
-        <div className={`relative min-w-48 rounded-xl border bg-white shadow-xs dark:bg-zinc-900 ${invalid ? '!border-red-500' : 'border-cyan-200 dark:border-cyan-800'}`}>
+        <div className={`relative min-w-48 rounded-xl border bg-white shadow-xs transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 dark:bg-zinc-900 ${invalid ? '!border-red-500' : 'border-cyan-200 dark:border-cyan-800'}`}>
             <div className="flex items-center gap-2 rounded-t-xl bg-cyan-50 px-3 py-2 dark:bg-cyan-950/30">
                 <BookOpen className="size-4 text-cyan-600 dark:text-cyan-400" />
                 <span className="text-xs font-semibold text-cyan-800 dark:text-cyan-300">Knowledge</span>

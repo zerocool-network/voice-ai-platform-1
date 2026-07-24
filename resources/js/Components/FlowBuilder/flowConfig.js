@@ -52,11 +52,11 @@ function configToReactFlow(config) {
       if (cond.branches) {
         cond.branches.forEach((b) => {
           if (b.next) {
-            edges.push({
+            edges.push(            {
               id: `${id}->${b.next}--${b.label}`,
               source: id,
               target: b.next,
-              type: 'smoothstep',
+              type: 'condition-edge',
               label: b.label,
               data: { branchLabel: b.label },
             });
@@ -68,8 +68,8 @@ function configToReactFlow(config) {
           id: `${id}->else--${cond.elseNext}`,
           source: id,
           target: cond.elseNext,
-          type: 'smoothstep',
-          label: 'else',
+          type: 'condition-edge',
+          label: 'No',
           data: { branchLabel: 'else' },
         });
       }
