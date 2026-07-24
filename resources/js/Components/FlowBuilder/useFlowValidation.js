@@ -29,7 +29,7 @@ export default function useFlowValidation(nodes, edges) {
 
     const errors = {};
 
-    nodes.forEach((node) => {
+    for (const node of nodes) {
       const nodeErrors = [];
       const data = node.data || {};
 
@@ -77,7 +77,7 @@ export default function useFlowValidation(nodes, edges) {
       if (nodeErrors.length > 0) {
         errors[node.id] = nodeErrors;
       }
-    });
+    }
 
     const globalErrors = [];
     if (nodes.length > 0 && !hasHangup) {

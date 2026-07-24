@@ -62,7 +62,7 @@ export default function SystemIndex({ health, failedJobs, queueDepth, errorRate,
     }, [fetchHealth])
 
     const { health: h, failedJobs: fj, queueDepth: qd, errorRate: er, lastChecked: lc } = data
-    const services = Object.entries(h ?? {}).filter(([k]) => k !== 'score').map(([, v]) => v)
+    const services = Object.entries(h ?? {}).reduce((acc, [k, v]) => { if (k !== 'score') acc.push(v); return acc; }, [])
     const scoreColor = (h?.score ?? 0) >= 80 ? 'emerald' : (h?.score ?? 0) >= 50 ? 'amber' : 'red'
 
     return (

@@ -78,7 +78,7 @@ export default function FlowCommentPanel({ flowId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!body.trim()) return;
+    if (!body.trim() || posting) return;
     setPosting(true);
     try {
       await axios.post(`/flows/${flowId}/comments`, {

@@ -35,7 +35,7 @@ export default function CallsIndex({ calls, filters }) {
     }
 
     function exportCalls() {
-        window.open(calls.export({ query: { search, status: filters.status ?? '' } }).url, '_blank')
+        window.open(calls.export({ query: { search, status: filters.status ?? '' } }).url, '_blank', 'noopener,noreferrer')
     }
 
     const statuses = ['', 'completed', 'failed', 'in_progress', 'initiated', 'ringing', 'busy', 'no-answer', 'cancelled']
