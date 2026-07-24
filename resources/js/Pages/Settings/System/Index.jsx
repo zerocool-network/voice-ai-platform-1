@@ -61,9 +61,9 @@ export default function SystemIndex({ health, failedJobs, queueDepth, errorRate,
         setSpinning(false)
     }, [fetchHealth])
 
-    const { h, fj, qd, er, lc } = data
-    const services = Object.entries(h).filter(([k]) => k !== 'score').map(([, v]) => v)
-    const scoreColor = h.score >= 80 ? 'emerald' : h.score >= 50 ? 'amber' : 'red'
+    const { health: h, failedJobs: fj, queueDepth: qd, errorRate: er, lastChecked: lc } = data
+    const services = Object.entries(h ?? {}).filter(([k]) => k !== 'score').map(([, v]) => v)
+    const scoreColor = (h?.score ?? 0) >= 80 ? 'emerald' : (h?.score ?? 0) >= 50 ? 'amber' : 'red'
 
     return (
         <AuthenticatedLayout>
