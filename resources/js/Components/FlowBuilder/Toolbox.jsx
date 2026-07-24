@@ -11,6 +11,8 @@ import {
   Webhook,
   PhoneForwarded,
   BookOpen,
+  Mic,
+  Activity,
 } from 'lucide-react';
 
 const iconMap = {
@@ -23,6 +25,8 @@ const iconMap = {
   webhook: Webhook,
   transfer: PhoneForwarded,
   knowledge: BookOpen,
+  voice_agent: Mic,
+  analyze: Activity,
 };
 
 const CATEGORIES = [
@@ -32,7 +36,7 @@ const CATEGORIES = [
   },
   {
     label: 'AI',
-    items: ['llm', 'knowledge'],
+    items: ['llm', 'knowledge', 'voice_agent'],
   },
   {
     label: 'Flow Control',
@@ -41,6 +45,10 @@ const CATEGORIES = [
   {
     label: 'Actions',
     items: ['transfer', 'webhook'],
+  },
+  {
+    label: 'Intelligence',
+    items: ['analyze'],
   },
 ];
 
@@ -53,6 +61,8 @@ const NODE_ITEMS = [
   { type: 'transfer', label: 'Transfer', color: 'rose', desc: 'Call transfer' },
   { type: 'webhook', label: 'Webhook', color: 'cyan', desc: 'HTTP request' },
   { type: 'knowledge', label: 'Knowledge', color: 'teal', desc: 'Query knowledge base' },
+  { type: 'voice_agent', label: 'Voice Agent', color: 'purple', desc: 'Conversation Relay AI' },
+  { type: 'analyze', label: 'Analyze', color: 'indigo', desc: 'Conversation Intelligence' },
   { type: 'hangup', label: 'Hangup', color: 'red', desc: 'End call' },
 ];
 
@@ -66,6 +76,8 @@ const colorMap = {
   cyan: 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-300',
   red: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300',
   teal: 'border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800 dark:bg-teal-950/30 dark:text-teal-300',
+  purple: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-300',
+  indigo: 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300',
 };
 
 function DraggableItem({ type, label, color, desc }) {

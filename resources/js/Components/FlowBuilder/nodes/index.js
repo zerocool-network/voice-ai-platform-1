@@ -7,6 +7,8 @@ import TransferNode from './TransferNode';
 import HangupNode from './HangupNode';
 import WebhookNode from './WebhookNode';
 import KnowledgeNode from './KnowledgeNode';
+import VoiceAgentNode from './VoiceAgentNode';
+import AnalyzeNode from './AnalyzeNode';
 
 const nodeTypes = {
   say: SayNode,
@@ -18,6 +20,8 @@ const nodeTypes = {
   webhook: WebhookNode,
   knowledge: KnowledgeNode,
   hangup: HangupNode,
+  voice_agent: VoiceAgentNode,
+  analyze: AnalyzeNode,
 };
 
 export default nodeTypes;

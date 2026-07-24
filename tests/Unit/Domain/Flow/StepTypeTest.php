@@ -11,7 +11,7 @@ class StepTypeTest extends TestCase
     {
         $cases = StepType::cases();
 
-        $this->assertCount(9, $cases);
+        $this->assertCount(11, $cases);
     }
 
     public function test_say_case(): void
@@ -52,6 +52,16 @@ class StepTypeTest extends TestCase
     public function test_transfer_case(): void
     {
         $this->assertEquals('transfer', StepType::Transfer->value);
+    }
+
+    public function test_voice_agent_case(): void
+    {
+        $this->assertEquals('voice_agent', StepType::VoiceAgent->value);
+    }
+
+    public function test_analyze_case(): void
+    {
+        $this->assertEquals('analyze', StepType::Analyze->value);
     }
 
     public function test_from_string(): void

@@ -13,4 +13,6 @@ enum StepType: string
     case Transfer = 'transfer';
     case Knowledge = 'knowledge';
     case Hangup = 'hangup';
+    case VoiceAgent = 'voice_agent';
+    case Analyze = 'analyze';
 }

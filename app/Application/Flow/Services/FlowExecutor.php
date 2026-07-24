@@ -42,6 +42,8 @@ class FlowExecutor
             'knowledge' => $this->knowledgeStep($step, $flow, $call),
             'webhook', 'mcp_tool' => $this->webhookStep($step, $flow, $call),
             'hangup' => $this->hangupStep(),
+            'voice_agent' => $this->voiceAgentStep($step),
+            'analyze' => $this->analyzeStep($step, $flow, $call),
             default => throw new \RuntimeException("Unknown step type: {$stepType}"),
         };
     }
@@ -357,6 +359,66 @@ class FlowExecutor
     {
         $response = new VoiceResponse;
         $response->hangup();
+
+        return $response;
+    }
+
+    /** @param FlowStep $step */
+    private function voiceAgentStep(array $step): VoiceResponse
+    {
+        $response = new VoiceResponse;
+        $config = $step['config'];
+        $wsUrl = config('app.url').'/twilio/relay';
+
+        $connect = $response->connect(['action' => route('twilio.step')]);
+        $relay = $connect->conversationRelay([
+            'url' => $wsUrl,
+            'welcomeGreeting' => $config['welcome_greeting'] ?? 'Hello! How can I help you today?',
+        ]);
+
+        if ($voice = $config['voice'] ?? null) {
+            $relay->setVoice($voice);
+        }
+
+        if ($ttsProvider = $config['tts_provider'] ?? null) {
+            $relay->setTtsProvider($ttsProvider);
+        }
+
+        if ($intelligenceService = $config['intelligence_service'] ?? null) {
+            $relay->setIntelligenceService($intelligenceService);
+        }
+
+        if ($interruptible = $config['interruptible'] ?? null) {
+            $relay->setInterruptible($interruptible);
+        }
+
+        if ($welcomeGreetingInterruptible = $config['welcome_greeting_interruptible'] ?? null) {
+            $relay->setWelcomeGreetingInterruptible($welcomeGreetingInterruptible);
+        }
+
+        if ($interruptSensitivity = $config['interrupt_sensitivity'] ?? null) {
+            $relay->setInterruptSensitivity($interruptSensitivity);
+        }
+
+        if ($debug = $config['debug'] ?? null) {
+            $relay->setDebug($debug);
+        }
+
+        return $response;
+    }
+
+    /** @param FlowStep $step */
+    private function analyzeStep(array $step, Flow $flow, ?Call $call): VoiceResponse
+    {
+        $response = new VoiceResponse;
+        $config = $step['config'];
+
+        $this->logger?->debug('FlowExecutor analyze step', ['config' => $config]);
+
+        $next = $step['next'] ?? null;
+        if ($next !== null) {
+            $response->redirect('/twilio/step');
+        }
 
         return $response;
     }

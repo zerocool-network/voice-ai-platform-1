@@ -84,6 +84,8 @@ class ExecuteFlow
             StepType::Transfer => $this->handleTransfer($step['id'], $resolvedConfig),
             StepType::Knowledge => $this->handleKnowledge($step['id'], $resolvedConfig, $step['next'] ?? null),
             StepType::Hangup => $this->handleHangup($step['id']),
+            StepType::VoiceAgent => $this->handleVoiceAgent($step['id'], $resolvedConfig, $step['next'] ?? null),
+            StepType::Analyze => $this->handleAnalyze($step['id'], $resolvedConfig, $step['next'] ?? null),
         };
     }
 
@@ -271,6 +273,46 @@ class ExecuteFlow
             output: 'Call ended',
             nextStepId: '',
             metadata: []
+        );
+    }
+
+    /** @param array<string, mixed> $config */
+    private function handleVoiceAgent(string $stepId, array $config, ?string $next): StepResult
+    {
+        $this->logger?->debug('Flow voice agent', ['config' => $config]);
+
+        $nextStepId = $next ?? '';
+        if ($nextStepId !== '') {
+            $this->completed = true;
+        }
+
+        return new StepResult(
+            stepId: $stepId,
+            type: StepType::VoiceAgent,
+            output: $config['welcome_greeting'] ?? 'Voice agent connected',
+            nextStepId: $nextStepId,
+            metadata: [
+                'voice' => $config['voice'] ?? null,
+                'tts_provider' => $config['tts_provider'] ?? null,
+                'intelligence_service' => $config['intelligence_service'] ?? null,
+            ]
+        );
+    }
+
+    /** @param array<string, mixed> $config */
+    private function handleAnalyze(string $stepId, array $config, ?string $next): StepResult
+    {
+        $this->logger?->debug('Flow analyze step', ['config' => $config]);
+
+        return new StepResult(
+            stepId: $stepId,
+            type: StepType::Analyze,
+            output: 'Conversation Intelligence configured',
+            nextStepId: $next ?? '',
+            metadata: [
+                'language_operator' => $config['language_operator'] ?? null,
+                'conversation_profile' => $config['conversation_profile'] ?? null,
+            ]
         );
     }
 
