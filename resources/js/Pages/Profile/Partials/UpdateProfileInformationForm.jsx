@@ -5,6 +5,7 @@ import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Input } from '@/Components/catalyst/input';
+import { useTranslation } from '@/hooks/useTranslation';
 import { update } from '@/routes/profile';
 import { send } from '@/routes/verification';
 
@@ -13,6 +14,7 @@ export default function UpdateProfileInformation({
     status,
     className = '',
 }) {
+    const { t } = useTranslation();
     const user = usePage().props.auth.user;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
@@ -30,15 +32,15 @@ export default function UpdateProfileInformation({
     return (
         <section className={className}>
             <header>
-                <Subheading>Profile Information</Subheading>
+                <Subheading>{t('ui.profile_information')}</Subheading>
                 <Text className="mt-1">
-                    Update your account's profile information and email address.
+                    {t('ui.profile_information_desc')}
                 </Text>
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <Field>
-                    <Label>Name</Label>
+                    <Label>{t('common.name')}</Label>
                     <Input
                         value={data.name}
                         onChange={(e) => setData('name', e.target.value)}
@@ -50,7 +52,7 @@ export default function UpdateProfileInformation({
                 </Field>
 
                 <Field>
-                    <Label>Email</Label>
+                    <Label>{t('common.email')}</Label>
                     <Input
                         type="email"
                         value={data.email}
@@ -64,28 +66,28 @@ export default function UpdateProfileInformation({
 
                 {mustVerifyEmail && user.email_verified_at === null && (
                     <div>
-                        <p className="mt-2 text-sm text-zinc-600">
-                            Your email address is unverified.
+                        <p className="mt-2 text-sm text-slate-600">
+                            {t('ui.email_unverified')}
                             <Link
                                 href={send().url}
                                 method="post"
                                 as="button"
-                                className="ml-1 rounded-md text-sm text-zinc-600 underline hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                className="ml-1 rounded-md text-sm text-slate-600 underline hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30"
                             >
-                                Click here to re-send the verification email.
+                                {t('ui.resend_verification')}
                             </Link>
                         </p>
 
                         {status === 'verification-link-sent' && (
                             <div className="mt-2 text-sm font-medium text-emerald-600">
-                                A new verification link has been sent to your email address.
+                                {t('ui.verification_sent')}
                             </div>
                         )}
                     </div>
                 )}
 
                 <div className="flex items-center gap-4">
-                    <Button type="submit" disabled={processing}>Save</Button>
+                    <Button type="submit" disabled={processing}>{t('common.save')}</Button>
 
                     <Transition
                         show={recentlySuccessful}
@@ -94,7 +96,7 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-zinc-600">Saved.</p>
+                        <p className="text-sm text-slate-600">{t('ui.saved')}</p>
                     </Transition>
                 </div>
             </form>

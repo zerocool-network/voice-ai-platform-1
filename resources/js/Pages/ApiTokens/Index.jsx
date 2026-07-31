@@ -1,19 +1,22 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import DataTable from '@/Components/DataTable';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import { Heading, Subheading } from '@/Components/catalyst/heading';
+import { useState, useMemo } from 'react';
 import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Input } from '@/Components/catalyst/input';
 import { Select } from '@/Components/catalyst/select';
 import { Badge } from '@/Components/catalyst/badge';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
 import { Dialog, DialogTitle, DialogDescription, DialogBody, DialogActions } from '@/Components/catalyst/dialog';
 import { Alert, AlertTitle, AlertDescription, AlertBody, AlertActions } from '@/Components/catalyst/alert';
 import { store, destroy } from '@/actions/App/Http/Controllers/Web/ApiTokenController';
+import { useTranslation } from '@/hooks/useTranslation';
+import { KeyRound } from 'lucide-react';
 
 export default function Index({ tokens, flash }) {
+    const { t } = useTranslation();
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         abilities: '*',
@@ -23,167 +26,180 @@ export default function Index({ tokens, flash }) {
     const [newToken, setNewToken] = useState(flash?.token ?? null);
     const [confirmingRevoke, setConfirmingRevoke] = useState(null);
 
+    const columns = useMemo(() => [
+        {
+            id: 'name',
+            header: t('ui.name'),
+            cell: (token) => <span className="font-medium">{token.name}</span>,
+        },
+        {
+            id: 'abilities',
+            header: t('ui.abilities'),
+            cell: (token) => (
+                token.abilities?.length === 1 && token.abilities[0] === '*'
+                    ? <Badge color="zinc">{t('ui.full_access')}</Badge>
+                    : token.abilities?.map((a) => (
+                        <Badge key={a} color="zinc" className="mr-1">{a}</Badge>
+                    ))
+            ),
+        },
+        {
+            id: 'created',
+            header: t('ui.created'),
+            cell: (token) => <span className="text-slate-500">{token.created_at}</span>,
+        },
+        {
+            id: 'last_used',
+            header: t('ui.last_used'),
+            cell: (token) => <span className="text-slate-500">{token.last_used_at || t('ui.never')}</span>,
+        },
+        {
+            id: 'expires',
+            header: t('ui.expires'),
+            cell: (token) => <span className="text-slate-500">{token.expires_at || t('ui.never')}</span>,
+        },
+        {
+            id: 'actions',
+            header: '',
+            meta: { align: 'right' },
+            cell: (token) => (
+                <button
+                    onClick={() => setConfirmingRevoke(token)}
+                    className="text-sm font-medium text-red-600 hover:text-red-800"
+                    aria-label={`${t('api-tokens.revoke')} ${token.name}`}
+                >
+                    {t('api-tokens.revoke')}
+                </button>
+            ),
+        },
+    ], [t]);
+
     function submit(e) {
         e.preventDefault();
         post(store().url, {
             onSuccess: (page) => {
-                const t = page.props.flash?.token;
-                if (t) setNewToken(t);
+                const tokenValue = page.props.flash?.token;
+                if (tokenValue) setNewToken(tokenValue);
                 reset();
                 setShowCreate(false);
             },
         });
     }
 
-    function revoke(id, name) {
+    function revoke() {
+        const token = confirmingRevoke;
         setConfirmingRevoke(null);
-        router.delete(destroy({token: id}).url);
+        if (token) {
+            router.delete(destroy({ token: token.id }).url);
+        }
     }
 
     return (
         <AuthenticatedLayout>
-            <Head title="API Tokens" />
+            <Head title={t('ui.api_tokens_title')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>API Tokens</Heading>
-                    <Text className="mt-1">Manage API tokens for programmatic access.</Text>
-                </div>
-                <Button onClick={() => setShowCreate(true)}>
-                    New Token
-                </Button>
-            </div>
-
-            <div className="mt-6 max-w-3xl space-y-6">
-                <div className="rounded-xl border border-zinc-950/5 bg-white dark:border-white/10 dark:bg-zinc-900">
-                    {tokens.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16">
-                            <p className="text-base font-semibold text-zinc-950 dark:text-white">No API tokens</p>
-                            <Text className="mt-2">Generate a token to authenticate API requests.</Text>
-                        </div>
-                    ) : (
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableHeader>Name</TableHeader>
-                                    <TableHeader>Abilities</TableHeader>
-                                    <TableHeader>Created</TableHeader>
-                                    <TableHeader>Last Used</TableHeader>
-                                    <TableHeader>Expires</TableHeader>
-                                    <TableHeader />
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {tokens.map((token) => (
-                                    <TableRow key={token.id}>
-                                        <TableCell className="font-medium">{token.name}</TableCell>
-                                        <TableCell>
-                                            {token.abilities?.length === 1 && token.abilities[0] === '*'
-                                                ? <Badge color="zinc">full access</Badge>
-                                                : token.abilities?.map((a) => (
-                                                    <Badge key={a} color="zinc" className="mr-1">{a}</Badge>
-                                                  ))
-                                            }
-                                        </TableCell>
-                                    <TableCell className="text-zinc-500">{token.created_at}</TableCell>
-                                    <TableCell className="text-zinc-500">{token.last_used_at || 'Never'}</TableCell>
-                                    <TableCell className="text-zinc-500">{token.expires_at || 'Never'}</TableCell>
-                                        <TableCell className="text-right">
-                                            <button
-                                                onClick={() => setConfirmingRevoke(token)}
-                                                className="text-sm font-medium text-red-600 hover:text-red-800"
-                                                aria-label={`Revoke ${token.name}`}
-                                            >
-                                                Revoke
-                                            </button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+            <div className="space-y-6">
+                <PageHeader
+                    title={t('ui.api_tokens_title')}
+                    subtitle={t('ui.api_tokens_subtitle')}
+                    actions={(
+                        <Button onClick={() => setShowCreate(true)}>
+                            {t('ui.new_token')}
+                        </Button>
                     )}
-                </div>
+                />
+
+                <DataTable
+                    className="max-w-3xl"
+                    columns={columns}
+                    data={tokens}
+                    getRowId={(row) => row.id}
+                    emptyIcon={KeyRound}
+                    emptyTitle={t('ui.no_tokens')}
+                    emptyDescription={t('ui.generate_token')}
+                    emptyAction={{ label: t('ui.new_token'), onClick: () => setShowCreate(true) }}
+                />
             </div>
 
             <Dialog open={showCreate} onClose={() => setShowCreate(false)}>
-                <DialogTitle>Create API Token</DialogTitle>
+                <DialogTitle>{t('ui.create_token')}</DialogTitle>
                 <DialogDescription>
-                    Generate a new token for programmatic API access.
+                    {t('ui.generate_new_token')}
                 </DialogDescription>
                 <DialogBody>
                     <form onSubmit={submit} id="create-token-form" className="space-y-4">
                         <Field>
-                            <Label>Name</Label>
+                            <Label>{t('ui.name')}</Label>
                             <Input
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
-                                placeholder="e.g. Production CI"
+                                placeholder={t('ui.token_name_placeholder')}
                                 invalid={errors.name ? true : undefined}
                             />
                             {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>Abilities (comma-separated)</Label>
+                            <Label>{t('ui.abilities_comma')}</Label>
                             <Input
                                 value={data.abilities}
                                 onChange={(e) => setData('abilities', e.target.value)}
-                                placeholder="* (full access)"
+                                placeholder={t('ui.abilities_placeholder')}
                                 invalid={errors.abilities ? true : undefined}
                             />
-                            <Text>Use flows:read,flows:write,calls:read or * for full access.</Text>
+                            <Text>{t('ui.abilities_hint')}</Text>
                             {errors.abilities && <ErrorMessage>{errors.abilities}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>Expires in</Label>
+                            <Label>{t('ui.expires_in')}</Label>
                             <Select
                                 value={data.expires_in}
                                 onChange={(e) => setData('expires_in', e.target.value)}
                             >
-                                <option value="never">Never</option>
-                                <option value="30">30 days</option>
-                                <option value="90">90 days</option>
-                                <option value="365">1 year</option>
+                                <option value="never">{t('ui.never')}</option>
+                                <option value="30">{t('ui.days_30')}</option>
+                                <option value="90">{t('ui.days_90')}</option>
+                                <option value="365">{t('ui.year_1')}</option>
                             </Select>
                             {errors.expires_in && <ErrorMessage>{errors.expires_in}</ErrorMessage>}
                         </Field>
                     </form>
                 </DialogBody>
                 <DialogActions>
-                    <Button plain onClick={() => setShowCreate(false)}>Cancel</Button>
+                    <Button plain onClick={() => setShowCreate(false)}>{t('ui.cancel')}</Button>
                     <Button type="submit" form="create-token-form" disabled={processing}>
-                        {processing ? 'Creating...' : 'Generate Token'}
+                        {processing ? t('ui.creating') : t('ui.generate')}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             <Alert open={newToken !== null} onClose={() => setNewToken(null)}>
-                <AlertTitle>Token created &mdash; copy it now!</AlertTitle>
+                <AlertTitle>{t('ui.token_created_title')}</AlertTitle>
                 <AlertDescription>
-                    You won&rsquo;t be able to see this token again. Copy it to a secure location.
+                    {t('ui.token_created_desc')}
                 </AlertDescription>
                 <AlertBody>
                     <div className="mt-3">
-                        <code className="block overflow-x-auto rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800/50 dark:bg-zinc-900 dark:text-amber-300">
+                        <code className="block overflow-x-auto rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                             {newToken}
                         </code>
                     </div>
                 </AlertBody>
                 <AlertActions>
                     <Button onClick={() => { navigator.clipboard.writeText(newToken); setNewToken(null); }}>
-                        Copy &amp; Close
+                        {t('ui.copy_close')}
                     </Button>
-                    <Button plain onClick={() => setNewToken(null)}>Dismiss</Button>
+                    <Button plain onClick={() => setNewToken(null)}>{t('ui.dismiss')}</Button>
                 </AlertActions>
             </Alert>
 
             <Alert open={confirmingRevoke !== null} onClose={() => setConfirmingRevoke(null)}>
-                <AlertTitle>Revoke token?</AlertTitle>
+                <AlertTitle>{t('ui.revoke_token_title')}</AlertTitle>
                 <AlertDescription>
-                    This will permanently revoke &ldquo;{confirmingRevoke?.name}&rdquo;. Any services using this token will immediately lose access.
+                    {t('ui.revoke_token_desc', { name: confirmingRevoke?.name ?? '' })}
                 </AlertDescription>
                 <AlertActions>
-                    <Button plain onClick={() => setConfirmingRevoke(null)}>Cancel</Button>
-                    <Button color="red" onClick={() => revoke(confirmingRevoke?.id, confirmingRevoke?.name)}>Revoke</Button>
+                    <Button plain onClick={() => setConfirmingRevoke(null)}>{t('ui.cancel')}</Button>
+                    <Button color="red" onClick={revoke}>{t('api-tokens.revoke')}</Button>
                 </AlertActions>
             </Alert>
         </AuthenticatedLayout>

@@ -6,9 +6,11 @@ import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Input } from '@/Components/catalyst/input';
+import { useTranslation } from '@/hooks/useTranslation';
 import { update } from '@/routes/password';
 
 export default function UpdatePasswordForm({ className = '' }) {
+    const { t } = useTranslation();
     const passwordInput = useRef();
     const currentPasswordInput = useRef();
 
@@ -49,15 +51,15 @@ export default function UpdatePasswordForm({ className = '' }) {
     return (
         <section className={className}>
             <header>
-                <Subheading>Update Password</Subheading>
+                <Subheading>{t('ui.update_password')}</Subheading>
                 <Text className="mt-1">
-                    Ensure your account is using a long, random password to stay secure.
+                    {t('ui.update_password_desc')}
                 </Text>
             </header>
 
             <form onSubmit={updatePassword} className="mt-6 space-y-6">
                 <Field>
-                    <Label>Current Password</Label>
+                    <Label>{t('ui.current_password')}</Label>
                     <Input
                         ref={currentPasswordInput}
                         value={data.current_password}
@@ -70,7 +72,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                 </Field>
 
                 <Field>
-                    <Label>New Password</Label>
+                    <Label>{t('ui.new_password')}</Label>
                     <Input
                         ref={passwordInput}
                         value={data.password}
@@ -83,7 +85,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                 </Field>
 
                 <Field>
-                    <Label>Confirm Password</Label>
+                    <Label>{t('ui.confirm_password_label')}</Label>
                     <Input
                         value={data.password_confirmation}
                         onChange={(e) => setData('password_confirmation', e.target.value)}
@@ -95,7 +97,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                 </Field>
 
                 <div className="flex items-center gap-4">
-                    <Button type="submit" disabled={processing}>Save</Button>
+                    <Button type="submit" disabled={processing}>{t('common.save')}</Button>
 
                     <Transition
                         show={recentlySuccessful}
@@ -104,7 +106,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-zinc-600">Saved.</p>
+                        <p className="text-sm text-slate-600">{t('ui.saved')}</p>
                     </Transition>
                 </div>
             </form>

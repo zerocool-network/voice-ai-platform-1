@@ -1,17 +1,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import DataTable from '@/Components/DataTable';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, useRef } from 'react';
-import { Heading, Subheading } from '@/Components/catalyst/heading';
-import { Text } from '@/Components/catalyst/text';
+import { useMemo, useState, useRef } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/Components/catalyst/button';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
 import { Badge } from '@/Components/catalyst/badge';
 import { Pagination, PaginationList, PaginationPage, PaginationGap, PaginationNext, PaginationPrevious } from '@/Components/catalyst/pagination';
 import { Alert, AlertTitle, AlertDescription, AlertActions } from '@/Components/catalyst/alert';
 import { Plus, Pencil, Trash2, GitBranch, Workflow, Copy, Download, Upload } from 'lucide-react';
-import { index, create, edit, update, destroy, duplicate, show, importMethod, exportMethod } from '@/actions/App/Http/Controllers/Web/FlowController';
+import { create, edit, update, destroy, duplicate, show, importMethod, exportMethod } from '@/actions/App/Http/Controllers/Web/FlowController';
 
 export default function Index({ flows }) {
+    const { t } = useTranslation();
     const [confirmingDelete, setConfirmingDelete] = useState(null);
     const importRef = useRef(null);
     const [importing, setImporting] = useState(false);
@@ -40,149 +41,151 @@ export default function Index({ flows }) {
 
     function destroyFlow() {
         if (!confirmingDelete) return;
-        const id = confirmingDelete;
+        const id = confirmingDelete.id;
         setConfirmingDelete(null);
         router.delete(destroy({flow: id}).url);
     }
 
-    return (
-        <AuthenticatedLayout>
-            <Head title="Flows" />
-
-            <div className="flex items-end justify-between">
+    const columns = useMemo(() => [
+        {
+            id: 'name',
+            header: t('ui.flows_table_name'),
+            cell: (flow) => (
                 <div>
-                    <Heading>Flows</Heading>
-                    <Text className="mt-1">Manage your voice AI conversation flows.</Text>
-                </div>
-                <div className="flex gap-2">
-                    <input
-                        ref={importRef}
-                        type="file"
-                        accept=".json"
-                        className="hidden"
-                        onChange={handleImportFile}
-                    />
-                    <Button plain onClick={() => importRef.current?.click()} disabled={importing}>
-                        <Upload className="size-4" />
-                        {importing ? 'Importing...' : 'Import'}
-                    </Button>
-                    <Button href={create().url}>
-                        <Plus className="size-4" />
-                        New Flow
-                    </Button>
-                </div>
-            </div>
-
-            {flows.data.length === 0 ? (
-                <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-                    <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-                        <GitBranch className="size-6 text-zinc-500 dark:text-zinc-400" />
-                    </div>
-                    <p className="mb-1 text-base font-medium text-zinc-950 dark:text-white">No flows yet</p>
-                    <Text className="mb-6">Create your first flow to start building voice AI agents.</Text>
-                    <Button href={create().url}>
-                        <Plus className="size-4" />
-                        Create Flow
-                    </Button>
-                </div>
-            ) : (
-                <div className="mt-8">
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableHeader>Name</TableHeader>
-                                <TableHeader>Phone</TableHeader>
-                                <TableHeader>Status</TableHeader>
-                                <TableHeader>Version</TableHeader>
-                                <TableHeader className="text-right">Actions</TableHeader>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {flows.data.map((flow) => (
-                                <TableRow key={flow.id}>
-                                    <TableCell>
-                                        <Link
-                                            href={show({flow: flow.id}).url}
-                                            className="font-medium text-zinc-950 transition-colors hover:text-zinc-600 dark:text-white dark:hover:text-zinc-300"
-                                        >
-                                            {flow.name}
-                                        </Link>
-                                        {flow.description && (
-                                            <div className="text-sm text-zinc-500 dark:text-zinc-400">{flow.description}</div>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-zinc-500 dark:text-zinc-400">
-                                        {flow.phone_number || <span className="italic">—</span>}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            color={flow.is_active ? 'emerald' : 'zinc'}
-                                            className="cursor-pointer select-none"
-                                            onClick={() => toggleActive(flow)}
-                                        >
-                                            {flow.is_active ? 'Active' : 'Inactive'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-zinc-500 dark:text-zinc-400">v{flow.version}</TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex items-center justify-end gap-1">
-                                            <Button plain href={show({flow: flow.id}).url} title="View flow" aria-label="View flow">
-                                                <Workflow className="size-4" />
-                                            </Button>
-                                            <Button plain href={exportMethod({flow: flow.id}).url} title="Export flow" aria-label="Export flow">
-                                                <Download className="size-4" />
-                                            </Button>
-                                            <Button plain onClick={() => router.post(duplicate({flow: flow.id}).url)} title="Duplicate flow" aria-label="Duplicate flow">
-                                                <Copy className="size-4" />
-                                            </Button>
-                                            <Button plain href={edit({flow: flow.id}).url} title="Edit flow" aria-label="Edit flow">
-                                                <Pencil className="size-4" />
-                                            </Button>
-                                            <Button plain onClick={() => setConfirmingDelete(flow)} title="Delete flow" aria-label="Delete flow">
-                                                <Trash2 className="size-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    {flows.links && (
-                        <div className="mt-4">
-                            <Pagination>
-                                <PaginationPrevious href={flows.prev_page_url} />
-                                <PaginationList>
-                                    {flows.links.map((link, i) => {
-                                        if (link.url === null) return <PaginationGap key={link.label || i} />;
-                                        const label = link.label.replace(/&laquo;|&raquo;/g, '').trim();
-                                        const pageNum = parseInt(label);
-                                        if (isNaN(pageNum)) return null;
-                                        return (
-                                            <PaginationPage
-                                                key={link.url}
-                                                href={link.url}
-                                                current={link.active}
-                                            >
-                                                {pageNum}
-                                            </PaginationPage>
-                                        );
-                                    })}
-                                </PaginationList>
-                                <PaginationNext href={flows.next_page_url} />
-                            </Pagination>
-                        </div>
+                    <Link
+                        href={show({flow: flow.id}).url}
+                        className="font-medium text-slate-950 transition-colors hover:text-cyan-700"
+                    >
+                        {flow.name}
+                    </Link>
+                    {flow.description && (
+                        <div className="mt-0.5 max-w-md truncate text-sm text-slate-500">{flow.description}</div>
                     )}
                 </div>
-            )}
+            ),
+        },
+        {
+            id: 'phone',
+            header: t('ui.flows_table_phone'),
+            meta: { mono: true },
+            cell: (flow) => flow.phone_number || <span className="italic text-slate-400">—</span>,
+        },
+        {
+            id: 'status',
+            header: t('ui.flows_table_status'),
+            cell: (flow) => (
+                <Badge
+                    color={flow.is_active ? 'emerald' : 'zinc'}
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleActive(flow)}
+                >
+                    {flow.is_active ? t('common.active') : t('common.inactive')}
+                </Badge>
+            ),
+        },
+        {
+            id: 'version',
+            header: t('ui.flows_table_version'),
+            meta: { mono: true },
+            cell: (flow) => <span className="text-slate-500">v{flow.version}</span>,
+        },
+        {
+            id: 'actions',
+            header: t('ui.flows_table_actions'),
+            meta: { align: 'right' },
+            cell: (flow) => (
+                <div className="flex items-center justify-end gap-0.5">
+                    <Button plain href={show({flow: flow.id}).url} title={t('ui.flow_action_view')} aria-label={t('ui.flow_action_view')}>
+                        <Workflow className="size-4" />
+                    </Button>
+                    <Button plain href={exportMethod({flow: flow.id}).url} title={t('ui.flow_action_export')} aria-label={t('ui.flow_action_export')}>
+                        <Download className="size-4" />
+                    </Button>
+                    <Button plain onClick={() => router.post(duplicate({flow: flow.id}).url)} title={t('ui.flow_action_duplicate')} aria-label={t('ui.flow_action_duplicate')}>
+                        <Copy className="size-4" />
+                    </Button>
+                    <Button plain href={edit({flow: flow.id}).url} title={t('ui.flow_action_edit')} aria-label={t('ui.flow_action_edit')}>
+                        <Pencil className="size-4" />
+                    </Button>
+                    <Button plain onClick={() => setConfirmingDelete(flow)} title={t('ui.flow_action_delete')} aria-label={t('ui.flow_action_delete')}>
+                        <Trash2 className="size-4" />
+                    </Button>
+                </div>
+            ),
+        },
+    ], [t]);
+
+    return (
+        <AuthenticatedLayout>
+            <Head title={t('flows.title')} />
+
+            <div className="space-y-6">
+                <PageHeader
+                    title={t('flows.title')}
+                    subtitle={t('ui.flows_subtitle')}
+                    actions={
+                        <>
+                            <input
+                                ref={importRef}
+                                type="file"
+                                accept=".json"
+                                className="hidden"
+                                onChange={handleImportFile}
+                            />
+                            <Button plain onClick={() => importRef.current?.click()} disabled={importing}>
+                                <Upload className="size-4" />
+                                {importing ? t('ui.flows_importing') : t('ui.flows_import')}
+                            </Button>
+                            <Button href={create().url}>
+                                <Plus className="size-4" />
+                                {t('ui.flows_new_flow')}
+                            </Button>
+                        </>
+                    }
+                />
+
+                <DataTable
+                    columns={columns}
+                    data={flows.data}
+                    getRowId={(row) => row.id}
+                    emptyIcon={GitBranch}
+                    emptyTitle={t('ui.flows_no_flows_yet')}
+                    emptyDescription={t('ui.flows_create_first_desc')}
+                    emptyAction={{ label: t('flows.create_flow'), href: create().url }}
+                    footer={flows.links ? (
+                        <Pagination>
+                            <PaginationPrevious href={flows.prev_page_url} />
+                            <PaginationList>
+                                {flows.links.map((link, i) => {
+                                    if (link.url === null) return <PaginationGap key={link.label || i} />;
+                                    const label = link.label.replace(/&laquo;|&raquo;/g, '').trim();
+                                    const pageNum = parseInt(label);
+                                    if (isNaN(pageNum)) return null;
+                                    return (
+                                        <PaginationPage
+                                            key={link.url}
+                                            href={link.url}
+                                            current={link.active}
+                                        >
+                                            {pageNum}
+                                        </PaginationPage>
+                                    );
+                                })}
+                            </PaginationList>
+                            <PaginationNext href={flows.next_page_url} />
+                        </Pagination>
+                    ) : null}
+                />
+            </div>
 
             <Alert open={confirmingDelete !== null} onClose={() => setConfirmingDelete(null)}>
-                <AlertTitle>Delete flow?</AlertTitle>
+                <AlertTitle>{t('ui.flows_confirm_delete_title')}</AlertTitle>
                 <AlertDescription>
-                    This will permanently delete &ldquo;{confirmingDelete?.name}&rdquo; and all of its configuration. This cannot be undone.
+                    {t('ui.flows_confirm_delete_desc', { name: confirmingDelete?.name ?? '' })}
                 </AlertDescription>
                 <AlertActions>
-                    <Button plain onClick={() => setConfirmingDelete(null)}>Cancel</Button>
-                    <Button color="red" onClick={destroyFlow}>Delete</Button>
+                    <Button plain onClick={() => setConfirmingDelete(null)}>{t('ui.flows_cancel')}</Button>
+                    <Button color="red" onClick={destroyFlow}>{t('ui.flows_delete')}</Button>
                 </AlertActions>
             </Alert>
         </AuthenticatedLayout>

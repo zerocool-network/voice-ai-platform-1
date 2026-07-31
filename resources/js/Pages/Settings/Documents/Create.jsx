@@ -1,7 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import PageSection from '@/Components/PageSection';
 import { Head, useForm } from '@inertiajs/react';
-import { Heading } from '@/Components/catalyst/heading';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
@@ -13,6 +15,7 @@ import { store, index } from '@/actions/App/Http/Controllers/Web/DocumentsContro
 const ACCEPTED_FILE_TYPES = '.pdf,.txt,.csv,.png,.jpg,.jpeg,.gif,.bmp,.webp';
 
 export default function Create({ resourceTypes }) {
+    const { t } = useTranslation();
     const { data, setData, post, processing, errors, progress } = useForm({
         resource_type: 'pdf',
         name: '',
@@ -55,114 +58,116 @@ export default function Create({ resourceTypes }) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Upload Document" />
+            <Head title={t('ui.upload_document')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>Upload Document</Heading>
-                    <Text className="mt-1">Add a document to your knowledge base.</Text>
-                </div>
-                <TextLink href={index().url}>&larr; Back to Documents</TextLink>
-            </div>
+            <PageHeader
+                title={t('ui.upload_document')}
+                subtitle={t('ui.add_document_hint')}
+                actions={
+                    <TextLink href={index().url}>&larr; {t('ui.back_to_documents')}</TextLink>
+                }
+            />
 
-            <form onSubmit={submit} className="mt-8 max-w-2xl space-y-6">
-                <Field>
-                    <Label>Document Type</Label>
-                    <Select
-                        value={data.resource_type}
-                        onChange={(e) => setData('resource_type', e.target.value)}
-                    >
-                        {resourceTypes.map((rt) => (
-                            <option key={rt.value} value={rt.value}>{rt.label}</option>
-                        ))}
-                    </Select>
-                </Field>
+            <PageSection className="mt-8">
+                <form onSubmit={submit} className="max-w-2xl space-y-6">
+                    <Field>
+                        <Label>{t('ui.document_type')}</Label>
+                        <Select
+                            value={data.resource_type}
+                            onChange={(e) => setData('resource_type', e.target.value)}
+                        >
+                            {resourceTypes.map((rt) => (
+                                <option key={rt.value} value={rt.value}>{rt.label}</option>
+                            ))}
+                        </Select>
+                    </Field>
 
-                <Field>
-                    <Label>Name (optional)</Label>
-                    <Input
-                        value={data.name}
-                        onChange={(e) => setData('name', e.target.value)}
-                        placeholder="Defaults to filename"
-                        invalid={errors.name ? true : undefined}
-                    />
-                    {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
-                </Field>
-
-                <Field>
-                    <Label>File</Label>
-                    <Text className="mb-2">Accepted: PDF, TXT, CSV, Images (PNG, JPG, GIF, BMP, WebP). Max 100 MB.</Text>
-                    <div
-                        className={`mt-1 flex flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors ${
-                            dragActive
-                                ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950/30'
-                                : 'border-zinc-950/20 hover:border-zinc-950/40 dark:border-white/10 dark:hover:border-white/30'
-                        }`}
-                        onDragEnter={handleDrag}
-                        onDragOver={handleDrag}
-                        onDragLeave={handleDrag}
-                        onDrop={handleDrop}
-                    >
-                        <input
-                            type="file"
-                            className="hidden"
-                            id="file-input"
-                            accept={ACCEPTED_FILE_TYPES}
-                            onChange={(e) => handleFile(e.target.files[0])}
+                    <Field>
+                        <Label>{t('ui.name_optional')}</Label>
+                        <Input
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            placeholder={t('ui.defaults_to_filename')}
+                            invalid={errors.name ? true : undefined}
                         />
-                        {fileName ? (
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{fileName}</p>
-                                <p className="text-xs text-zinc-500">
-                                    {(data.file.size / 1024).toFixed(1)} KB
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={() => handleFile(null)}
-                                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                    Drag and drop your file here, or
-                                </p>
-                                <label
-                                    htmlFor="file-input"
-                                    className="mt-2 cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                >
-                                    click to browse
-                                </label>
-                            </>
-                        )}
-                    </div>
-                    {errors.file && <ErrorMessage>{errors.file}</ErrorMessage>}
-                </Field>
+                        {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
+                    </Field>
 
-                {progress && (
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-zinc-500">
-                            <span>Uploading...</span>
-                            <span>{progress.percentage}%</span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                            <div
-                                className="h-full rounded-full bg-blue-600 transition-all duration-300 dark:bg-blue-400"
-                                style={{ width: `${progress.percentage}%` }}
+                    <Field>
+                        <Label>{t('ui.file_label')}</Label>
+                        <Text className="mb-2">{t('ui.accepted_formats')}</Text>
+                        <div
+                            className={`mt-1 flex flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors ${
+                                dragActive
+                                    ? 'border-cyan-500 bg-cyan-50'
+                                    : 'border-slate-200 hover:border-slate-300'
+                            }`}
+                            onDragEnter={handleDrag}
+                            onDragOver={handleDrag}
+                            onDragLeave={handleDrag}
+                            onDrop={handleDrop}
+                        >
+                            <input
+                                type="file"
+                                className="hidden"
+                                id="file-input"
+                                accept={ACCEPTED_FILE_TYPES}
+                                onChange={(e) => handleFile(e.target.files[0])}
                             />
+                            {fileName ? (
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-slate-700">{fileName}</p>
+                                    <p className="text-xs text-slate-500">
+                                        {(data.file.size / 1024).toFixed(1)} KB
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleFile(null)}
+                                        className="text-xs text-cyan-600 hover:text-cyan-700"
+                                    >
+                                        {t('ui.remove_file')}
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <p className="text-sm text-slate-500">
+                                        {t('ui.drag_drop_hint')}
+                                    </p>
+                                    <label
+                                        htmlFor="file-input"
+                                        className="mt-2 cursor-pointer text-sm font-medium text-cyan-600 hover:text-cyan-700"
+                                    >
+                                        {t('ui.click_to_browse')}
+                                    </label>
+                                </>
+                            )}
                         </div>
-                    </div>
-                )}
+                        {errors.file && <ErrorMessage>{errors.file}</ErrorMessage>}
+                    </Field>
 
-                <div className="flex items-center gap-3">
-                    <Button type="submit" disabled={processing || !data.file}>
-                        {processing ? 'Uploading...' : 'Upload & Process'}
-                    </Button>
-                    <Button plain href={index().url}>Cancel</Button>
-                </div>
-            </form>
+                    {progress && (
+                        <div className="space-y-1">
+                            <div className="flex justify-between text-xs text-slate-500">
+                                <span>{t('ui.uploading')}</span>
+                                <span>{progress.percentage}%</span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                                <div
+                                    className="h-full rounded-full bg-cyan-600 transition-all duration-300"
+                                    style={{ width: `${progress.percentage}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-3">
+                        <Button type="submit" disabled={processing || !data.file}>
+                            {processing ? t('ui.uploading') : t('ui.upload_and_process')}
+                        </Button>
+                        <Button plain href={index().url}>{t('common.cancel')}</Button>
+                    </div>
+                </form>
+            </PageSection>
         </AuthenticatedLayout>
     );
 }

@@ -1,29 +1,27 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import DataTable from '@/Components/DataTable';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Heading } from '@/Components/catalyst/heading';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Badge } from '@/Components/catalyst/badge';
 import { Input } from '@/Components/catalyst/input';
 import { Textarea } from '@/Components/catalyst/textarea';
 import { Switch } from '@/Components/catalyst/switch';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
 import { Dialog, DialogTitle, DialogDescription, DialogBody, DialogActions } from '@/Components/catalyst/dialog';
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Mic, Upload, Play, Trash2, Star, Search, Plus, Pause, Library } from 'lucide-react';
 import { store, destroy, setDefault } from '@/actions/App/Http/Controllers/Web/VoiceController';
 
-const TABS = {
-    myVoices: 'My Voices',
-    library: 'Library',
-};
+const TAB_KEYS = ['myVoices', 'library'];
 
 function SkeletonCard() {
     return (
-        <div className="animate-pulse rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-5">
             <div className="mb-3 h-5 w-2/3 rounded bg-zinc-200 dark:bg-zinc-700" />
             <div className="mb-2 h-4 w-full rounded bg-zinc-100 dark:bg-zinc-800" />
             <div className="flex items-center justify-between mt-4">
@@ -35,6 +33,7 @@ function SkeletonCard() {
 }
 
 function VoiceCard({ voice, onPlayPause, playingVoiceId, onAdd, addingVoiceId, localVoiceIds }) {
+    const { t } = useTranslation();
     const isLocal = localVoiceIds.has(voice.voice_id);
     const isPlaying = playingVoiceId === voice.voice_id;
     const isAdding = addingVoiceId === voice.voice_id;
@@ -50,9 +49,9 @@ function VoiceCard({ voice, onPlayPause, playingVoiceId, onAdd, addingVoiceId, l
     }
 
     return (
-        <div className="flex flex-col justify-between rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5">
             <div>
-                <h3 className="font-semibold text-zinc-950 dark:text-white truncate">{voice.name}</h3>
+                <h3 className="font-semibold text-slate-950 truncate">{voice.name}</h3>
                 {voice.labels?.accent && (
                     <Badge color="zinc" className="mt-1">{voice.labels.accent}</Badge>
                 )}
@@ -67,11 +66,11 @@ function VoiceCard({ voice, onPlayPause, playingVoiceId, onAdd, addingVoiceId, l
                     </Button>
                 )}
                 {isLocal ? (
-                    <Badge color="emerald">Added</Badge>
+                    <Badge color="emerald">{t('ui.voices_added')}</Badge>
                 ) : (
                     <Button outline onClick={handleAdd} disabled={isAdding} aria-label={`Add ${voice.name}`}>
                         <Plus className="size-4" />
-                        {isAdding ? 'Adding...' : 'Add'}
+                        {isAdding ? t('ui.voices_adding') : t('ui.voices_add')}
                     </Button>
                 )}
             </div>
@@ -80,6 +79,7 @@ function VoiceCard({ voice, onPlayPause, playingVoiceId, onAdd, addingVoiceId, l
 }
 
 export default function Index({ voices }) {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('myVoices');
     const [cloneOpen, setCloneOpen] = useState(false);
     const [deleteVoice, setDeleteVoice] = useState(null);
@@ -237,98 +237,99 @@ export default function Index({ voices }) {
         router.patch(setDefault({voice: voice.id}).url, { preserveScroll: true });
     }
 
+    const voiceColumns = useMemo(() => [
+        {
+            id: 'name',
+            header: t('ui.voices_table_name'),
+            cell: (voice) => (
+                <button
+                    type="button"
+                    onClick={() => setDetailVoice(voice)}
+                    className="text-left font-medium hover:text-indigo-600"
+                >
+                    {voice.name} {voice.is_default && <Star className="inline size-3 text-indigo-500" />}
+                </button>
+            ),
+        },
+        {
+            id: 'samples',
+            header: t('ui.voices_table_samples'),
+            cell: (voice) => voice.sample_count,
+        },
+        {
+            id: 'status',
+            header: t('ui.voices_table_status'),
+            cell: (voice) => (
+                <div className="flex gap-1.5">
+                    {voice.is_default && <Badge color="indigo">{t('ui.voices_default')}</Badge>}
+                    {voice.requires_verification && <Badge color="amber">{t('ui.voices_pending')}</Badge>}
+                </div>
+            ),
+        },
+        {
+            id: 'actions',
+            header: '',
+            meta: { align: 'right' },
+            cell: (voice) => (
+                <div className="flex justify-end gap-2">
+                    {voice.preview_url && (
+                        <Button outline onClick={() => new Audio(voice.preview_url).play()} title={t('ui.voices_preview')} aria-label={`${t('ui.voices_preview')} ${voice.name}`}>
+                            <Play className="size-4" />
+                        </Button>
+                    )}
+                    {!voice.is_default && (
+                        <Button outline onClick={() => handleSetDefault(voice)} title="Set as default" aria-label={`Set ${voice.name} as default`}>
+                            <Star className="size-4" />
+                        </Button>
+                    )}
+                    <Button outline onClick={() => setDeleteVoice(voice)} aria-label={`Delete ${voice.name}`}>
+                        <Trash2 className="size-4" />
+                    </Button>
+                </div>
+            ),
+        },
+    ], [t]);
+
     return (
         <AuthenticatedLayout>
-            <Head title="Custom Voices" />
+            <Head title={t('ui.custom_voices_title')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>Custom Voices</Heading>
-                    <Text className="mt-1">Clone and manage custom voices from your own audio samples.</Text>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button onClick={openClone}>Clone Voice</Button>
-                </div>
-            </div>
+            <PageHeader
+                title={t('ui.custom_voices_title')}
+                subtitle={t('ui.voices_subtitle')}
+                actions={
+                    <Button onClick={openClone}>{t('ui.voices_clone')}</Button>
+                }
+            />
 
-            <div className="mt-4 mb-6 flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800">
-                {Object.entries(TABS).map(([key, label]) => (
+            <div className="mt-4 mb-6 flex items-center gap-1 rounded-lg bg-slate-100 p-0.5">
+                {TAB_KEYS.map((key) => (
                     <button
                         key={key}
                         type="button"
                         onClick={() => setActiveTab(key)}
                         className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${
                             activeTab === key
-                                ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100'
-                                : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                                ? 'bg-white text-slate-900 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
-                        {label}
+                        {key === 'myVoices' ? t('ui.voices_tab_my_voices') : t('ui.voices_tab_library')}
                     </button>
                 ))}
             </div>
 
             {activeTab === 'myVoices' && (
-                <>
-                    {voices.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-                            <Mic className="size-10 text-zinc-400" />
-                            <p className="mt-4 text-base font-semibold text-zinc-950 dark:text-white">No custom voices</p>
-                            <Text className="mt-2">Clone your voice from audio samples to get started.</Text>
-                            <Button onClick={openClone} className="mt-4">Clone Your First Voice</Button>
-                        </div>
-                    ) : (
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableHeader>Name</TableHeader>
-                                    <TableHeader>Samples</TableHeader>
-                                    <TableHeader>Status</TableHeader>
-                                    <TableHeader className="text-right" />
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {voices.map((voice) => (
-                                    <TableRow key={voice.id}>
-                                        <TableCell className="font-medium">
-                                            <button
-                                                type="button"
-                                                onClick={() => setDetailVoice(voice)}
-                                                className="text-left hover:text-indigo-600"
-                                            >
-                                                {voice.name} {voice.is_default && <Star className="inline size-3 text-indigo-500" />}
-                                            </button>
-                                        </TableCell>
-                                        <TableCell>{voice.sample_count}</TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-1.5">
-                                                {voice.is_default && <Badge color="indigo">Default</Badge>}
-                                                {voice.requires_verification && <Badge color="amber">Pending</Badge>}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                {voice.preview_url && (
-                                                    <Button outline onClick={() => new Audio(voice.preview_url).play()} title="Preview" aria-label={`Preview ${voice.name}`}>
-                                                        <Play className="size-4" />
-                                                    </Button>
-                                                )}
-                                                {!voice.is_default && (
-                                                    <Button outline onClick={() => handleSetDefault(voice)} title="Set as default" aria-label={`Set ${voice.name} as default`}>
-                                                        <Star className="size-4" />
-                                                    </Button>
-                                                )}
-                                                <Button outline onClick={() => setDeleteVoice(voice)} aria-label={`Delete ${voice.name}`}>
-                                                    <Trash2 className="size-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    )}
-                </>
+                <DataTable
+                    className="mt-2"
+                    columns={voiceColumns}
+                    data={voices}
+                    getRowId={(row) => row.id}
+                    emptyIcon={Mic}
+                    emptyTitle={t('ui.voices_no_custom_voices')}
+                    emptyDescription={t('ui.voices_no_custom_voices_desc')}
+                    emptyAction={{ label: t('ui.voices_clone_first'), onClick: openClone }}
+                />
             )}
 
             {activeTab === 'library' && (
@@ -337,7 +338,7 @@ export default function Index({ voices }) {
                         <div className="relative max-w-md">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
                             <Input
-                                placeholder="Search voices by name..."
+                                placeholder={t('ui.voices_search_placeholder')}
                                 value={librarySearch}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 className="pl-9"
@@ -351,7 +352,7 @@ export default function Index({ voices }) {
                         <div className="flex flex-col items-center justify-center rounded-xl border border-red-200 bg-red-50 py-16 dark:border-red-800/50 dark:bg-red-900/20">
                             <p className="text-sm font-medium text-red-700 dark:text-red-300">{libraryError}</p>
                             <Button outline onClick={() => fetchLibrary(librarySearch)} className="mt-4">
-                                Retry
+                                {t('ui.voices_retry')}
                             </Button>
                         </div>
                     )}
@@ -365,10 +366,10 @@ export default function Index({ voices }) {
                     )}
 
                     {!libraryLoading && !libraryError && libraryVoices.length === 0 && (
-                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-                            <Library className="size-10 text-zinc-400" />
-                            <p className="mt-4 text-base font-semibold text-zinc-950 dark:text-white">No voices found</p>
-                            <Text className="mt-2">Try a different search term.</Text>
+                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 py-16">
+                            <Library className="size-10 text-slate-400" />
+                            <p className="mt-4 text-base font-semibold text-slate-950">{t('ui.voices_no_voices_found')}</p>
+                            <Text className="mt-2">{t('ui.voices_try_different_search')}</Text>
                         </div>
                     )}
 
@@ -398,7 +399,7 @@ export default function Index({ voices }) {
 
                             {libraryHasMore && !libraryLoading && (
                                 <div className="mt-6 flex justify-center">
-                                    <Button outline onClick={handleLoadMore}>Load More</Button>
+                                    <Button outline onClick={handleLoadMore}>{t('ui.voices_load_more')}</Button>
                                 </div>
                             )}
                         </>
@@ -407,20 +408,20 @@ export default function Index({ voices }) {
             )}
 
             <Dialog open={cloneOpen} onClose={() => setCloneOpen(false)} size="xl">
-                <DialogTitle>Clone Voice</DialogTitle>
+                <DialogTitle>{t('ui.voices_clone_title')}</DialogTitle>
                 <DialogDescription>
-                    Upload up to 3 audio samples to clone a voice. Short, clean samples with no background noise work best.
+                    {t('ui.voices_clone_desc')}
                 </DialogDescription>
                 <form onSubmit={handleClone}>
                     <DialogBody className="space-y-5">
                         <Field>
-                            <Label>Name</Label>
-                            <Input value={data.name} onChange={(e) => setData('name', e.target.value)} required placeholder="My Custom Voice" invalid={errors.name ? true : undefined} />
+                            <Label>{t('ui.voices_name')}</Label>
+                            <Input value={data.name} onChange={(e) => setData('name', e.target.value)} required placeholder={t('ui.voices_name_placeholder')} invalid={errors.name ? true : undefined} />
                             {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
                         </Field>
 
                         <Field>
-                            <Label>Audio Samples ({data.files.length}/3)</Label>
+                            <Label>{t('ui.voices_audio_samples')} ({data.files.length}/3)</Label>
                             <div
                                 className={`mt-1 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
                                     dragOver ? 'border-indigo-400 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-950' : 'border-zinc-950/15 dark:border-white/15'
@@ -431,8 +432,8 @@ export default function Index({ voices }) {
                                 onClick={() => fileInputRef.current?.click()}
                             >
                                 <Upload className="size-8 text-zinc-400" />
-                                <Text className="mt-2 text-center">Drop audio files here or click to browse</Text>
-                                <Text className="text-xs text-zinc-400">MP3, WAV, FLAC, M4A — up to 25MB each</Text>
+                                <Text className="mt-2 text-center">{t('ui.voices_drop_audio')}</Text>
+                                <Text className="text-xs text-slate-400">{t('ui.voices_audio_formats')}</Text>
                                 <input ref={fileInputRef} type="file" accept=".mp3,.wav,.flac,.m4a,audio/mpeg,audio/wav,audio/flac,audio/mp4" multiple className="hidden" onChange={handleFiles} />
                             </div>
                             {errors.files && <ErrorMessage>{errors.files}</ErrorMessage>}
@@ -450,25 +451,25 @@ export default function Index({ voices }) {
                         </Field>
 
                         <Field>
-                            <Label>Description</Label>
-                            <Textarea value={data.description} onChange={(e) => setData('description', e.target.value)} rows={3} placeholder="Optional description for this voice..." invalid={errors.description ? true : undefined} />
+                            <Label>{t('ui.voices_description')}</Label>
+                            <Textarea value={data.description} onChange={(e) => setData('description', e.target.value)} rows={3} placeholder={t('ui.voices_description_placeholder')} invalid={errors.description ? true : undefined} />
                             {errors.description && <ErrorMessage>{errors.description}</ErrorMessage>}
                         </Field>
 
                         <Field>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <Label>Remove Background Noise</Label>
-                                    <Text className="text-xs">Clean up audio samples before cloning</Text>
+                                    <Label>{t('ui.voices_remove_noise')}</Label>
+                                    <Text className="text-xs">{t('ui.voices_remove_noise_desc')}</Text>
                                 </div>
                                 <Switch checked={data.remove_background_noise} onChange={(v) => setData('remove_background_noise', v)} />
                             </div>
                         </Field>
                     </DialogBody>
                     <DialogActions>
-                        <Button plain onClick={() => setCloneOpen(false)}>Cancel</Button>
+                        <Button plain onClick={() => setCloneOpen(false)}>{t('common.cancel')}</Button>
                         <Button type="submit" disabled={processing || data.files.length === 0}>
-                            {processing ? 'Cloning...' : 'Clone Voice'}
+                            {processing ? t('ui.voices_cloning') : t('ui.voices_clone')}
                         </Button>
                     </DialogActions>
                 </form>
@@ -478,43 +479,43 @@ export default function Index({ voices }) {
                 {detailVoice && (
                     <>
                         <DialogTitle>{detailVoice.name}</DialogTitle>
-                        <DialogDescription>Voice details and metadata</DialogDescription>
+                        <DialogDescription>{t('ui.voices_voice_details')}</DialogDescription>
                         <DialogBody className="space-y-4">
                             {detailVoice.requires_verification && (
-                                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/50 dark:bg-amber-900/20">
-                                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300">Verification pending — this voice requires ElevenLabs verification before use.</p>
+                                <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                                    <p className="text-sm font-medium text-amber-700">{t('ui.voices_verification_pending')}</p>
                                 </div>
                             )}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <Text className="text-xs text-zinc-500">ElevenLabs ID</Text>
+                                    <Text className="text-xs text-slate-500">{t('ui.voices_elevenlabs_id')}</Text>
                                     <p className="font-mono text-sm">{detailVoice.elevenlabs_voice_id}</p>
                                 </div>
                                 <div>
-                                    <Text className="text-xs text-zinc-500">Samples</Text>
+                                    <Text className="text-xs text-slate-500">{t('ui.voices_samples')}</Text>
                                     <p className="text-sm">{detailVoice.sample_count}</p>
                                 </div>
                                 <div>
-                                    <Text className="text-xs text-zinc-500">Status</Text>
+                                    <Text className="text-xs text-slate-500">{t('ui.voices_status')}</Text>
                                     <div className="flex gap-1.5 mt-0.5">
-                                        {detailVoice.is_default && <Badge color="indigo">Default</Badge>}
-                                        {detailVoice.requires_verification ? <Badge color="amber">Pending Verification</Badge> : <Badge color="emerald">Ready</Badge>}
+                                        {detailVoice.is_default && <Badge color="indigo">{t('ui.voices_default')}</Badge>}
+                                        {detailVoice.requires_verification ? <Badge color="amber">{t('ui.voices_pending_verification')}</Badge> : <Badge color="emerald">{t('ui.voices_ready')}</Badge>}
                                     </div>
                                 </div>
                                 <div>
-                                    <Text className="text-xs text-zinc-500">Labels</Text>
-                                    <p className="text-sm">{detailVoice.labels ? JSON.stringify(detailVoice.labels) : 'None'}</p>
+                                    <Text className="text-xs text-slate-500">{t('ui.voices_labels')}</Text>
+                                    <p className="text-sm">{detailVoice.labels ? JSON.stringify(detailVoice.labels) : t('ui.voices_none')}</p>
                                 </div>
                             </div>
                             {detailVoice.description && (
                                 <div>
-                                    <Text className="text-xs text-zinc-500">Description</Text>
+                                    <Text className="text-xs text-slate-500">{t('ui.voices_description')}</Text>
                                     <p className="text-sm">{detailVoice.description}</p>
                                 </div>
                             )}
                             {detailVoice.preview_url && (
                                 <div>
-                                    <Text className="text-xs text-zinc-500">Preview</Text>
+                                    <Text className="text-xs text-slate-500">{t('ui.voices_preview')}</Text>
                                     <audio controls className="mt-1 w-full">
                                         <source src={detailVoice.preview_url} type="audio/mpeg" />
                                     </audio>
@@ -522,21 +523,21 @@ export default function Index({ voices }) {
                             )}
                         </DialogBody>
                         <DialogActions>
-                            <Button plain onClick={() => setDetailVoice(null)}>Close</Button>
+                            <Button plain onClick={() => setDetailVoice(null)}>{t('ui.voices_close')}</Button>
                         </DialogActions>
                     </>
                 )}
             </Dialog>
 
             <Dialog open={deleteVoice !== null} onClose={() => setDeleteVoice(null)}>
-                <DialogTitle>Delete Voice</DialogTitle>
+                <DialogTitle>{t('ui.voices_delete_title')}</DialogTitle>
                 <DialogDescription>
-                    Delete &ldquo;{deleteVoice?.name}&rdquo;? This will remove the voice from ElevenLabs and all flows using it.
+                    {t('ui.voices_delete_desc', { name: deleteVoice?.name ?? '' })}
                 </DialogDescription>
                 <DialogActions>
-                    <Button plain onClick={() => setDeleteVoice(null)}>Cancel</Button>
+                    <Button plain onClick={() => setDeleteVoice(null)}>{t('common.cancel')}</Button>
                     <Button color="red" onClick={handleDelete} disabled={processing}>
-                        {processing ? 'Deleting...' : 'Delete Voice'}
+                        {processing ? t('ui.voices_deleting') : t('ui.voices_delete_voice')}
                     </Button>
                 </DialogActions>
             </Dialog>

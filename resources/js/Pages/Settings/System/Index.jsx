@@ -1,12 +1,15 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'
+import PageHeader from '@/Components/PageHeader'
+import PageSection from '@/Components/PageSection'
 import { Head } from '@inertiajs/react'
-import { Heading } from '@/Components/catalyst/heading'
+import { Subheading } from '@/Components/catalyst/heading'
 import { Text } from '@/Components/catalyst/text'
 import { Badge } from '@/Components/catalyst/badge'
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table'
+import DataTable from '@/Components/DataTable'
 import MetricCard from '@/Components/MetricCard'
 import { RefreshCw, Database, HardDrive, Radio, Globe, Layers, AlertTriangle, Activity } from 'lucide-react'
+import { useTranslation } from '@/hooks/useTranslation'
 
 const statusColor = (s) => {
     if (s === 'ok') return 'emerald'
@@ -34,6 +37,31 @@ function formatLatency(us) {
 }
 
 export default function SystemIndex({ health, failedJobs, queueDepth, errorRate, lastChecked }) {
+    const { t, locale } = useTranslation()
+
+    const failedJobColumns = useMemo(() => [
+        {
+            id: 'connection',
+            header: t('ui.connection'),
+            cell: (job) => <span className="font-medium">{job.connection}</span>,
+        },
+        {
+            id: 'queue',
+            header: t('ui.queue_label'),
+            cell: (job) => job.queue,
+        },
+        {
+            id: 'exception',
+            header: t('ui.exception'),
+            className: 'max-w-xs truncate font-mono text-xs text-slate-500',
+            cell: (job) => job.exception,
+        },
+        {
+            id: 'failed_at',
+            header: t('ui.failed_at'),
+            cell: (job) => new Date(job.failed_at).toLocaleString(locale || undefined),
+        },
+    ], [t, locale])
     const [data, setData] = useState({ health, failedJobs, queueDepth, errorRate, lastChecked })
     const [polling, setPolling] = useState(true)
     const [spinning, setSpinning] = useState(false)
@@ -67,43 +95,45 @@ export default function SystemIndex({ health, failedJobs, queueDepth, errorRate,
 
     return (
         <AuthenticatedLayout>
-            <Head title="System Health" />
+            <Head title={t('ui.system_title')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>System Health</Heading>
-                    <Text className="mt-1">Monitor system services, queues, and error rates.</Text>
-                </div>
-                <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 text-sm text-zinc-500">
-                        <input
-                            type="checkbox"
-                            checked={polling}
-                            onChange={(e) => setPolling(e.target.checked)}
-                            className="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        Auto-refresh
-                    </label>
-                    <button
-                        onClick={handleRefresh}
-                        className="rounded-lg border border-zinc-200 p-2 text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-700"
-                        title="Refresh now"
-                    >
-                        <RefreshCw className={`size-4 ${spinning ? 'animate-spin' : ''}`} />
-                    </button>
-                </div>
-            </div>
+            <div className="space-y-6">
+                <PageHeader
+                    title={t('ui.system_title')}
+                    subtitle={t('ui.system_subtitle_health')}
+                    actions={(
+                        <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 text-sm text-slate-500">
+                                <input
+                                    type="checkbox"
+                                    checked={polling}
+                                    onChange={(e) => setPolling(e.target.checked)}
+                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                {t('ui.auto_refresh')}
+                            </label>
+                            <button
+                                type="button"
+                                onClick={handleRefresh}
+                                className="rounded-lg border border-slate-200 p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
+                                title={t('ui.refresh_now')}
+                            >
+                                <RefreshCw className={`size-4 ${spinning ? 'animate-spin' : ''}`} />
+                            </button>
+                        </div>
+                    )}
+                />
 
-            <div className="mt-4 flex items-center gap-2 text-xs text-zinc-400">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
                 <Activity className="size-3" />
-                Last checked: {lc ? new Date(lc).toLocaleTimeString() : '—'}
+                {t('ui.last_checked')} {lc ? new Date(lc).toLocaleTimeString(locale || undefined) : '—'}
                 <span className="ml-auto flex items-center gap-1">
                     <span className={`inline-block size-2 rounded-full bg-${scoreColor}-500`} />
-                    Health score: <strong>{h.score}%</strong>
+                    {t('ui.health_score')} <strong>{h.score}%</strong>
                 </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 {services.map((svc) => {
                     const Icon = serviceIcons[svc.label] || Radio
                     return (
@@ -123,62 +153,42 @@ export default function SystemIndex({ health, failedJobs, queueDepth, errorRate,
                 })}
             </div>
 
-            <div className="mt-8">
-                <Heading level={2}>Queues</Heading>
+            <div>
+                <Subheading>{t('ui.queues')}</Subheading>
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                     {qd.map((q) => (
-                        <div key={q.queue} className="rounded-xl border border-zinc-200 bg-white p-5">
-                            <Text className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{q.queue}</Text>
-                            <p className="mt-1 text-[28px] font-bold tracking-tight text-zinc-900">
+                        <PageSection key={q.queue} className="!p-5">
+                            <Text className="text-xs font-semibold uppercase tracking-wider text-slate-500">{q.queue}</Text>
+                            <p className="mt-1 text-[28px] font-bold tracking-tight text-slate-900">
                                 {q.size}
                             </p>
-                        </div>
+                        </PageSection>
                     ))}
                 </div>
             </div>
 
-            <div className="mt-8">
-                <Heading level={2}>Error Rate (24h)</Heading>
+            <div>
+                <Subheading>{t('ui.error_rate_24h')}</Subheading>
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <MetricCard label="Total Calls" value={er.total} icon={Activity} color="zinc" />
-                    <MetricCard label="Failed" value={er.failed} icon={AlertTriangle} color={er.failed > 0 ? 'red' : 'emerald'} />
-                    <MetricCard label="Failure Rate" value={`${er.percentage}%`} icon={AlertTriangle} color={er.percentage > 10 ? 'red' : er.percentage > 0 ? 'amber' : 'emerald'} />
+                    <MetricCard label={t('ui.total_calls')} value={er.total} icon={Activity} color="zinc" />
+                    <MetricCard label={t('ui.failed_label')} value={er.failed} icon={AlertTriangle} color={er.failed > 0 ? 'red' : 'emerald'} />
+                    <MetricCard label={t('ui.failure_rate')} value={`${er.percentage}%`} icon={AlertTriangle} color={er.percentage > 10 ? 'red' : er.percentage > 0 ? 'amber' : 'emerald'} />
                 </div>
             </div>
 
-            <div className="mt-8">
-                <Heading level={2}>Failed Jobs (24h)</Heading>
-                {fj.length === 0 ? (
-                    <div className="mt-4 flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-12">
-                        <Activity className="size-8 text-zinc-300" />
-                        <Text className="mt-2">No failed jobs in the last 24 hours.</Text>
-                    </div>
-                ) : (
-                    <div className="mt-4">
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableHeader>Connection</TableHeader>
-                                    <TableHeader>Queue</TableHeader>
-                                    <TableHeader>Exception</TableHeader>
-                                    <TableHeader>Failed At</TableHeader>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {fj.map((job) => (
-                                    <TableRow key={job.id}>
-                                        <TableCell className="font-medium">{job.connection}</TableCell>
-                                        <TableCell>{job.queue}</TableCell>
-                                        <TableCell className="max-w-xs truncate font-mono text-xs text-zinc-500">{job.exception}</TableCell>
-                                        <TableCell>
-                                            {new Date(job.failed_at).toLocaleString()}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                )}
+            <div>
+                <Subheading>{t('ui.failed_jobs_24h')}</Subheading>
+                <div className="mt-4">
+                    <DataTable
+                        columns={failedJobColumns}
+                        data={fj}
+                        getRowId={(row) => row.id}
+                        emptyIcon={Activity}
+                        emptyTitle={t('ui.no_failed_jobs')}
+                        density="dense"
+                    />
+                </div>
+            </div>
             </div>
         </AuthenticatedLayout>
     )

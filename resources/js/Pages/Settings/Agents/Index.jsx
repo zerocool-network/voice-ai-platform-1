@@ -1,18 +1,20 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import DataTable from '@/Components/DataTable';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Heading } from '@/Components/catalyst/heading';
-import { Text } from '@/Components/catalyst/text';
+import { useState, useMemo } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/Components/catalyst/button';
 import { Badge } from '@/Components/catalyst/badge';
 import { Input } from '@/Components/catalyst/input';
 import { Textarea } from '@/Components/catalyst/textarea';
 import { Select } from '@/Components/catalyst/select';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
 import { Dialog, DialogTitle, DialogDescription, DialogBody, DialogActions } from '@/Components/catalyst/dialog';
 import { Field, Label, Legend, FieldGroup, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { index, store, update, destroy, syncFromApi } from '@/actions/App/Http/Controllers/Web/ElevenLabsAgentController';
+import { motion } from 'motion/react';
+import { Text } from '@/Components/catalyst/text';
+import { Bot } from 'lucide-react';
 
 const LANGUAGES = [
     { value: '', label: 'Default' },
@@ -59,8 +61,8 @@ const sectionVariants = {
 
 function SectionHeader({ children }) {
     return (
-        <div className="border-b border-zinc-200 pb-2 dark:border-zinc-700">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+        <div className="border-b border-slate-200 pb-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
                 {children}
             </h3>
         </div>
@@ -84,6 +86,7 @@ function initialFormData() {
 }
 
 export default function Index({ agents }) {
+    const { t } = useTranslation();
     const [createOpen, setCreateOpen] = useState(false);
     const [editAgent, setEditAgent] = useState(null);
     const [deleteAgent, setDeleteAgent] = useState(null);
@@ -134,34 +137,68 @@ export default function Index({ agents }) {
     }
 
     function handleSync() {
-        if (confirm('Sync agents from ElevenLabs? This will import agents created in the ElevenLabs dashboard.')) {
+        if (confirm(t('ui.agents_sync_confirm'))) {
             router.post(syncFromApi().url);
         }
     }
+
+    const columns = useMemo(() => [
+        {
+            id: 'name',
+            header: t('ui.agents_table_name'),
+            cell: (agent) => <span className="font-medium">{agent.name}</span>,
+        },
+        {
+            id: 'elevenlabs_id',
+            header: t('ui.agents_table_elevenlabs_id'),
+            meta: { mono: true },
+            cell: (agent) => <span className="text-xs text-slate-500">{agent.elevenlabs_agent_id}</span>,
+        },
+        {
+            id: 'status',
+            header: t('ui.agents_table_status'),
+            cell: (agent) => (
+                <Badge color={agent.is_active ? 'emerald' : 'zinc'}>
+                    {agent.is_active ? t('ui.agents_active') : t('ui.agents_inactive')}
+                </Badge>
+            ),
+        },
+        {
+            id: 'actions',
+            header: '',
+            meta: { align: 'right' },
+            cell: (agent) => (
+                <div className="flex justify-end gap-2">
+                    <Button outline onClick={() => openEdit(agent)}>{t('ui.agents_edit')}</Button>
+                    <Button outline onClick={() => setDeleteAgent(agent)}>{t('ui.agents_delete')}</Button>
+                </div>
+            ),
+        },
+    ], [t]);
 
     function formFields(i = 0) {
         return (
             <DialogBody className="space-y-8">
                 <motion.div custom={i++} variants={sectionVariants} initial="hidden" animate="visible">
-                    <SectionHeader>Basic Settings</SectionHeader>
+                    <SectionHeader>{t('ui.agents_basic_settings')}</SectionHeader>
                     <div className="mt-4 space-y-4">
                         <Field>
-                            <Label>Name</Label>
+                            <Label>{t('ui.agents_name')}</Label>
                             <Input value={data.name} onChange={(e) => setData('name', e.target.value)} required invalid={errors.name ? true : undefined} />
                             {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>System Prompt</Label>
+                            <Label>{t('ui.agents_system_prompt')}</Label>
                             <Textarea value={data.system_prompt} onChange={(e) => setData('system_prompt', e.target.value)} rows={4} placeholder="You are a helpful assistant..." invalid={errors.system_prompt ? true : undefined} />
                             {errors.system_prompt && <ErrorMessage>{errors.system_prompt}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>First Message</Label>
+                            <Label>{t('ui.agents_first_message')}</Label>
                             <Input value={data.first_message} onChange={(e) => setData('first_message', e.target.value)} placeholder="Hello! How can I help you?" invalid={errors.first_message ? true : undefined} />
                             {errors.first_message && <ErrorMessage>{errors.first_message}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>Language</Label>
+                            <Label>{t('ui.agents_language')}</Label>
                             <Select value={data.language} onChange={(e) => setData('language', e.target.value)} invalid={errors.language ? true : undefined}>
                                 {LANGUAGES.map((l) => (
                                     <option key={l.value} value={l.value}>{l.label}</option>
@@ -173,20 +210,20 @@ export default function Index({ agents }) {
                 </motion.div>
 
                 <motion.div custom={i++} variants={sectionVariants} initial="hidden" animate="visible">
-                    <SectionHeader>LLM Configuration</SectionHeader>
+                    <SectionHeader>{t('ui.agents_llm_config')}</SectionHeader>
                     <div className="mt-4 space-y-4">
                         <Field>
-                            <Label>Model ID</Label>
+                            <Label>{t('ui.agents_model_id')}</Label>
                             <Input value={data.llm_model} onChange={(e) => setData('llm_model', e.target.value)} placeholder="eleven_turbo_v2, gpt-4o" invalid={errors.llm_model ? true : undefined} />
                             {errors.llm_model && <ErrorMessage>{errors.llm_model}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>Temperature ({data.llm_temperature})</Label>
+                            <Label>{t('ui.agents_temperature')} ({data.llm_temperature})</Label>
                             <Input type="range" min="0" max="2" step="0.1" value={data.llm_temperature} onChange={(e) => setData('llm_temperature', parseFloat(e.target.value))} />
                             {errors.llm_temperature && <ErrorMessage>{errors.llm_temperature}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>Max Tokens</Label>
+                            <Label>{t('ui.agents_max_tokens')}</Label>
                             <Input type="number" min="100" max="4096" value={data.llm_max_tokens} onChange={(e) => setData('llm_max_tokens', parseInt(e.target.value) || 500)} invalid={errors.llm_max_tokens ? true : undefined} />
                             {errors.llm_max_tokens && <ErrorMessage>{errors.llm_max_tokens}</ErrorMessage>}
                         </Field>
@@ -194,15 +231,15 @@ export default function Index({ agents }) {
                 </motion.div>
 
                 <motion.div custom={i++} variants={sectionVariants} initial="hidden" animate="visible">
-                    <SectionHeader>Voice Configuration</SectionHeader>
+                    <SectionHeader>{t('ui.agents_voice_config')}</SectionHeader>
                     <div className="mt-4 space-y-4">
                         <Field>
-                            <Label>Voice ID</Label>
+                            <Label>{t('ui.agents_voice_id')}</Label>
                             <Input value={data.tts_voice_id} onChange={(e) => setData('tts_voice_id', e.target.value)} placeholder="ElevenLabs voice ID" invalid={errors.tts_voice_id ? true : undefined} />
                             {errors.tts_voice_id && <ErrorMessage>{errors.tts_voice_id}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>TTS Model</Label>
+                            <Label>{t('ui.agents_tts_model')}</Label>
                             <Select value={data.tts_model} onChange={(e) => setData('tts_model', e.target.value)} invalid={errors.tts_model ? true : undefined}>
                                 {TTS_MODELS.map((m) => (
                                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -211,7 +248,7 @@ export default function Index({ agents }) {
                             {errors.tts_model && <ErrorMessage>{errors.tts_model}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>Turn Sensitivity ({data.turn_sensitivity})</Label>
+                            <Label>{t('ui.agents_turn_sensitivity')} ({data.turn_sensitivity})</Label>
                             <Input type="range" min="0" max="1" step="0.05" value={data.turn_sensitivity} onChange={(e) => setData('turn_sensitivity', parseFloat(e.target.value))} />
                             {errors.turn_sensitivity && <ErrorMessage>{errors.turn_sensitivity}</ErrorMessage>}
                         </Field>
@@ -219,10 +256,10 @@ export default function Index({ agents }) {
                 </motion.div>
 
                 <motion.div custom={i++} variants={sectionVariants} initial="hidden" animate="visible">
-                    <SectionHeader>Speech Recognition</SectionHeader>
+                    <SectionHeader>{t('ui.agents_speech_recognition')}</SectionHeader>
                     <div className="mt-4 space-y-4">
                         <Field>
-                            <Label>STT Provider</Label>
+                            <Label>{t('ui.agents_stt_provider')}</Label>
                             <Select value={data.stt_provider} onChange={(e) => setData('stt_provider', e.target.value)} invalid={errors.stt_provider ? true : undefined}>
                                 {STT_PROVIDERS.map((p) => (
                                     <option key={p.value} value={p.value}>{p.label}</option>
@@ -238,94 +275,66 @@ export default function Index({ agents }) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="AI Agents" />
+            <Head title={t('ui.agents_title')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>AI Agents</Heading>
-                    <Text className="mt-1">Manage your ElevenLabs conversational AI agents.</Text>
-                </div>
-                <div className="flex gap-2">
-                    <Button outline onClick={handleSync}>Sync from ElevenLabs</Button>
-                    <Button onClick={openCreate}>Create Agent</Button>
-                </div>
+            <PageHeader
+                title={t('ui.agents_title')}
+                subtitle={t('ui.agents_subtitle')}
+                actions={
+                    <>
+                        <Button outline onClick={handleSync}>{t('ui.agents_sync')}</Button>
+                        <Button onClick={openCreate}>{t('ui.agents_create')}</Button>
+                    </>
+                }
+            />
+
+            <div className="mt-6">
+                <DataTable
+                    columns={columns}
+                    data={agents}
+                    getRowId={(row) => row.id}
+                    emptyIcon={Bot}
+                    emptyTitle={t('ui.agents_no_agents')}
+                    emptyDescription={t('ui.agents_no_agents_desc')}
+                    emptyAction={{ label: t('ui.agents_sync'), onClick: handleSync }}
+                />
             </div>
 
-            {agents.length === 0 ? (
-                <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-                    <p className="mt-4 text-base font-semibold text-zinc-950 dark:text-white">No agents</p>
-                    <Text className="mt-2">Create an AI agent or sync from ElevenLabs to get started.</Text>
-                    <Button onClick={handleSync} className="mt-4">Sync from ElevenLabs</Button>
-                </div>
-            ) : (
-                <div className="mt-6">
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableHeader>Name</TableHeader>
-                                <TableHeader>ElevenLabs ID</TableHeader>
-                                <TableHeader>Status</TableHeader>
-                                <TableHeader className="text-right" />
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {agents.map((agent) => (
-                                <TableRow key={agent.id}>
-                                    <TableCell className="font-medium">{agent.name}</TableCell>
-                                    <TableCell className="font-mono text-xs text-zinc-500">{agent.elevenlabs_agent_id}</TableCell>
-                                    <TableCell>
-                                        <Badge color={agent.is_active ? 'emerald' : 'zinc'}>
-                                            {agent.is_active ? 'Active' : 'Inactive'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button outline onClick={() => openEdit(agent)}>Edit</Button>
-                                            <Button outline onClick={() => setDeleteAgent(agent)}>Delete</Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            )}
-
             <Dialog open={createOpen} onClose={() => setCreateOpen(false)} size="2xl">
-                <DialogTitle>Create AI Agent</DialogTitle>
+                <DialogTitle>{t('ui.agents_create_title')}</DialogTitle>
                 <DialogDescription>
-                    This will create a new conversational AI agent in your ElevenLabs account.
+                    {t('ui.agents_create_desc')}
                 </DialogDescription>
                 <form onSubmit={handleCreate}>
                     {formFields()}
                     <DialogActions>
-                        <Button plain onClick={() => setCreateOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={processing}>{processing ? 'Creating...' : 'Create Agent'}</Button>
+                        <Button plain onClick={() => setCreateOpen(false)}>{t('ui.agents_cancel')}</Button>
+                        <Button type="submit" disabled={processing}>{processing ? t('ui.agents_creating') : t('ui.agents_create')}</Button>
                     </DialogActions>
                 </form>
             </Dialog>
 
             <Dialog open={editAgent !== null} onClose={() => setEditAgent(null)} size="2xl">
-                <DialogTitle>Edit Agent</DialogTitle>
-                <DialogDescription>Update the agent configuration.</DialogDescription>
+                <DialogTitle>{t('ui.agents_edit_title')}</DialogTitle>
+                <DialogDescription>{t('ui.agents_edit_desc')}</DialogDescription>
                 <form onSubmit={handleUpdate}>
                     {formFields()}
                     <DialogActions>
-                        <Button plain onClick={() => setEditAgent(null)}>Cancel</Button>
-                        <Button type="submit" disabled={processing}>{processing ? 'Saving...' : 'Save Changes'}</Button>
+                        <Button plain onClick={() => setEditAgent(null)}>{t('ui.agents_cancel')}</Button>
+                        <Button type="submit" disabled={processing}>{processing ? t('ui.agents_saving') : t('ui.agents_save_changes')}</Button>
                     </DialogActions>
                 </form>
             </Dialog>
 
             <Dialog open={deleteAgent !== null} onClose={() => setDeleteAgent(null)}>
-                <DialogTitle>Delete Agent</DialogTitle>
+                <DialogTitle>{t('ui.agents_delete_title')}</DialogTitle>
                 <DialogDescription>
-                    Are you sure you want to delete "{deleteAgent?.name}"? This will also remove it from ElevenLabs.
+                    {t('ui.agents_delete_desc', { name: deleteAgent?.name ?? '' })}
                 </DialogDescription>
                 <DialogActions>
-                    <Button plain onClick={() => setDeleteAgent(null)}>Cancel</Button>
+                    <Button plain onClick={() => setDeleteAgent(null)}>{t('ui.agents_cancel')}</Button>
                     <Button color="red" onClick={handleDelete} disabled={processing}>
-                        {processing ? 'Deleting...' : 'Delete Agent'}
+                        {processing ? t('ui.agents_deleting') : t('ui.agents_delete_agent')}
                     </Button>
                 </DialogActions>
             </Dialog>

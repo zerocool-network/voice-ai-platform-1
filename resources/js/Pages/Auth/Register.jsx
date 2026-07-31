@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { login, register } from '@/routes';
 import AuthLayout from '@/Layouts/AuthLayout';
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Input } from '@/Components/catalyst/input';
 import { Button } from '@/Components/catalyst/button';
 import { TextLink } from '@/Components/catalyst/text';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Register() {
+    const { t } = useTranslation();
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -27,11 +29,11 @@ export default function Register() {
         if (/[A-Z]/.test(pw)) score += 15;
         if (/[0-9]/.test(pw)) score += 15;
         if (/[^a-zA-Z0-9]/.test(pw)) score += 20;
-        if (score < 30) return { score, label: 'Weak', color: 'bg-red-500', width: '25%', textColor: 'text-red-600' };
-        if (score < 60) return { score, label: 'Fair', color: 'bg-amber-500', width: '55%', textColor: 'text-amber-600' };
-        if (score < 80) return { score, label: 'Good', color: 'bg-blue-500', width: '75%', textColor: 'text-blue-600' };
-        return { score, label: 'Strong', color: 'bg-emerald-500', width: '100%', textColor: 'text-emerald-600' };
-    }, [data.password]);
+        if (score < 30) return { score, label: t('ui.password_weak'), color: 'bg-red-500', width: '25%', textColor: 'text-red-600' };
+        if (score < 60) return { score, label: t('ui.password_fair'), color: 'bg-amber-500', width: '55%', textColor: 'text-amber-600' };
+        if (score < 80) return { score, label: t('ui.password_good'), color: 'bg-blue-500', width: '75%', textColor: 'text-blue-600' };
+        return { score, label: t('ui.password_strong'), color: 'bg-emerald-500', width: '100%', textColor: 'text-emerald-600' };
+    }, [data.password, t]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -42,14 +44,14 @@ export default function Register() {
 
     return (
         <AuthLayout
-            title="Create your account"
-            subtitle="Get started with ZeroVoice. No credit card required."
+            title={t('ui.create_account')}
+            subtitle={t('ui.register_subtitle')}
         >
-            <Head title="Register" />
+            <Head title={t('ui.register')} />
 
             <form onSubmit={submit} className="space-y-6">
                 <Field>
-                    <Label>Full name</Label>
+                    <Label>{t('ui.full_name')}</Label>
                     <Input
                         id="name"
                         value={data.name}
@@ -62,7 +64,7 @@ export default function Register() {
                 </Field>
 
                 <Field>
-                    <Label>Email address</Label>
+                    <Label>{t('ui.email_address')}</Label>
                     <Input
                         id="email"
                         type="email"
@@ -76,7 +78,7 @@ export default function Register() {
                 </Field>
 
                 <Field>
-                    <Label>Password</Label>
+                    <Label>{t('ui.password')}</Label>
                     <div className="relative">
                         <Input
                             id="password"
@@ -84,15 +86,15 @@ export default function Register() {
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             autoComplete="new-password"
-                            placeholder="Min. 8 characters"
+                            placeholder={t('ui.min_chars')}
                             invalid={errors.password ? true : undefined}
                         />
                         <button
                             type="button"
                             onClick={() => setVisible(!visible)}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-zinc-400 transition-colors hover:text-zinc-600 focus:outline-none dark:hover:text-zinc-300"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none"
                             tabIndex={-1}
-                            aria-label={visible ? 'Hide password' : 'Show password'}
+                            aria-label={visible ? t('ui.hide_password') : t('ui.show_password')}
                         >
                             {visible ? (
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -109,7 +111,7 @@ export default function Register() {
                     {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
                     {data.password && (
                         <div className="mt-2">
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                                 <div className={`h-full rounded-full transition-all duration-300 ${passwordStrength.color}`} style={{ width: passwordStrength.width }} />
                             </div>
                             <p className={`mt-1 text-xs ${passwordStrength.textColor}`}>
@@ -120,26 +122,26 @@ export default function Register() {
                 </Field>
 
                 <Field>
-                    <Label>Confirm password</Label>
+                    <Label>{t('ui.confirm_password')}</Label>
                     <Input
                         id="password_confirmation"
                         type={visible ? 'text' : 'password'}
                         value={data.password_confirmation}
                         onChange={(e) => setData('password_confirmation', e.target.value)}
                         autoComplete="new-password"
-                        placeholder="Repeat your password"
+                        placeholder={t('ui.repeat_password')}
                         invalid={errors.password_confirmation ? true : undefined}
                     />
                     {errors.password_confirmation && <ErrorMessage>{errors.password_confirmation}</ErrorMessage>}
                 </Field>
 
                 <Button type="submit" disabled={processing} className="w-full">
-                    {processing ? 'Creating account...' : 'Create account'}
+                    {processing ? t('ui.creating_account') : t('ui.create_account')}
                 </Button>
 
-                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-                    Already have an account?{' '}
-                    <TextLink href={login().url}>Sign in</TextLink>
+                <p className="text-center text-sm text-slate-500">
+                    {t('ui.already_have_account')}{' '}
+                    <TextLink href={login().url}>{t('ui.sign_in')}</TextLink>
                 </p>
             </form>
         </AuthLayout>

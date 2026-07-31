@@ -1,16 +1,19 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import PageSection from '@/Components/PageSection';
+import DataTable from '@/Components/DataTable';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import { Heading } from '@/Components/catalyst/heading';
+import { useMemo, useState } from 'react';
 import { Text } from '@/Components/catalyst/text';
 import { Input } from '@/Components/catalyst/input';
 import { Select } from '@/Components/catalyst/select';
 import { Badge } from '@/Components/catalyst/badge';
 import { Button } from '@/Components/catalyst/button';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
 import { Pagination, PaginationList, PaginationPage, PaginationGap, PaginationNext, PaginationPrevious } from '@/Components/catalyst/pagination';
+import { useTranslation } from '@/hooks/useTranslation';
+import { callStatusLabel } from '@/utils/callStatusLabel';
+import { CalendarClock } from 'lucide-react';
 
-const frequencyLabels = { once: 'Once', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
 const statusColors = { pending: 'blue', completed: 'emerald', failed: 'red', cancelled: 'zinc', in_progress: 'amber' };
 
 const timezones = [
@@ -20,14 +23,8 @@ const timezones = [
     'Pacific/Auckland',
 ];
 
-function formatDate(date) {
-    if (!date) return '\u2014';
-    return new Date(date).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
-}
-
 export default function Index({ calls, flows, stats }) {
+    const { t, locale } = useTranslation();
     const [showModal, setShowModal] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         flow_id: '',
@@ -36,6 +33,20 @@ export default function Index({ calls, flows, stats }) {
         frequency: 'once',
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     });
+
+    const frequencyLabels = {
+        once: t('ui.once'),
+        daily: t('ui.daily'),
+        weekly: t('ui.weekly'),
+        monthly: t('ui.monthly'),
+    };
+
+    function formatDate(date) {
+        if (!date) return '\u2014';
+        return new Date(date).toLocaleString(locale || undefined, {
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
+        });
+    }
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -47,143 +58,151 @@ export default function Index({ calls, flows, stats }) {
         });
     }
 
-    return (
-        <AuthenticatedLayout>
-            <Head title="Scheduled Calls" />
-
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>Scheduled Calls</Heading>
-                    <Text className="mt-1">Schedule outbound calls to run automatically.</Text>
-                </div>
-                <div className="flex gap-3">
-                    <Link href="/calls">
-                        <Button outline>Back to Call Logs</Button>
-                    </Link>
-                    <Button onClick={() => setShowModal(true)}>Schedule Call</Button>
-                </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-3 gap-4">
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <Text className="text-sm">Pending</Text>
-                    <p className="mt-1 text-2xl font-semibold">{stats.pending}</p>
-                </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <Text className="text-sm">Due Today</Text>
-                    <p className="mt-1 text-2xl font-semibold">{stats.dueToday}</p>
-                </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <Text className="text-sm">Completed Today</Text>
-                    <p className="mt-1 text-2xl font-semibold">{stats.completedToday}</p>
-                </div>
-            </div>
-
-            {calls.data.length === 0 ? (
-                <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-                    <p className="mt-4 text-base font-semibold text-zinc-950 dark:text-white">No scheduled calls</p>
-                    <Text className="mt-2">Schedule your first call to get started.</Text>
-                </div>
-            ) : (
-                <div className="mt-6">
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableHeader>Phone</TableHeader>
-                                <TableHeader>Flow</TableHeader>
-                                <TableHeader>Scheduled At</TableHeader>
-                                <TableHeader>Frequency</TableHeader>
-                                <TableHeader>Status</TableHeader>
-                                <TableHeader className="text-right">Actions</TableHeader>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {calls.data.map((call) => (
-                                <TableRow key={call.id}>
-                                    <TableCell className="font-medium">{call.phone_number}</TableCell>
-                                    <TableCell>{call.flow?.name || '\u2014'}</TableCell>
-                                    <TableCell>{formatDate(call.scheduled_at)}</TableCell>
-                                    <TableCell>
-                                        <Badge color="purple">{frequencyLabels[call.frequency] || call.frequency}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge color={statusColors[call.status] || 'zinc'}>
-                                            {call.status.replace('_', ' ')}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {call.status === 'pending' && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (confirm('Cancel this scheduled call?')) {
-                                                            router.patch(`/calls/scheduled/${call.id}/cancel`);
-                                                        }
-                                                    }}
-                                                    className="text-sm font-medium text-amber-600 underline decoration-amber-600/50 hover:decoration-amber-600 dark:text-amber-400"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            )}
-                                            {call.status !== 'in_progress' && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (confirm('Delete this scheduled call?')) {
-                                                            router.delete(`/calls/scheduled/${call.id}`);
-                                                        }
-                                                    }}
-                                                    className="text-sm font-medium text-red-600 underline decoration-red-600/50 hover:decoration-red-600 dark:text-red-400"
-                                                >
-                                                    Delete
-                                                </button>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    {calls.links && (
-                        <div className="mt-4">
-                            <Pagination>
-                                <PaginationPrevious href={calls.prev_page_url} />
-                                <PaginationList>
-                                    {calls.links.map((link, i) => {
-                                        if (link.url === null) return <PaginationGap key={link.label || i} />;
-                                        const label = link.label.replace(/&laquo;|&raquo;/g, '').trim();
-                                        const pageNum = parseInt(label);
-                                        if (isNaN(pageNum)) return null;
-                                        return (
-                                            <PaginationPage key={link.url} href={link.url} current={link.active}>
-                                                {pageNum}
-                                            </PaginationPage>
-                                        );
-                                    })}
-                                </PaginationList>
-                                <PaginationNext href={calls.next_page_url} />
-                            </Pagination>
-                        </div>
+    const columns = useMemo(() => [
+        {
+            id: 'phone',
+            header: t('ui.phone'),
+            cell: (call) => <span className="font-medium text-slate-900">{call.phone_number}</span>,
+        },
+        {
+            id: 'flow',
+            header: t('calls.flow'),
+            cell: (call) => call.flow?.name || '\u2014',
+        },
+        {
+            id: 'scheduled_at',
+            header: t('ui.scheduled_at'),
+            cell: (call) => formatDate(call.scheduled_at),
+        },
+        {
+            id: 'frequency',
+            header: t('ui.frequency'),
+            cell: (call) => (
+                <Badge color="purple">{frequencyLabels[call.frequency] || call.frequency}</Badge>
+            ),
+        },
+        {
+            id: 'status',
+            header: t('calls.status'),
+            cell: (call) => (
+                <Badge color={statusColors[call.status] || 'zinc'}>
+                    {callStatusLabel(t, call.status)}
+                </Badge>
+            ),
+        },
+        {
+            id: 'actions',
+            header: t('common.actions'),
+            meta: { align: 'right' },
+            cell: (call) => (
+                <div className="flex justify-end gap-3">
+                    {call.status === 'pending' && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (confirm(t('ui.cancel_scheduled_call'))) {
+                                    router.patch(`/calls/scheduled/${call.id}/cancel`);
+                                }
+                            }}
+                            className="text-[13px] font-semibold text-amber-600 hover:text-amber-500"
+                        >
+                            {t('ui.cancel')}
+                        </button>
+                    )}
+                    {call.status !== 'in_progress' && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (confirm(t('ui.delete_scheduled_call'))) {
+                                    router.delete(`/calls/scheduled/${call.id}`);
+                                }
+                            }}
+                            className="text-[13px] font-semibold text-rose-600 hover:text-rose-500"
+                        >
+                            {t('common.delete')}
+                        </button>
                     )}
                 </div>
-            )}
+            ),
+        },
+    ], [t, locale, frequencyLabels]);
+
+    return (
+        <AuthenticatedLayout>
+            <Head title={t('ui.scheduled_calls')} />
+
+            <div className="space-y-6">
+                <PageHeader
+                    title={t('ui.scheduled_calls')}
+                    subtitle={t('ui.schedule_outbound_calls')}
+                    actions={(
+                        <>
+                            <Link href="/calls">
+                                <Button outline>{t('ui.back_to_call_logs')}</Button>
+                            </Link>
+                            <Button onClick={() => setShowModal(true)}>{t('ui.schedule_call')}</Button>
+                        </>
+                    )}
+                />
+
+                <div className="grid grid-cols-3 gap-3">
+                    {[
+                        { label: t('ui.pending'), value: stats.pending },
+                        { label: t('ui.due_today'), value: stats.dueToday },
+                        { label: t('ui.completed_today'), value: stats.completedToday },
+                    ].map((kpi) => (
+                        <PageSection key={kpi.label} className="!p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{kpi.label}</p>
+                            <p className="font-metric mt-2 text-[26px] font-semibold leading-none text-slate-950">{kpi.value}</p>
+                        </PageSection>
+                    ))}
+                </div>
+
+                <DataTable
+                    columns={columns}
+                    data={calls.data}
+                    getRowId={(row) => row.id}
+                    emptyIcon={CalendarClock}
+                    emptyTitle={t('ui.no_scheduled_calls')}
+                    emptyDescription={t('ui.schedule_first_call')}
+                    emptyAction={{ label: t('ui.schedule_call'), onClick: () => setShowModal(true) }}
+                    footer={calls.links ? (
+                        <Pagination>
+                            <PaginationPrevious href={calls.prev_page_url} />
+                            <PaginationList>
+                                {calls.links.map((link, i) => {
+                                    if (link.url === null) return <PaginationGap key={link.label || i} />;
+                                    const label = link.label.replace(/&laquo;|&raquo;/g, '').trim();
+                                    const pageNum = parseInt(label);
+                                    if (isNaN(pageNum)) return null;
+                                    return (
+                                        <PaginationPage key={link.url} href={link.url} current={link.active}>
+                                            {pageNum}
+                                        </PaginationPage>
+                                    );
+                                })}
+                            </PaginationList>
+                            <PaginationNext href={calls.next_page_url} />
+                        </Pagination>
+                    ) : null}
+                />
+            </div>
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-                        <Heading>Schedule a Call</Heading>
-                        <Text className="mt-1 mb-4">Set up an automated outbound call.</Text>
+                    <PageSection className="w-full max-w-md shadow-xl">
+                        <h2 className="text-lg font-semibold text-slate-950">{t('ui.schedule_a_call')}</h2>
+                        <Text className="mt-1 mb-4">{t('ui.set_up_automated_call')}</Text>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-zinc-950 dark:text-white">Flow</label>
+                                <label className="block text-sm font-medium text-slate-950">{t('calls.flow')}</label>
                                 <Select
                                     className="mt-1 w-full"
                                     value={data.flow_id}
                                     onChange={(e) => setData('flow_id', e.target.value)}
                                     required
                                 >
-                                    <option value="">Select a flow...</option>
+                                    <option value="">{t('ui.select_flow')}</option>
                                     {flows.map((flow) => (
                                         <option key={flow.id} value={flow.id}>
                                             {flow.name}{flow.phone_number ? ` (${flow.phone_number})` : ''}
@@ -193,7 +212,7 @@ export default function Index({ calls, flows, stats }) {
                                 {errors.flow_id && <Text className="mt-1 text-sm text-red-600">{errors.flow_id}</Text>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-zinc-950 dark:text-white">Phone Number</label>
+                                <label className="block text-sm font-medium text-slate-950">{t('ui.phone_number')}</label>
                                 <Input
                                     className="mt-1 w-full"
                                     value={data.phone_number}
@@ -204,7 +223,7 @@ export default function Index({ calls, flows, stats }) {
                                 {errors.phone_number && <Text className="mt-1 text-sm text-red-600">{errors.phone_number}</Text>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-zinc-950 dark:text-white">Scheduled At</label>
+                                <label className="block text-sm font-medium text-slate-950">{t('ui.scheduled_at')}</label>
                                 <Input
                                     className="mt-1 w-full"
                                     type="datetime-local"
@@ -215,21 +234,21 @@ export default function Index({ calls, flows, stats }) {
                                 {errors.scheduled_at && <Text className="mt-1 text-sm text-red-600">{errors.scheduled_at}</Text>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-zinc-950 dark:text-white">Frequency</label>
+                                <label className="block text-sm font-medium text-slate-950">{t('ui.frequency')}</label>
                                 <Select
                                     className="mt-1 w-full"
                                     value={data.frequency}
                                     onChange={(e) => setData('frequency', e.target.value)}
                                 >
-                                    <option value="once">Once</option>
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
+                                    <option value="once">{t('ui.once')}</option>
+                                    <option value="daily">{t('ui.daily')}</option>
+                                    <option value="weekly">{t('ui.weekly')}</option>
+                                    <option value="monthly">{t('ui.monthly')}</option>
                                 </Select>
                                 {errors.frequency && <Text className="mt-1 text-sm text-red-600">{errors.frequency}</Text>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-zinc-950 dark:text-white">Timezone</label>
+                                <label className="block text-sm font-medium text-slate-950">{t('ui.timezone')}</label>
                                 <Select
                                     className="mt-1 w-full"
                                     value={data.timezone}
@@ -247,14 +266,14 @@ export default function Index({ calls, flows, stats }) {
                                     type="button"
                                     onClick={() => { setShowModal(false); reset(); }}
                                 >
-                                    Cancel
+                                    {t('ui.cancel')}
                                 </Button>
                                 <Button type="submit" disabled={processing}>
-                                    {processing ? 'Scheduling...' : 'Schedule Call'}
+                                    {processing ? t('ui.scheduling') : t('ui.schedule_call')}
                                 </Button>
                             </div>
                         </form>
-                    </div>
+                    </PageSection>
                 </div>
             )}
         </AuthenticatedLayout>

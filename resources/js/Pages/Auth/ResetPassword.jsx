@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { login } from '@/routes';
 import { store } from '@/routes/password';
 import AuthLayout from '@/Layouts/AuthLayout';
@@ -6,8 +6,10 @@ import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Input } from '@/Components/catalyst/input';
 import { Button } from '@/Components/catalyst/button';
 import { TextLink } from '@/Components/catalyst/text';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ResetPassword({ token, email }) {
+    const { t } = useTranslation();
     const { data, setData, post, processing, errors, reset } = useForm({
         token: token,
         email: email,
@@ -24,14 +26,14 @@ export default function ResetPassword({ token, email }) {
 
     return (
         <AuthLayout
-            title="Set new password"
-            subtitle="Choose a strong password for your account."
+            title={t('ui.set_new_password')}
+            subtitle={t('ui.set_new_password_subtitle')}
         >
-            <Head title="Reset Password" />
+            <Head title={t('ui.reset_password')} />
 
             <form onSubmit={submit} className="space-y-6">
                 <Field>
-                    <Label>Email address</Label>
+                    <Label>{t('ui.email_address')}</Label>
                     <Input
                         id="email"
                         type="email"
@@ -44,39 +46,39 @@ export default function ResetPassword({ token, email }) {
                 </Field>
 
                 <Field>
-                    <Label>New password</Label>
+                    <Label>{t('ui.new_password')}</Label>
                     <Input
                         id="password"
                         type="password"
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
                         autoComplete="new-password"
-                        placeholder="Min. 8 characters"
+                        placeholder={t('ui.min_chars')}
                         invalid={errors.password ? true : undefined}
                     />
                     {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
                 </Field>
 
                 <Field>
-                    <Label>Confirm password</Label>
+                    <Label>{t('ui.confirm_password')}</Label>
                     <Input
                         id="password_confirmation"
                         type="password"
                         value={data.password_confirmation}
                         onChange={(e) => setData('password_confirmation', e.target.value)}
                         autoComplete="new-password"
-                        placeholder="Repeat your password"
+                        placeholder={t('ui.repeat_password')}
                         invalid={errors.password_confirmation ? true : undefined}
                     />
                     {errors.password_confirmation && <ErrorMessage>{errors.password_confirmation}</ErrorMessage>}
                 </Field>
 
                 <Button type="submit" disabled={processing} className="w-full">
-                    {processing ? 'Resetting...' : 'Reset password'}
+                    {processing ? t('ui.resetting') : t('ui.reset_password')}
                 </Button>
 
-                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-                    <TextLink href={login().url}>Back to sign in</TextLink>
+                <p className="text-center text-sm text-slate-500">
+                    <TextLink href={login().url}>{t('ui.back_to_sign_in')}</TextLink>
                 </p>
             </form>
         </AuthLayout>

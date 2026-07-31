@@ -5,18 +5,22 @@
 @source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
 
 @theme {
-    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-    --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
-    --color-primary: #6366f1;
-    --color-primary-dark: #4f46e5;
-    --color-sidebar: #111827;
-    --color-surface: #f8f9fa;
+    --color-primary: #06b6d4;
+    --color-primary-dark: #0891b2;
+    --color-sidebar: #0b1220;
+    --color-surface: #f4f6f8;
     --color-surface-card: #ffffff;
-    --color-surface-border: #e1e3e4;
-    --color-text-primary: #191c1d;
-    --color-text-secondary: #464554;
-    --color-text-muted: #767586;
+    --color-surface-border: rgba(15, 23, 42, 0.06);
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94a3b8;
+
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.04);
+    --shadow-elevated: 0 4px 6px rgba(15, 23, 42, 0.04), 0 16px 40px rgba(15, 23, 42, 0.08);
 
     --spacing-stack-sm: 0.5rem;
     --spacing-stack-md: 1rem;
@@ -32,10 +36,24 @@
     body {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background-color: #f8f9fa;
+        background-color: #f4f6f8;
+        color: #0f172a;
     }
     ::selection {
-        background-color: #6366f1 / 0.15;
+        background-color: color-mix(in srgb, #06b6d4 20%, transparent);
+    }
+}
+
+@layer utilities {
+    .shadow-card {
+        box-shadow: var(--shadow-card);
+    }
+    .shadow-elevated {
+        box-shadow: var(--shadow-elevated);
+    }
+    .font-metric {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
     }
 }
 

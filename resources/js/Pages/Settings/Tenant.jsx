@@ -1,9 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import PageSection from '@/Components/PageSection';
 import ConnectTwilioButton from '@/Components/ConnectTwilioButton';
 import ElevenLabsConnectModal from '@/Components/ElevenLabsConnectModal';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Heading, Subheading } from '@/Components/catalyst/heading';
+import { Subheading } from '@/Components/catalyst/heading';
 import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Badge } from '@/Components/catalyst/badge';
@@ -13,8 +15,10 @@ import { Select } from '@/Components/catalyst/select';
 import { Eye, EyeOff, Phone, Key } from 'lucide-react';
 import { update } from '@/actions/App/Http/Controllers/Web/TenantSettingsController';
 import { disconnect } from '@/actions/App/Http/Controllers/Web/TwilioOAuthController';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Tenant({ tenant }) {
+    const { t } = useTranslation();
     const { data, setData, patch, processing, errors } = useForm({
         name: tenant.name ?? '',
         slug: tenant.slug ?? '',
@@ -40,22 +44,20 @@ export default function Tenant({ tenant }) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Tenant Settings" />
+            <Head title={t('ui.settings_title')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>Tenant Settings</Heading>
-                    <Text className="mt-1">Configure your workspace settings and integrations.</Text>
-                </div>
-            </div>
+            <div className="max-w-2xl space-y-6">
+                <PageHeader
+                    title={t('ui.settings_title')}
+                    subtitle={t('ui.settings_subtitle')}
+                />
 
-            <div className="mt-8 max-w-2xl">
                 <form onSubmit={submit} className="space-y-6">
-                    <div className="rounded-xl border border-zinc-950/5 bg-white p-8 dark:border-white/10 dark:bg-zinc-900">
-                        <Subheading>General</Subheading>
+                    <PageSection>
+                        <Subheading>{t('ui.general')}</Subheading>
                         <div className="mt-4 space-y-4">
                             <Field>
-                                <Label>Tenant Name</Label>
+                                <Label>{t('ui.tenant_name')}</Label>
                                 <Input
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
@@ -65,7 +67,7 @@ export default function Tenant({ tenant }) {
                             </Field>
 
                             <Field>
-                                <Label>Slug</Label>
+                                <Label>{t('ui.slug')}</Label>
                                 <Input
                                     value={data.slug}
                                     onChange={(e) => setData('slug', e.target.value)}
@@ -74,13 +76,13 @@ export default function Tenant({ tenant }) {
                                 {errors.slug && <ErrorMessage>{errors.slug}</ErrorMessage>}
                             </Field>
                         </div>
-                    </div>
+                    </PageSection>
 
-                    <div className="rounded-xl border border-zinc-950/5 bg-white p-8 dark:border-white/10 dark:bg-zinc-900">
-                        <Subheading>Localization</Subheading>
+                    <PageSection>
+                        <Subheading>{t('ui.localization')}</Subheading>
                         <div className="mt-4 space-y-4">
                             <Field>
-                                <Label>Timezone</Label>
+                                <Label>{t('ui.timezone')}</Label>
                                 <Select
                                     value={data.timezone}
                                     onChange={(e) => setData('timezone', e.target.value)}
@@ -100,7 +102,7 @@ export default function Tenant({ tenant }) {
                             </Field>
 
                             <Field>
-                                <Label>Locale</Label>
+                                <Label>{t('ui.locale')}</Label>
                                 <Select
                                     value={data.locale}
                                     onChange={(e) => setData('locale', e.target.value)}
@@ -113,48 +115,48 @@ export default function Tenant({ tenant }) {
                                 {errors.locale && <ErrorMessage>{errors.locale}</ErrorMessage>}
                             </Field>
                         </div>
-                    </div>
+                    </PageSection>
 
-                    <div className="rounded-xl border border-zinc-950/5 bg-white p-8 dark:border-white/10 dark:bg-zinc-900">
-                        <Subheading>Status</Subheading>
+                    <PageSection>
+                        <Subheading>{t('ui.status_section')}</Subheading>
                         <div className="mt-4 space-y-4">
                             <Field>
-                                <Label>Workspace Status</Label>
+                                <Label>{t('ui.workspace_status')}</Label>
                                 <Select
                                     value={data.status}
                                     onChange={(e) => setData('status', e.target.value)}
                                     invalid={errors.status ? true : undefined}
                                 >
-                                    <option value="active">Active</option>
-                                    <option value="suspended">Suspended</option>
+                                    <option value="active">{t('ui.active')}</option>
+                                    <option value="suspended">{t('ui.suspended')}</option>
                                 </Select>
                                 {errors.status && <ErrorMessage>{errors.status}</ErrorMessage>}
                             </Field>
                         </div>
-                    </div>
+                    </PageSection>
 
-                    <div className="rounded-xl border border-zinc-950/5 bg-white p-8 dark:border-white/10 dark:bg-zinc-900">
+                    <PageSection>
                         <div className="flex items-center gap-2">
-                            <Phone className="size-5 text-zinc-500" />
-                            <Subheading>Twilio</Subheading>
+                            <Phone className="size-5 text-slate-500" />
+                            <Subheading>{t('ui.twilio')}</Subheading>
                         </div>
-                        <Text className="mt-1">Configure your Twilio account for phone call handling.</Text>
+                        <Text className="mt-1">{t('ui.twilio_configure_desc')}</Text>
 
                         {tenant.twilio_oauth_enabled ? (
                             <div className="mt-4 space-y-4">
                                 <div className="flex items-center gap-3 rounded-lg bg-emerald-50 p-4 dark:bg-emerald-900/20">
-                                    <Badge color="emerald">Connected</Badge>
-                                    <Text>Account {tenant.twilio_account_sid_oauth ?? 'connected'} — {tenant.twilio_connected_at ? new Date(tenant.twilio_connected_at).toLocaleDateString() : ''}</Text>
+                                    <Badge color="emerald">{t('ui.connected')}</Badge>
+                                    <Text>{t('ui.account_connected', { sid: tenant.twilio_account_sid_oauth ?? 'connected', date: tenant.twilio_connected_at ? new Date(tenant.twilio_connected_at).toLocaleDateString() : '' })}</Text>
                                 </div>
                                 <Button outline onClick={() => router.post(disconnect().url)}>
-                                    Disconnect
+                                    {t('ui.disconnect')}
                                 </Button>
                             </div>
                         ) : (
                             <div className="mt-4 space-y-4">
                                 <ConnectTwilioButton href={tenant.connectUrl} />
                                 <Field>
-                                    <Label>Account SID</Label>
+                                    <Label>{t('ui.account_sid')}</Label>
                                     <Input
                                         value={data.twilio_account_sid}
                                         onChange={(e) => setData('twilio_account_sid', e.target.value)}
@@ -165,13 +167,13 @@ export default function Tenant({ tenant }) {
                                 </Field>
 
                                 <Field>
-                                    <Label>Auth Token</Label>
+                                    <Label>{t('ui.auth_token')}</Label>
                                     <div className="relative">
                                         <Input
                                             type={showTwilioToken ? 'text' : 'password'}
                                             value={data.twilio_auth_token}
                                             onChange={(e) => setData('twilio_auth_token', e.target.value)}
-                                            placeholder={tenant.twilio_auth_token ? '********' : 'Enter auth token'}
+                                            placeholder={tenant.twilio_auth_token ? '********' : t('ui.enter_auth_token')}
                                             invalid={errors.twilio_auth_token ? true : undefined}
                                         />
                                         <button
@@ -187,7 +189,7 @@ export default function Tenant({ tenant }) {
                                 </Field>
 
                                  <Field>
-                                    <Label>Default Phone Number (SMS)</Label>
+                                    <Label>{t('ui.default_phone')}</Label>
                                     <Input
                                         value={data.twilio_phone_number}
                                         onChange={(e) => setData('twilio_phone_number', e.target.value)}
@@ -198,7 +200,7 @@ export default function Tenant({ tenant }) {
                                 </Field>
 
                                 <Field>
-                                    <Label>WhatsApp Phone Number</Label>
+                                    <Label>{t('ui.whatsapp_phone')}</Label>
                                     <Input
                                         value={data.whatsapp_phone_number}
                                         onChange={(e) => setData('whatsapp_phone_number', e.target.value)}
@@ -209,20 +211,20 @@ export default function Tenant({ tenant }) {
                                 </Field>
                             </div>
                         )}
-                    </div>
+                    </PageSection>
 
-                    <div className="rounded-xl border border-zinc-950/5 bg-white p-8 dark:border-white/10 dark:bg-zinc-900">
+                    <PageSection>
                         <div className="flex items-center gap-2">
-                            <Key className="size-5 text-zinc-500" />
-                            <Subheading>ElevenLabs</Subheading>
+                            <Key className="size-5 text-slate-500" />
+                            <Subheading>{t('ui.elevenlabs')}</Subheading>
                         </div>
-                        <Text className="mt-1">Configure your ElevenLabs voice synthesis settings.</Text>
+                        <Text className="mt-1">{t('ui.elevenlabs_configure_desc')}</Text>
 
                         {tenant.elevenlabs_connected_at ? (
                             <div className="mt-4 space-y-4">
                                 <div className="flex items-center gap-3 rounded-lg bg-emerald-50 p-4 dark:bg-emerald-900/20">
-                                    <Badge color="emerald">Connected</Badge>
-                                    <Text>Tier: {tenant.elevenlabs_subscription_tier ?? 'unknown'}</Text>
+                                    <Badge color="emerald">{t('ui.connected')}</Badge>
+                                    <Text>{t('ui.tier_label', { tier: tenant.elevenlabs_subscription_tier ?? 'unknown' })}</Text>
                                 </div>
                                 <div className="w-full bg-zinc-200 rounded-full h-2 dark:bg-zinc-700">
                                     <div
@@ -230,17 +232,17 @@ export default function Tenant({ tenant }) {
                                         style={{ width: `${Math.min(100, ((tenant.elevenlabs_character_count ?? 0) / (tenant.elevenlabs_character_limit ?? 1)) * 100)}%` }}
                                     />
                                 </div>
-                                <Text>{tenant.elevenlabs_character_count ?? 0} / {tenant.elevenlabs_character_limit ?? 0} characters used</Text>
-                                <Button outline onClick={() => setShowElevenLabsModal(true)}>Reconnect</Button>
+                                <Text>{t('ui.characters_used', { used: tenant.elevenlabs_character_count ?? 0, limit: tenant.elevenlabs_character_limit ?? 0 })}</Text>
+                                <Button outline onClick={() => setShowElevenLabsModal(true)}>{t('ui.reconnect')}</Button>
                             </div>
                         ) : (
-                            <Button outline className="mt-4" onClick={() => setShowElevenLabsModal(true)}>Connect ElevenLabs</Button>
+                            <Button outline className="mt-4" onClick={() => setShowElevenLabsModal(true)}>{t('ui.connect_elevenlabs')}</Button>
                         )}
-                    </div>
+                    </PageSection>
 
                     <div className="flex justify-end gap-3">
                         <Button type="submit" disabled={processing}>
-                            {processing ? 'Saving...' : 'Save Settings'}
+                            {processing ? t('ui.saving') : t('ui.save_settings')}
                         </Button>
                     </div>
                 </form>
