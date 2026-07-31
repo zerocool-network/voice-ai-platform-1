@@ -94,4 +94,28 @@ class FlowConfigTest extends TestCase
         $this->assertIsArray($step);
         $this->assertEquals('say', $step['type']);
     }
+
+    public function test_preserves_step_positions_on_roundtrip(): void
+    {
+        $data = [
+            'start_step' => 'start',
+            'steps' => [
+                'start' => [
+                    'type' => 'say',
+                    'config' => ['text' => 'Hello'],
+                    'next' => 'end',
+                    'position' => ['x' => 120, 'y' => 240],
+                ],
+                'end' => [
+                    'type' => 'hangup',
+                    'position' => ['x' => 400, 'y' => 240],
+                ],
+            ],
+        ];
+
+        $config = FlowConfig::fromArray($data);
+
+        $this->assertSame($data, $config->toArray());
+        $this->assertSame(['x' => 120, 'y' => 240], $config->getStep('start')['position']);
+    }
 }

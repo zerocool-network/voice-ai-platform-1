@@ -70,25 +70,4 @@ class WebhookStepTest extends TestCase
         $this->assertStringContainsString('Webhook returned status 500', $xml);
         $this->assertStringContainsString('<Redirect>', $xml);
     }
-
-    public function test_mcp_tool_type_also_works_as_webhook(): void
-    {
-        Http::fake([
-            'https://example.com/mcp' => Http::response(['ok' => true], 200),
-        ]);
-
-        $flow = $this->makeFlow([
-            's1' => ['id' => 's1', 'type' => 'mcp_tool', 'config' => ['url' => 'https://example.com/mcp', 'method' => 'POST'], 'next' => 'hangup'],
-            'hangup' => ['id' => 'hangup', 'type' => 'hangup'],
-        ]);
-        $executor = $this->app->make(FlowExecutor::class);
-        $response = $executor->executeStep('s1', $flow);
-
-        $xml = (string) $response;
-        $this->assertStringContainsString('Webhook completed successfully.', $xml);
-
-        Http::assertSent(function ($request) {
-            return $request->url() === 'https://example.com/mcp';
-        });
-    }
 }

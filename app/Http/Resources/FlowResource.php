@@ -18,6 +18,7 @@ class FlowResource extends JsonResource
             'name' => $this->getName(),
             'description' => $this->getDescription(),
             'phone_number' => $this->getPhoneNumber(),
+            'language' => $this->getLanguage(),
             'config' => $this->getConfig(),
             'is_active' => $this->isActive(),
             'version' => $this->getVersion(),

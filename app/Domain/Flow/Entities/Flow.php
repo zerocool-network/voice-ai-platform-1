@@ -15,6 +15,7 @@ class Flow
         private FlowConfig $config,
         private bool $isActive = true,
         private int $version = 1,
+        private string $language = 'en-US',
     ) {}
 
     public function getId(): string
@@ -91,5 +92,15 @@ class Flow
     public function version(): int
     {
         return $this->version;
+    }
+
+    public function getLanguage(): string
+    {
+        return $this->language;
+    }
+
+    public function language(): string
+    {
+        return $this->language;
     }
 }

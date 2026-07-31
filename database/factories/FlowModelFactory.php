@@ -19,6 +19,7 @@ class FlowModelFactory extends Factory
             'name' => fake()->words(3, true),
             'description' => fake()->sentence(),
             'phone_number' => null,
+            'language' => 'en-US',
             'config' => [
                 'start_step' => 's1',
                 'steps' => [

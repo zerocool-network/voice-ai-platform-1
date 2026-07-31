@@ -42,6 +42,7 @@ class EloquentFlowRepository implements FlowRepositoryInterface
                 'name' => $flow->name(),
                 'description' => $flow->description(),
                 'phone_number' => $flow->phoneNumber(),
+                'language' => $flow->language(),
                 'config' => $flow->config()->toArray(),
                 'is_active' => $flow->isActive(),
                 'version' => $flow->version(),
@@ -77,6 +78,7 @@ class EloquentFlowRepository implements FlowRepositoryInterface
             config: FlowConfig::fromArray((array) $model->config),
             isActive: $model->is_active,
             version: $model->version,
+            language: $model->language ?: 'en-US',
         );
     }
 }

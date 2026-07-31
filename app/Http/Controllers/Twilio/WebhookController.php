@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Twilio;
 use App\Application\Call\DTOs\InboundCallData;
 use App\Application\Call\UseCases\HandleInboundCall;
 use App\Application\Flow\Services\FlowExecutor;
+use App\Application\Flow\Services\FlowSpeechLocale;
 use App\Application\Webhook\Services\WebhookDispatcher;
 use App\Domain\Call\Repositories\CallRepositoryInterface;
 use App\Domain\Flow\Repositories\FlowRepositoryInterface;
@@ -35,23 +36,28 @@ class WebhookController extends Controller
     {
         try {
             $toNumber = $request->input('To');
-            $tenantModel = TenantModel::where('settings->twilio_phone_number', $toNumber)->first();
+            $tenantModel = is_string($toNumber) && $toNumber !== ''
+                ? TenantModel::where('settings->twilio_phone_number', $toNumber)->first()
+                : null;
+
+            $speechLocale = $this->resolveSpeechLocale($request, $tenantModel);
 
             if ($tenantModel !== null) {
                 $dp = $tenantModel->data_protection;
                 if (($dp['consent_required'] ?? false)) {
+                    $say = FlowSpeechLocale::sayAttributes($speechLocale);
                     $response = new VoiceResponse;
                     $gather = $response->gather([
                         'action' => '/twilio/consent-callback',
                         'numDigits' => 1,
                         'timeout' => 5,
                     ]);
-                    $gather->say($dp['consent_message'] ?? 'This call may be recorded.');
-                    $gather->say('Press 1 to accept, or any other key to decline.');
-                    $response->say('You did not provide consent. Goodbye.');
+                    $gather->say($dp['consent_message'] ?? 'This call may be recorded.', $say);
+                    $gather->say('Press 1 to accept, or any other key to decline.', $say);
+                    $response->say('You did not provide consent. Goodbye.', $say);
                     $response->hangup();
 
-                    return response((string) $response)->header('Content-Type', 'text/xml');
+                    return $this->toResponse($response);
                 }
             }
 
@@ -65,7 +71,7 @@ class WebhookController extends Controller
             $flow = $this->flowRepository->findById($call->getFlowId() ?? '');
 
             if ($flow === null || ! $flow->isActive()) {
-                return $this->notConfigured();
+                return $this->notConfigured($speechLocale);
             }
 
             $startStep = $flow->config()->startStep();
@@ -77,7 +83,7 @@ class WebhookController extends Controller
                 'callSid' => $request->input('CallSid'),
             ]);
 
-            return $this->notConfigured();
+            return $this->notConfigured($this->resolveSpeechLocale($request, null));
         }
     }
 
@@ -111,17 +117,30 @@ class WebhookController extends Controller
             $currentStepId = $call->currentStep();
 
             if ($currentStepId === null) {
-                return $this->notConfigured();
+                return $this->notConfigured($flow->language());
             }
 
             $currentStep = $flow->config()->getStep($currentStepId);
 
             if ($currentStep === null) {
-                return $this->notConfigured();
+                return $this->notConfigured($flow->language());
             }
 
             $digits = $request->input('Digits');
-            $nextStepId = $this->flowExecutor->determineNextStep($currentStep, $digits);
+            $speech = $request->input('SpeechResult');
+            $variables = $call->context();
+
+            if ($digits !== null && $digits !== '') {
+                $variables['digits'] = $digits;
+                $variables['input'] = $digits;
+            }
+
+            if ($speech !== null && $speech !== '') {
+                $variables['speech'] = $speech;
+                $variables['input'] = $speech;
+            }
+
+            $nextStepId = $this->flowExecutor->determineNextStep($currentStep, $digits, $variables);
 
             if ($nextStepId === null) {
                 $call->markCompleted();
@@ -233,6 +252,13 @@ class WebhookController extends Controller
 
     public function consentCallback(Request $request): Response
     {
+        $toNumber = $request->input('To');
+        $tenantModel = is_string($toNumber) && $toNumber !== ''
+            ? TenantModel::where('settings->twilio_phone_number', $toNumber)->first()
+            : null;
+        $speechLocale = $this->resolveSpeechLocale($request, $tenantModel);
+        $say = FlowSpeechLocale::sayAttributes($speechLocale);
+
         $digits = $request->input('Digits');
 
         if ($digits === '1') {
@@ -250,7 +276,7 @@ class WebhookController extends Controller
             $flow = $this->flowRepository->findById($call->getFlowId() ?? '');
 
             if ($flow === null || ! $flow->isActive()) {
-                return $this->notConfigured();
+                return $this->notConfigured($speechLocale);
             }
 
             $startStep = $flow->config()->startStep();
@@ -267,23 +293,55 @@ class WebhookController extends Controller
             ->log('Call recording consent declined');
 
         $response = new VoiceResponse;
-        $response->say('Goodbye.');
+        $response->say('Goodbye.', $say);
         $response->hangup();
 
         return $this->toResponse($response);
     }
 
-    private function notConfigured(): Response
+    private function notConfigured(?string $locale = null): Response
     {
         $response = new VoiceResponse;
-        $response->say('Sorry, this number is not configured. Goodbye.');
+        $response->say(
+            'Sorry, this number is not configured. Goodbye.',
+            FlowSpeechLocale::sayAttributes($locale),
+        );
         $response->hangup();
 
         return $this->toResponse($response);
+    }
+
+    private function resolveSpeechLocale(Request $request, ?TenantModel $tenantModel): string
+    {
+        $flowId = $request->input('flow_id');
+
+        if (is_string($flowId) && $flowId !== '') {
+            $flow = $this->flowRepository->findById($flowId);
+
+            if ($flow !== null) {
+                return $flow->language();
+            }
+        }
+
+        $toNumber = $request->input('To');
+
+        if (is_string($toNumber) && $toNumber !== '') {
+            $flow = $this->flowRepository->findByPhoneNumber($toNumber);
+
+            if ($flow !== null) {
+                return $flow->language();
+            }
+        }
+
+        $settings = $tenantModel?->settings ?? [];
+        $tenantLang = $settings['default_language'] ?? null;
+
+        return FlowSpeechLocale::bcp47(is_string($tenantLang) ? $tenantLang : null);
     }
 
     private function toResponse(VoiceResponse $response): Response
     {
-        return response((string) $response)->header('Content-Type', 'text/xml');
+        // Twilio 12100: no leading whitespace before <?xml
+        return response(ltrim((string) $response))->header('Content-Type', 'text/xml');
     }
 }

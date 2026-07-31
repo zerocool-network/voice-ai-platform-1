@@ -54,9 +54,28 @@ class WebhookFlowTest extends TestCase
 
         $response->assertOk();
         $this->assertStringStartsWith('text/xml', $response->headers->get('Content-Type'));
-        $response->assertSee('<Say>', false);
+        // Twilio 12100: body must start with <?xml (no leading blank line)
+        $this->assertMatchesRegularExpression('/^<\?xml/', $response->getContent());
+        $response->assertSee('<Say', false);
+        $response->assertSee('language="en-US"', false);
+        $response->assertSee('voice="Polly.Joanna"', false);
         $response->assertSee('Hello from AI Voice Platform', false);
         $response->assertSee('<Redirect>/twilio/step</Redirect>', false);
+    }
+
+    public function test_inbound_uses_spanish_language_and_polly_lucia_voice(): void
+    {
+        $this->flow->update(['language' => 'es-ES']);
+
+        $response = $this->post('/twilio/inbound', [
+            'CallSid' => 'CA'.str_repeat('e', 32),
+            'From' => '+15551234567',
+            'To' => '+14159309192',
+        ]);
+
+        $response->assertOk();
+        $response->assertSee('language="es-ES"', false);
+        $response->assertSee('voice="Polly.Lucia"', false);
     }
 
     public function test_inbound_returns_not_configured_for_missing_flow(): void

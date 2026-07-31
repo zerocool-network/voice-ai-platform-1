@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Flow\Services\FlowSpeechLocale;
 use App\Domain\Flow\Entities\Flow;
 use App\Domain\Flow\Repositories\FlowRepositoryInterface;
 use App\Domain\Flow\ValueObjects\FlowConfig;
@@ -10,6 +11,7 @@ use App\Http\Resources\FlowResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class FlowController extends Controller
 {
@@ -31,6 +33,7 @@ class FlowController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'phone_number' => 'nullable|string',
+            'language' => ['nullable', 'string', 'max:10', Rule::in(FlowSpeechLocale::allowed())],
             'config' => 'required|array',
             'config.start_step' => 'required|string',
             'config.steps' => 'required|array',
@@ -45,6 +48,7 @@ class FlowController extends Controller
             config: FlowConfig::fromArray($data['config']),
             isActive: true,
             version: 1,
+            language: FlowSpeechLocale::bcp47($data['language'] ?? null),
         );
 
         $this->flowRepository->save($flow);
@@ -75,6 +79,7 @@ class FlowController extends Controller
             'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
             'phone_number' => 'nullable|string',
+            'language' => ['sometimes', 'string', 'max:10', Rule::in(FlowSpeechLocale::allowed())],
             'config' => 'sometimes|array',
             'is_active' => 'sometimes|boolean',
         ]);
@@ -90,6 +95,7 @@ class FlowController extends Controller
                 : $flow->config(),
             isActive: $data['is_active'] ?? $flow->isActive(),
             version: $flow->getVersion(),
+            language: FlowSpeechLocale::bcp47($data['language'] ?? $flow->language()),
         );
 
         $this->flowRepository->save($updated);

@@ -5,25 +5,25 @@ import { motion, AnimatePresence } from 'motion/react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
 import FlowBuilderComponent from '@/Components/FlowBuilder';
 import FlowCommentPanel from '@/Components/FlowCommentPanel';
 import FlowVersionPanel from '@/Components/FlowVersionPanel';
-import { Heading } from '@/Components/catalyst/heading';
 import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Badge } from '@/Components/catalyst/badge';
 import { Input } from '@/Components/catalyst/input';
+import { Select } from '@/Components/catalyst/select';
 import { Alert, AlertTitle, AlertDescription, AlertActions, AlertBody } from '@/Components/catalyst/alert';
 import { update } from '@/actions/App/Http/Controllers/Web/FlowController';
+import { useTranslation } from '@/hooks/useTranslation';
 
-const TABS = {
-  builder: 'Builder',
-  comments: 'Comments',
-  history: 'History',
-};
+const TAB_KEYS = ['builder', 'comments', 'history'];
 
-export default function Builder({ flow }) {
+export default function Builder({ flow, languages = {}, speechVoices = {} }) {
+  const { t } = useTranslation();
   const [config, setConfig] = useState(flow.config);
+  const [language, setLanguage] = useState(flow.language ?? 'en-US');
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testPhone, setTestPhone] = useState('');
@@ -34,6 +34,8 @@ export default function Builder({ flow }) {
   const [activeTab, setActiveTab] = useState('builder');
   const dirtyRef = useRef(false);
   const builderRef = useRef(null);
+
+  const speechVoice = speechVoices[language] ?? 'Polly.Joanna';
 
   useEffect(() => {
     const handler = (e) => {
@@ -55,49 +57,75 @@ export default function Builder({ flow }) {
     setDirty(true);
   }, []);
 
-  const handleSave = useCallback(() => {
-    builderRef.current?.syncToConfig();
+  const persistFlow = useCallback((onSuccess, onError) => {
+    const synced = builderRef.current?.syncToConfig();
+    const nextConfig = synced ?? config;
+    setConfig(nextConfig);
     setSaving(true);
 
-    setTimeout(() => {
-      router.patch(update({ flow: flow.id }).url, {
-        name: flow.name,
-        description: flow.description,
-        phone_number: flow.phone_number,
-        is_active: flow.is_active,
-        config: JSON.stringify(config),
-      }, {
-        onSuccess: () => {
-          toast.success('Flow saved');
-          dirtyRef.current = false;
-          setDirty(false);
-        },
-        onError: () => toast.error('Failed to save flow'),
-        onFinish: () => setSaving(false),
-        preserveScroll: true,
-      });
-    }, 0);
-  }, [flow, config]);
+    router.patch(update({ flow: flow.id }).url, {
+      name: flow.name,
+      description: flow.description,
+      phone_number: flow.phone_number,
+      language,
+      is_active: flow.is_active,
+      config: JSON.stringify(nextConfig),
+    }, {
+      onSuccess: () => {
+        dirtyRef.current = false;
+        setDirty(false);
+        onSuccess?.();
+      },
+      onError: () => {
+        toast.error(t('ui.flow_save_failed') || 'Failed to save flow');
+        onError?.();
+      },
+      onFinish: () => setSaving(false),
+      preserveScroll: true,
+    });
+  }, [flow, config, language, t]);
 
-  const handleTestFlow = useCallback(async () => {
+  const handleSave = useCallback(() => {
+    persistFlow(() => toast.success(t('ui.flow_saved') || 'Flow saved'));
+  }, [persistFlow, t]);
+
+  const handleTestFlow = useCallback(() => {
     if (!testPhone || testPhone.trim() === '') {
       toast.error('Please enter a phone number');
       return;
     }
-    setTesting(true);
-    try {
-      await axios.post(`/flows/${flow.id}/test`, {
-        phone_number: testPhone,
-      });
-      toast.success('Test call initiated');
-      setShowTestModal(false);
-      setTestPhone('');
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to initiate test call');
-    } finally {
-      setTesting(false);
+
+    const runTest = async () => {
+      setTesting(true);
+      try {
+        await axios.post(`/flows/${flow.id}/test`, {
+          phone_number: testPhone,
+        });
+        toast.success('Test call initiated');
+        setShowTestModal(false);
+        setTestPhone('');
+      } catch (err) {
+        toast.error(err.response?.data?.error || 'Failed to initiate test call');
+      } finally {
+        setTesting(false);
+      }
+    };
+
+    if (dirtyRef.current) {
+      setTesting(true);
+      toast.message(t('ui.test_flow_saving_first') || 'Saving changes before test call…');
+      persistFlow(
+        () => {
+          toast.success(t('ui.flow_saved') || 'Flow saved');
+          runTest();
+        },
+        () => setTesting(false),
+      );
+      return;
     }
-  }, [flow.id, testPhone]);
+
+    runTest();
+  }, [flow.id, testPhone, persistFlow, t]);
 
   const handleSimulate = useCallback(async () => {
     setSimulating(true);
@@ -113,62 +141,83 @@ export default function Builder({ flow }) {
 
   return (
     <AuthenticatedLayout>
-      <Head title={flow.name} />
+      <Head title={`${t('ui.flow_builder')} — ${flow.name}`} />
 
-      <div className="flex items-center gap-3">
-        <Link href="/flows" className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
-          <ArrowLeft className="size-4" />
-        </Link>
-        <Heading>{flow.name}</Heading>
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-          v{flow.version}
-        </span>
-      </div>
+      <PageHeader
+        eyebrow={t('ui.flow_builder')}
+        title={flow.name}
+        subtitle={
+          <span className="inline-flex items-center gap-2">
+            <Link href="/flows" className="inline-flex items-center gap-1 text-slate-500 transition hover:text-slate-800">
+              <ArrowLeft className="size-3.5" />
+              {t('navigation.flows') || 'Flows'}
+            </Link>
+            <span className="text-slate-300">·</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+              v{flow.version}
+            </span>
+          </span>
+        }
+        actions={
+          activeTab === 'builder' ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {dirty && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">
+                  <span className="size-1.5 rounded-full bg-amber-500" />
+                  {t('ui.unsaved')}
+                </span>
+              )}
+              <Select
+                aria-label={t('ui.flow_language')}
+                value={language}
+                onChange={(e) => {
+                  setLanguage(e.target.value);
+                  dirtyRef.current = true;
+                  setDirty(true);
+                }}
+                className="min-w-[10rem]"
+              >
+                {Object.entries(languages).map(([code, label]) => (
+                  <option key={code} value={code}>{label}</option>
+                ))}
+              </Select>
+              <Button outline onClick={() => setShowTestModal(true)}>
+                <Phone className="size-4" />
+                {t('ui.test_flow')}
+              </Button>
+              <Button outline onClick={handleSimulate} disabled={simulating}>
+                <Play className="size-4" />
+                {simulating ? t('ui.simulating') : t('ui.simulate')}
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? t('ui.saving') : t('ui.save_flow')}
+              </Button>
+            </div>
+          ) : null
+        }
+      />
 
-      <div className="mt-4 flex h-[calc(100vh-12rem)] flex-col">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800">
-            {Object.entries(TABS).map(([key, label]) => (
+      <div className="mt-6 flex h-[calc(100vh-11rem)] min-h-[32rem] flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200/80 bg-slate-100/80 p-1">
+            {TAB_KEYS.map((key) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setActiveTab(key)}
-                className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${
+                className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
                   activeTab === key
-                    ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100'
-                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                {label}
+                {t(`ui.${key}`)}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            {dirty && activeTab === 'builder' && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
-                <span className="size-1.5 rounded-full bg-amber-500" />
-                Unsaved
-              </span>
-            )}
-            {activeTab === 'builder' && (
-              <>
-                <Button outline onClick={() => setShowTestModal(true)}>
-                  <Phone className="size-4" />
-                  Test Flow
-                </Button>
-                <Button outline onClick={handleSimulate} disabled={simulating}>
-                  <Play className="size-4" />
-                  {simulating ? 'Simulating...' : 'Simulate'}
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? 'Saving...' : 'Save Flow'}
-                </Button>
-              </>
-            )}
-          </div>
         </div>
 
-        <div className="flex-1 overflow-hidden rounded-xl border border-zinc-950/5 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card">
           <AnimatePresence mode="wait">
             {activeTab === 'builder' && (
               <motion.div
@@ -226,11 +275,15 @@ export default function Builder({ flow }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
             >
-              <AlertTitle>Test Flow: {flow.name}</AlertTitle>
+              <AlertTitle>{t('ui.test_flow_modal_title', { name: flow.name })}</AlertTitle>
               <AlertDescription>
-                Enter a phone number to call and test this flow.
+                {t('ui.test_flow_modal_desc')}
               </AlertDescription>
               <AlertBody>
+                <Text className="mb-3 text-sm text-slate-600">
+                  {t('ui.test_flow_will_speak', { language, voice: speechVoice })
+                    || `Will speak: ${language} · ${speechVoice}`}
+                </Text>
                 <Input
                   type="tel"
                   placeholder="+1 (555) 123-4567"
@@ -239,9 +292,9 @@ export default function Builder({ flow }) {
                 />
               </AlertBody>
               <AlertActions>
-                <Button plain onClick={() => setShowTestModal(false)}>Cancel</Button>
+                <Button plain onClick={() => setShowTestModal(false)}>{t('common.cancel')}</Button>
                 <Button onClick={handleTestFlow} disabled={testing}>
-                  {testing ? 'Calling...' : 'Call Now'}
+                  {testing ? t('ui.calling') : t('ui.call_now')}
                 </Button>
               </AlertActions>
             </motion.div>
@@ -258,8 +311,8 @@ export default function Builder({ flow }) {
               exit={{ scale: 0.95, opacity: 0 }}
               className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900"
             >
-            <h3 className="text-lg font-semibold">Simulation Results</h3>
-            <Text className="mt-1">{simulateResults.steps_count} steps simulated</Text>
+            <h3 className="text-lg font-semibold">{t('ui.simulation_results')}</h3>
+            <Text className="mt-1">{t('ui.simulation_steps_simulated', { count: simulateResults.steps_count })}</Text>
             <div className="mt-4 space-y-2">
               {simulateResults.results.map((r, i) => (
                 <div key={i} className={`rounded-lg border p-3 ${
@@ -278,7 +331,7 @@ export default function Builder({ flow }) {
               ))}
             </div>
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => setSimulateResults(null)}>Close</Button>
+              <Button onClick={() => setSimulateResults(null)}>{t('ui.close')}</Button>
             </div>
             </motion.div>
           </div>
