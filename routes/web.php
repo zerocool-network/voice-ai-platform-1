@@ -51,7 +51,9 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/locale/{locale}', function (string $locale) {
-    if (in_array($locale, ['en', 'es'])) {
+    $supported = array_keys(config('locales'));
+
+    if (in_array($locale, $supported, true)) {
         session(['locale' => $locale]);
         App::setLocale($locale);
     }
@@ -60,7 +62,9 @@ Route::get('/locale/{locale}', function (string $locale) {
 })->name('locale.switch');
 
 Route::post('twilio/inbound', [WebhookController::class, 'inbound'])->middleware('twilio.verify');
-Route::post('twilio/step', [WebhookController::class, 'step'])->middleware('twilio.verify');
+Route::post('twilio/step', [WebhookController::class, 'step'])
+    ->middleware('twilio.verify')
+    ->name('twilio.step');
 Route::post('twilio/status', [WebhookController::class, 'status'])->middleware('twilio.verify');
 Route::post('twilio/gather', [WebhookController::class, 'gather'])->middleware('twilio.verify');
 Route::post('twilio/recording', [WebhookController::class, 'recording'])->middleware('twilio.verify');

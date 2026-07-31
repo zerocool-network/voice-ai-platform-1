@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'failed' => 'Diese Anmeldedaten stimmen nicht mit unseren Aufzeichnungen überein.',
+    'password' => 'Das angegebene Passwort ist falsch.',
+    'throttle' => 'Zu viele Anmeldeversuche. Bitte versuchen Sie es in :seconds Sekunden erneut.',
+    'login' => 'Anmelden',
+    'register' => 'Registrieren',
+    'logout' => 'Abmelden',
+    'email' => 'E-Mail',
+    'password_field' => 'Passwort',
+    'confirm_password' => 'Passwort bestätigen',
+    'remember_me' => 'Angemeldet bleiben',
+    'forgot_password' => 'Passwort vergessen?',
+    'reset_password' => 'Passwort zurücksetzen',
+    'send_reset_link' => 'Link zum Zurücksetzen senden',
+    'verify_email' => 'E-Mail-Adresse bestätigen',
+    'verification_link_sent' => 'Ein neuer Bestätigungslink wurde an Ihre E-Mail gesendet.',
+    'verify_notice' => 'Bitte überprüfen Sie Ihre E-Mails auf den Bestätigungslink, bevor Sie fortfahren.',
+    'verify_resend' => 'Falls Sie die E-Mail nicht erhalten haben, klicken Sie hier, um eine neue anzufordern.',
+    'name' => 'Name',
+    'already_registered' => 'Bereits registriert?',
+    'accept_invite' => 'Einladung annehmen',
+    'join_team' => 'Sie wurden eingeladen, :team beizutreten.',
+    'register_to_accept' => 'Erstellen Sie ein Konto, um die Einladung anzunehmen.',
+];
