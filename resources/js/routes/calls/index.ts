@@ -1,5 +1,48 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 import scheduled89e461 from './scheduled'
+/**
+* @see \App\Http\Controllers\Web\ScheduledCallController::scheduled
+* @see app/Http/Controllers/Web/ScheduledCallController.php:16
+* @route '/calls/scheduled'
+*/
+export const scheduled = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: scheduled.url(options),
+    method: 'get',
+})
+
+scheduled.definition = {
+    methods: ["get","head"],
+    url: '/calls/scheduled',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Web\ScheduledCallController::scheduled
+* @see app/Http/Controllers/Web/ScheduledCallController.php:16
+* @route '/calls/scheduled'
+*/
+scheduled.url = (options?: RouteQueryOptions) => {
+    return scheduled.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Web\ScheduledCallController::scheduled
+* @see app/Http/Controllers/Web/ScheduledCallController.php:16
+* @route '/calls/scheduled'
+*/
+scheduled.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: scheduled.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Web\ScheduledCallController::scheduled
+* @see app/Http/Controllers/Web/ScheduledCallController.php:16
+* @route '/calls/scheduled'
+*/
+scheduled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: scheduled.url(options),
+    method: 'head',
+})
 
 /**
 * @see \App\Http\Controllers\Web\CallController::index
@@ -42,6 +85,50 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\Web\CallController::exportMethod
+* @see app/Http/Controllers/Web/CallController.php:129
+* @route '/calls/export/csv'
+*/
+export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: exportMethod.url(options),
+    method: 'get',
+})
+
+exportMethod.definition = {
+    methods: ["get","head"],
+    url: '/calls/export/csv',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Web\CallController::exportMethod
+* @see app/Http/Controllers/Web/CallController.php:129
+* @route '/calls/export/csv'
+*/
+exportMethod.url = (options?: RouteQueryOptions) => {
+    return exportMethod.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Web\CallController::exportMethod
+* @see app/Http/Controllers/Web/CallController.php:129
+* @route '/calls/export/csv'
+*/
+exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: exportMethod.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Web\CallController::exportMethod
+* @see app/Http/Controllers/Web/CallController.php:129
+* @route '/calls/export/csv'
+*/
+exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: exportMethod.url(options),
     method: 'head',
 })
 
@@ -104,94 +191,6 @@ show.get = (args: { call: string | number } | [call: string | number ] | string 
 */
 show.head = (args: { call: string | number } | [call: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
-    method: 'head',
-})
-
-/**
-* @see \App\Http\Controllers\Web\ScheduledCallController::scheduled
-* @see app/Http/Controllers/Web/ScheduledCallController.php:16
-* @route '/calls/scheduled'
-*/
-export const scheduled = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: scheduled.url(options),
-    method: 'get',
-})
-
-scheduled.definition = {
-    methods: ["get","head"],
-    url: '/calls/scheduled',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\Web\ScheduledCallController::scheduled
-* @see app/Http/Controllers/Web/ScheduledCallController.php:16
-* @route '/calls/scheduled'
-*/
-scheduled.url = (options?: RouteQueryOptions) => {
-    return scheduled.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Web\ScheduledCallController::scheduled
-* @see app/Http/Controllers/Web/ScheduledCallController.php:16
-* @route '/calls/scheduled'
-*/
-scheduled.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: scheduled.url(options),
-    method: 'get',
-})
-
-/**
-* @see \App\Http\Controllers\Web\ScheduledCallController::scheduled
-* @see app/Http/Controllers/Web/ScheduledCallController.php:16
-* @route '/calls/scheduled'
-*/
-scheduled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: scheduled.url(options),
-    method: 'head',
-})
-
-/**
-* @see \App\Http\Controllers\Web\CallController::exportMethod
-* @see app/Http/Controllers/Web/CallController.php:129
-* @route '/calls/export/csv'
-*/
-export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: exportMethod.url(options),
-    method: 'get',
-})
-
-exportMethod.definition = {
-    methods: ["get","head"],
-    url: '/calls/export/csv',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\Web\CallController::exportMethod
-* @see app/Http/Controllers/Web/CallController.php:129
-* @route '/calls/export/csv'
-*/
-exportMethod.url = (options?: RouteQueryOptions) => {
-    return exportMethod.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\Web\CallController::exportMethod
-* @see app/Http/Controllers/Web/CallController.php:129
-* @route '/calls/export/csv'
-*/
-exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: exportMethod.url(options),
-    method: 'get',
-})
-
-/**
-* @see \App\Http\Controllers\Web\CallController::exportMethod
-* @see app/Http/Controllers/Web/CallController.php:129
-* @route '/calls/export/csv'
-*/
-exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: exportMethod.url(options),
     method: 'head',
 })
 
@@ -352,10 +351,10 @@ destroy.delete = (args: { call: string | number } | [call: string | number ] | s
 })
 
 const calls = {
-    index: Object.assign(index, index),
-    show: Object.assign(show, show),
     scheduled: Object.assign(scheduled, scheduled89e461),
+    index: Object.assign(index, index),
     export: Object.assign(exportMethod, exportMethod),
+    show: Object.assign(show, show),
     notes: Object.assign(notes, notes),
     retry: Object.assign(retry, retry),
     destroy: Object.assign(destroy, destroy),

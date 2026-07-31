@@ -78,6 +78,84 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 })
 
 /**
+* @see \App\Http\Controllers\Web\VoiceController::library
+* @see app/Http/Controllers/Web/VoiceController.php:199
+* @route '/settings/voices/library'
+*/
+export const library = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: library.url(options),
+    method: 'get',
+})
+
+library.definition = {
+    methods: ["get","head"],
+    url: '/settings/voices/library',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Web\VoiceController::library
+* @see app/Http/Controllers/Web/VoiceController.php:199
+* @route '/settings/voices/library'
+*/
+library.url = (options?: RouteQueryOptions) => {
+    return library.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Web\VoiceController::library
+* @see app/Http/Controllers/Web/VoiceController.php:199
+* @route '/settings/voices/library'
+*/
+library.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: library.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Web\VoiceController::library
+* @see app/Http/Controllers/Web/VoiceController.php:199
+* @route '/settings/voices/library'
+*/
+library.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: library.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\Web\VoiceController::addFromLibrary
+* @see app/Http/Controllers/Web/VoiceController.php:241
+* @route '/settings/voices/library'
+*/
+export const addFromLibrary = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: addFromLibrary.url(options),
+    method: 'post',
+})
+
+addFromLibrary.definition = {
+    methods: ["post"],
+    url: '/settings/voices/library',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Web\VoiceController::addFromLibrary
+* @see app/Http/Controllers/Web/VoiceController.php:241
+* @route '/settings/voices/library'
+*/
+addFromLibrary.url = (options?: RouteQueryOptions) => {
+    return addFromLibrary.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Web\VoiceController::addFromLibrary
+* @see app/Http/Controllers/Web/VoiceController.php:241
+* @route '/settings/voices/library'
+*/
+addFromLibrary.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: addFromLibrary.url(options),
+    method: 'post',
+})
+
+/**
 * @see \App\Http\Controllers\Web\VoiceController::destroy
 * @see app/Http/Controllers/Web/VoiceController.php:115
 * @route '/settings/voices/{voice}'
@@ -246,6 +324,8 @@ setDefault.patch = (args: { voice: string | number } | [voice: string | number ]
 const voices = {
     index: Object.assign(index, index),
     store: Object.assign(store, store),
+    library: Object.assign(library, library),
+    addFromLibrary: Object.assign(addFromLibrary, addFromLibrary),
     destroy: Object.assign(destroy, destroy),
     show: Object.assign(show, show),
     setDefault: Object.assign(setDefault, setDefault),

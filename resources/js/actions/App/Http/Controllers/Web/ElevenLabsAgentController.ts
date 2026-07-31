@@ -79,7 +79,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::update
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:71
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:79
 * @route '/settings/agents/{agent}'
 */
 export const update = (args: { agent: string | number } | [agent: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -94,7 +94,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::update
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:71
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:79
 * @route '/settings/agents/{agent}'
 */
 update.url = (args: { agent: string | number } | [agent: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -121,7 +121,7 @@ update.url = (args: { agent: string | number } | [agent: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::update
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:71
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:79
 * @route '/settings/agents/{agent}'
 */
 update.patch = (args: { agent: string | number } | [agent: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -131,7 +131,7 @@ update.patch = (args: { agent: string | number } | [agent: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::destroy
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:111
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:127
 * @route '/settings/agents/{agent}'
 */
 export const destroy = (args: { agent: string | number } | [agent: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -146,7 +146,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::destroy
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:111
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:127
 * @route '/settings/agents/{agent}'
 */
 destroy.url = (args: { agent: string | number } | [agent: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -173,7 +173,7 @@ destroy.url = (args: { agent: string | number } | [agent: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::destroy
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:111
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:127
 * @route '/settings/agents/{agent}'
 */
 destroy.delete = (args: { agent: string | number } | [agent: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -183,7 +183,7 @@ destroy.delete = (args: { agent: string | number } | [agent: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::syncFromApi
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:138
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:154
 * @route '/settings/agents/sync'
 */
 export const syncFromApi = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -198,7 +198,7 @@ syncFromApi.definition = {
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::syncFromApi
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:138
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:154
 * @route '/settings/agents/sync'
 */
 syncFromApi.url = (options?: RouteQueryOptions) => {
@@ -207,7 +207,7 @@ syncFromApi.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Web\ElevenLabsAgentController::syncFromApi
-* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:138
+* @see app/Http/Controllers/Web/ElevenLabsAgentController.php:154
 * @route '/settings/agents/sync'
 */
 syncFromApi.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
