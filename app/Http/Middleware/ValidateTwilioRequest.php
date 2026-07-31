@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Application\Flow\Services\TwilioPublicUrl;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,9 +19,15 @@ class ValidateTwilioRequest
         }
 
         $validator = new RequestValidator(config('twilio.auth_token'));
-        $url = $request->fullUrl();
 
-        if (! $validator->validate($signature, $url, $request->all())) {
+        // Twilio signs the public webhook URL. Behind Cloudflare/Herd the Host
+        // header is rewritten (e.g. voice-ai-platform.test), so fullUrl() does
+        // not match what Twilio signed — use TWILIO_WEBHOOK_BASE_URL instead.
+        $url = TwilioPublicUrl::base().$request->getRequestUri();
+
+        // POST body only — query string is already part of the signed URL.
+        // $request->all() would re-include ?flow_id=… and break validation.
+        if (! $validator->validate($signature, $url, $request->post())) {
             abort(403, 'Invalid Twilio signature');
         }
 
