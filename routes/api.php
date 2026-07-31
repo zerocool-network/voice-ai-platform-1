@@ -13,14 +13,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class)->withoutMiddleware(['auth:sanctum', 'throttle:api']);
 
-Route::middleware(['token.expiry', 'auth:sanctum', 'throttle:api_tenant'])->prefix('v1')->group(function () {
+Route::middleware(['token.expiry', 'auth:sanctum', 'throttle:api_tenant'])->name('api.v1.')->prefix('v1')->group(function () {
     Route::apiResource('flows', FlowController::class)->except(['destroy']);
     Route::apiResource('calls', CallController::class)->only(['index', 'show']);
     Route::get('calls/{call}/transcript', [CallController::class, 'transcript']);
     Route::apiResource('tenants', TenantController::class)->except(['index', 'destroy']);
 });
 
-Route::middleware(['token.expiry', 'auth:sanctum', 'throttle:api_tenant'])->prefix('v2')->group(function () {
+Route::middleware(['token.expiry', 'auth:sanctum', 'throttle:api_tenant'])->name('api.v2.')->prefix('v2')->group(function () {
     Route::apiResource('flows', FlowController::class)->except(['destroy']);
     Route::get('calls/search', [V2CallSearchController::class, 'index']);
     Route::get('calls/{call}/quality', [V2CallQualityController::class, 'show']);

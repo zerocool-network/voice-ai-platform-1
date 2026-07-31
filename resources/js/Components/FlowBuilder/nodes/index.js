@@ -6,6 +6,7 @@ import GotoNode from './GotoNode';
 import TransferNode from './TransferNode';
 import HangupNode from './HangupNode';
 import WebhookNode from './WebhookNode';
+import McpToolNode from './McpToolNode';
 import KnowledgeNode from './KnowledgeNode';
 import VoiceAgentNode from './VoiceAgentNode';
 import AnalyzeNode from './AnalyzeNode';
@@ -19,6 +20,7 @@ const nodeTypes = {
   goto: GotoNode,
   transfer: TransferNode,
   webhook: WebhookNode,
+  mcp_tool: McpToolNode,
   knowledge: KnowledgeNode,
   hangup: HangupNode,
   voice_agent: VoiceAgentNode,

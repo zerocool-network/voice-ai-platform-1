@@ -1,4 +1,6 @@
-const NODE_TYPES = ['say', 'ask', 'llm', 'condition', 'goto', 'transfer', 'webhook', 'knowledge', 'hangup', 'voice_agent', 'analyze', 'memory'];
+import { computeAutoLayout } from './layoutFlow'
+
+const NODE_TYPES = ['say', 'ask', 'llm', 'condition', 'goto', 'transfer', 'webhook', 'mcp_tool', 'knowledge', 'hangup', 'voice_agent', 'analyze', 'memory'];
 
 const NODE_DEFAULTS = {
   say: { type: 'say', config: { text: '' }, next: null },
@@ -8,38 +10,38 @@ const NODE_DEFAULTS = {
   goto: { type: 'goto', config: { target: '' } },
   transfer: { type: 'transfer', config: { destination: 'number', value: '' } },
   webhook: { type: 'webhook', config: { url: '', method: 'POST', headers: [], body: '' }, next: null },
+  mcp_tool: { type: 'mcp_tool', config: { server: '', tool: '', parameters: '', variable: 'tool_result' }, next: null },
   knowledge: { type: 'knowledge', config: { query: '', topK: 5, retrievalType: 'semantic', resourceType: '', systemPrompt: '' }, next: null },
   hangup: { type: 'hangup', config: {} },
-  voice_agent: { type: 'voice_agent', config: { welcome_greeting: 'Hello! How can I help you today?', system_prompt: 'You are a helpful voice assistant.', voice: '21m00Tcm4TlvDq8ikWAM', tts_provider: 'elevenlabs', intelligence_service: '' }, next: null },
+  voice_agent: { type: 'voice_agent', config: { welcome_greeting: 'Hello! How can I help you today?', system_prompt: 'You are a helpful voice assistant.', voice: '21m00Tcm4TlvDq8ikWAM', tts_provider: 'ElevenLabs', intelligence_service: '' }, next: null },
   analyze: { type: 'analyze', config: { language_operator: '', redaction_rules: 'none', conversation_profile: '' }, next: null },
   memory: { type: 'memory', config: { from_number: '' }, next: null },
 };
+
+const META_KEYS = ['_valid', '_errors', 'label'];
 
 function generateId() {
   return `n_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-function configToReactFlow(config) {
-  if (!config || !config.steps) return { nodes: [], edges: [] };
+function stripMeta(data = {}) {
+  const config = { ...data };
+  META_KEYS.forEach((k) => delete config[k]);
+  return config;
+}
 
-  const nodes = [];
+function hasValidPosition(pos) {
+  return pos
+    && typeof pos.x === 'number'
+    && typeof pos.y === 'number'
+    && Number.isFinite(pos.x)
+    && Number.isFinite(pos.y);
+}
+
+function buildEdges(steps) {
   const edges = [];
-  const stepIds = Object.keys(config.steps);
-  const cols = 300;
-  const rows = 120;
-  const perCol = Math.ceil(stepIds.length / 3);
-
-  stepIds.forEach((id, i) => {
-    const step = config.steps[id];
-    const col = Math.floor(i / perCol);
-    const row = i % perCol;
-
-    nodes.push({
-      id,
-      type: step.type,
-      position: { x: col * cols + 40, y: row * rows + 40 },
-      data: { ...step.config, label: step.type.charAt(0).toUpperCase() + step.type.slice(1) },
-    });
+  Object.keys(steps).forEach((id) => {
+    const step = steps[id];
 
     if (step.next) {
       edges.push({
@@ -55,7 +57,7 @@ function configToReactFlow(config) {
       if (cond.branches) {
         cond.branches.forEach((b) => {
           if (b.next) {
-            edges.push(            {
+            edges.push({
               id: `${id}->${b.next}--${b.label}`,
               source: id,
               target: b.next,
@@ -78,23 +80,53 @@ function configToReactFlow(config) {
       }
     }
   });
+  return edges;
+}
 
-  return { nodes, edges };
+function configToReactFlow(config) {
+  if (!config || !config.steps) return { nodes: [], edges: [] };
+
+  const steps = config.steps;
+  const stepIds = Object.keys(steps);
+  const allHavePosition = stepIds.every((id) => hasValidPosition(steps[id].position));
+  const layout = allHavePosition
+    ? null
+    : computeAutoLayout(steps, config.start_step);
+
+  const nodes = stepIds.map((id) => {
+    const step = steps[id];
+    const position = hasValidPosition(step.position)
+      ? { x: step.position.x, y: step.position.y }
+      : (layout.get(id) || { x: 40, y: 40 });
+
+    return {
+      id,
+      type: step.type,
+      position,
+      data: {
+        ...step.config,
+        label: step.type.charAt(0).toUpperCase() + step.type.slice(1),
+      },
+    };
+  });
+
+  return { nodes, edges: buildEdges(steps) };
 }
 
 function reactFlowToConfig(nodes, edges, startNodeId) {
   const steps = {};
 
   nodes.forEach((node) => {
-    const step = {
+    steps[node.id] = {
       id: node.id,
       type: node.type,
-      config: { ...node.data },
+      config: stripMeta(node.data),
       next: null,
+      position: {
+        x: Math.round(node.position?.x ?? 0),
+        y: Math.round(node.position?.y ?? 0),
+      },
     };
-
-    delete step.config.label;
-    steps[node.id] = step;
   });
 
   edges.forEach((edge) => {
@@ -122,4 +154,52 @@ function reactFlowToConfig(nodes, edges, startNodeId) {
   };
 }
 
-export { NODE_TYPES, NODE_DEFAULTS, generateId, configToReactFlow, reactFlowToConfig };
+/**
+ * Recompute positions for current React Flow nodes from their graph edges.
+ */
+function layoutReactFlowNodes(nodes, edges, startNodeId) {
+  const steps = {};
+  nodes.forEach((n) => {
+    steps[n.id] = {
+      type: n.type,
+      config: stripMeta(n.data),
+      next: null,
+    };
+  });
+
+  edges.forEach((edge) => {
+    const source = steps[edge.source];
+    if (!source) return;
+    if (source.type === 'condition') {
+      const branchLabel = edge.data?.branchLabel;
+      if (!source.config.branches) source.config.branches = [];
+      if (branchLabel === 'else') {
+        source.config.elseNext = edge.target;
+      } else if (branchLabel) {
+        let branch = source.config.branches.find((b) => b.label === branchLabel);
+        if (!branch) {
+          branch = { label: branchLabel, expression: '', next: null };
+          source.config.branches.push(branch);
+        }
+        branch.next = edge.target;
+      }
+    } else {
+      source.next = edge.target;
+    }
+  });
+
+  const positions = computeAutoLayout(steps, startNodeId || nodes[0]?.id);
+  return nodes.map((n) => {
+    const pos = positions.get(n.id);
+    return pos ? { ...n, position: { ...pos } } : n;
+  });
+}
+
+export {
+  NODE_TYPES,
+  NODE_DEFAULTS,
+  generateId,
+  configToReactFlow,
+  reactFlowToConfig,
+  layoutReactFlowNodes,
+};

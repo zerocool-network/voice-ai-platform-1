@@ -44,6 +44,14 @@ export default function useFlowValidation(nodes, edges) {
             nodeErrors.push({ field: 'url', message: 'URL must start with http:// or https://' });
           }
           break;
+        case 'mcp_tool':
+          if (!data.server || data.server.trim() === '') {
+            nodeErrors.push({ field: 'server', message: 'Server is required' });
+          }
+          if (!data.tool || data.tool.trim() === '') {
+            nodeErrors.push({ field: 'tool', message: 'Tool name is required' });
+          }
+          break;
         case 'llm':
           if (!data.systemPrompt || data.systemPrompt.trim() === '') {
             nodeErrors.push({ field: 'systemPrompt', message: 'System prompt is required' });
