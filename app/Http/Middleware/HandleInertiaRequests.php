@@ -43,7 +43,7 @@ class HandleInertiaRequests extends Middleware
     /** @return array<string, array<string, mixed>> */
     private function loadTranslations(string $locale): array
     {
-        $namespaces = ['common', 'navigation', 'dashboard', 'flows', 'calls', 'settings', 'team', 'api-tokens', 'auth', 'ui', 'integrations'];
+        $namespaces = ['common', 'navigation', 'dashboard', 'flows', 'calls', 'settings', 'team', 'api-tokens', 'auth', 'ui', 'integrations', 'hubspot'];
 
         $translations = [];
         foreach ($namespaces as $ns) {

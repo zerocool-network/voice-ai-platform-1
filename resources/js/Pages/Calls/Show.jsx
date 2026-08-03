@@ -146,6 +146,25 @@ export default function CallShow({ call }) {
                         </PageSection>
 
                         <PageSection>
+                            <h3 className="text-base font-semibold text-slate-950">HubSpot</h3>
+                            <Text className="mt-2 text-sm text-slate-600">{t('hubspot.sync_test_hint')}</Text>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                <Button
+                                    type="button"
+                                    onClick={() => router.post(`/settings/integrations/hubspot/voice-sync/calls/${call.id}`)}
+                                >
+                                    {t('hubspot.sync_this_call')}
+                                </Button>
+                                <Link href="/settings/integrations/hubspot/voice-sync">
+                                    <Button outline type="button">{t('hubspot.modules.voice-sync')}</Button>
+                                </Link>
+                                <Link href="/settings/integrations/hubspot">
+                                    <Button outline type="button">{t('hubspot.modules.overview')}</Button>
+                                </Link>
+                            </div>
+                        </PageSection>
+
+                        <PageSection>
                             <h3 className="text-base font-semibold text-slate-950">{t('ui.flow_context')}</h3>
                             {call.context ? (
                                 <pre className="mt-4 max-h-48 overflow-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-700">

@@ -82,6 +82,7 @@ class HubSpotOAuthService
             ],
             'portal_id' => $portalId,
             'scopes' => explode(' ', (string) ($tokenData['scope'] ?? '')),
+            'auth_source' => 'oauth',
             'status' => IntegrationStatus::Connected->value,
             'connected_at' => now()->toIso8601String(),
             'last_error' => null,

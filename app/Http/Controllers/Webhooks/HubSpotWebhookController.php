@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Webhooks;
 
 use App\Enums\IntegrationProvider;
 use App\Http\Controllers\Controller;
+use App\Infrastructure\Persistence\Eloquent\HubSpot\HubSpotWebhookEventModel;
 use App\Infrastructure\Persistence\Eloquent\Tenant\TenantModel;
 use App\Services\Integrations\HubSpot\HubSpotWebhookSignature;
 use App\Services\Integrations\IntegrationConnectionService;
@@ -48,10 +49,26 @@ class HubSpotWebhookController extends Controller
             return response()->json(['message' => 'Not connected'], 422);
         }
 
+        $eventList = array_is_list($events) ? $events : [$events];
+        foreach ($eventList as $event) {
+            if (! is_array($event)) {
+                continue;
+            }
+
+            HubSpotWebhookEventModel::create([
+                'tenant_id' => $tenant->id,
+                'portal_id' => $portalId,
+                'subscription_type' => (string) ($event['subscriptionType'] ?? $event['subscription_type'] ?? ''),
+                'object_id' => isset($event['objectId']) ? (string) $event['objectId'] : null,
+                'payload' => $event,
+                'processed_at' => now(),
+            ]);
+        }
+
         Log::info('HubSpot webhook received', [
             'tenant_id' => $tenant->id,
             'portal_id' => $portalId,
-            'count' => is_array($events) ? count($events) : 0,
+            'count' => count($eventList),
         ]);
 
         activity()

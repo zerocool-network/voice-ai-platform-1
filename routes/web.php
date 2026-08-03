@@ -23,6 +23,10 @@ use App\Http\Controllers\Web\FlowController;
 use App\Http\Controllers\Web\FlowTestController;
 use App\Http\Controllers\Web\GettingStartedController;
 use App\Http\Controllers\Web\ImpersonationController;
+use App\Http\Controllers\Web\Integrations\HubSpot\HubSpotConsoleController;
+use App\Http\Controllers\Web\Integrations\HubSpot\HubSpotCrmObjectController;
+use App\Http\Controllers\Web\Integrations\HubSpot\HubSpotModulePageController;
+use App\Http\Controllers\Web\Integrations\HubSpot\HubSpotVoiceSyncController;
 use App\Http\Controllers\Web\Integrations\HubSpotIntegrationController;
 use App\Http\Controllers\Web\Integrations\IntegrationsController;
 use App\Http\Controllers\Web\Integrations\LookerStudioIntegrationController;
@@ -185,11 +189,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/settings/integrations/n8n/workflows/{workflowId}/activate', [N8nIntegrationController::class, 'activateWorkflow'])->name('settings.integrations.n8n.activate');
     Route::post('/settings/integrations/n8n/workflows/{workflowId}/deactivate', [N8nIntegrationController::class, 'deactivateWorkflow'])->name('settings.integrations.n8n.deactivate');
 
-    Route::get('/settings/integrations/hubspot', [HubSpotIntegrationController::class, 'show'])->name('settings.integrations.hubspot');
+    Route::get('/settings/integrations/hubspot', [HubSpotConsoleController::class, 'overview'])->name('settings.integrations.hubspot');
+    Route::get('/settings/integrations/hubspot/search', [HubSpotConsoleController::class, 'search'])->name('settings.integrations.hubspot.search');
     Route::post('/settings/integrations/hubspot/connect', [HubSpotIntegrationController::class, 'connect'])->name('settings.integrations.hubspot.connect');
     Route::get('/settings/integrations/hubspot/callback', [HubSpotIntegrationController::class, 'callback'])->name('settings.integrations.hubspot.callback');
     Route::post('/settings/integrations/hubspot/disconnect', [HubSpotIntegrationController::class, 'disconnect'])->name('settings.integrations.hubspot.disconnect');
     Route::post('/settings/integrations/hubspot/sync', [HubSpotIntegrationController::class, 'updateSync'])->name('settings.integrations.hubspot.sync');
+
+    Route::get('/settings/integrations/hubspot/objects/{objectType}', [HubSpotCrmObjectController::class, 'index'])->name('settings.integrations.hubspot.objects.index');
+    Route::post('/settings/integrations/hubspot/objects/{objectType}', [HubSpotCrmObjectController::class, 'store'])->name('settings.integrations.hubspot.objects.store');
+    Route::post('/settings/integrations/hubspot/objects/{objectType}/batch', [HubSpotCrmObjectController::class, 'batch'])->name('settings.integrations.hubspot.objects.batch');
+    Route::get('/settings/integrations/hubspot/objects/{objectType}/{id}', [HubSpotCrmObjectController::class, 'show'])->name('settings.integrations.hubspot.objects.show');
+    Route::patch('/settings/integrations/hubspot/objects/{objectType}/{id}', [HubSpotCrmObjectController::class, 'update'])->name('settings.integrations.hubspot.objects.update');
+    Route::delete('/settings/integrations/hubspot/objects/{objectType}/{id}', [HubSpotCrmObjectController::class, 'destroy'])->name('settings.integrations.hubspot.objects.destroy');
+    Route::post('/settings/integrations/hubspot/objects/{objectType}/{id}/associate', [HubSpotCrmObjectController::class, 'associate'])->name('settings.integrations.hubspot.objects.associate');
+    Route::post('/settings/integrations/hubspot/objects/{objectType}/{id}/dissociate', [HubSpotCrmObjectController::class, 'dissociate'])->name('settings.integrations.hubspot.objects.dissociate');
+
+    Route::get('/settings/integrations/hubspot/modules/{module}', [HubSpotModulePageController::class, 'show'])->name('settings.integrations.hubspot.modules.show');
+    Route::post('/settings/integrations/hubspot/modules/{module}', [HubSpotModulePageController::class, 'mutate'])->name('settings.integrations.hubspot.modules.mutate');
+
+    Route::get('/settings/integrations/hubspot/voice-sync', [HubSpotVoiceSyncController::class, 'show'])->name('settings.integrations.hubspot.voice-sync');
+    Route::post('/settings/integrations/hubspot/voice-sync', [HubSpotVoiceSyncController::class, 'update'])->name('settings.integrations.hubspot.voice-sync.update');
+    Route::post('/settings/integrations/hubspot/voice-sync/calls/{callId}', [HubSpotVoiceSyncController::class, 'syncCall'])->name('settings.integrations.hubspot.voice-sync.sync-call');
 
     Route::get('/settings/integrations/looker-studio', [LookerStudioIntegrationController::class, 'show'])->name('settings.integrations.looker-studio');
     Route::post('/settings/integrations/looker-studio/connect', [LookerStudioIntegrationController::class, 'connect'])->name('settings.integrations.looker-studio.connect');

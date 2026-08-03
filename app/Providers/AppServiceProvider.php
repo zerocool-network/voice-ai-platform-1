@@ -132,6 +132,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manageWebhooks', fn (User $user) => $user->hasPermissionTo('webhooks.manage'));
         Gate::define('manageAgents', fn (User $user) => $user->hasPermissionTo('agents.manage'));
         Gate::define('manageSettings', fn (User $user) => $user->hasPermissionTo('settings.manage') || $user->isOwnerOrAdmin());
+        Gate::define('viewHubSpot', fn (User $user) => $user->tenant_id !== null);
+        Gate::define('manageHubSpot', fn (User $user) => $user->isOwner() || $user->isAdmin() || $user->hasPermissionTo('settings.manage'));
 
         Event::subscribe(UserActivitySubscriber::class);
 

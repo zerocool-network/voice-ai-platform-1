@@ -10,8 +10,6 @@ use App\Services\Integrations\IntegrationConnectionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class HubSpotIntegrationController extends Controller
 {
@@ -20,15 +18,9 @@ class HubSpotIntegrationController extends Controller
         private readonly HubSpotOAuthService $oauth,
     ) {}
 
-    public function show(Request $request): Response
+    public function show(Request $request): RedirectResponse
     {
-        $tenant = TenantModel::findOrFail($request->user()->tenant_id);
-
-        return Inertia::render('Settings/Integrations/HubSpot', [
-            'integration' => $this->connections->publicView($tenant, IntegrationProvider::HubSpot),
-            'platform_configured' => filled(config('hubspot.client_id')) && filled(config('hubspot.client_secret')),
-            'scopes' => config('hubspot.scopes', []),
-        ]);
+        return redirect()->route('settings.integrations.hubspot');
     }
 
     public function connect(Request $request): RedirectResponse
