@@ -78,4 +78,41 @@ class VoiceAgentTwimlTest extends TestCase
         $this->assertStringContainsString('name="callSid"', $xml);
         $this->assertStringContainsString('action="https://voice-ai-platform.hifenix.com/twilio/step"', $xml);
     }
+
+    public function test_voice_agent_with_blank_voice_omits_attribute(): void
+    {
+        config([
+            'twilio.webhook_base_url' => 'https://example.test',
+            'twilio.relay_url' => 'wss://example.test/twilio/relay',
+        ]);
+
+        $flow = new Flow(
+            id: 'flow-1',
+            tenantId: 'tenant-1',
+            name: 'Agent Flow',
+            description: null,
+            phoneNumber: '+15551234567',
+            config: FlowConfig::fromArray([
+                'start_step' => 'agent',
+                'steps' => [
+                    'agent' => [
+                        'id' => 'agent',
+                        'type' => 'voice_agent',
+                        'config' => [
+                            'tts_provider' => 'elevenlabs',
+                            'voice' => '   ',
+                        ],
+                        'next' => null,
+                    ],
+                ],
+            ]),
+            language: 'es-ES',
+        );
+
+        $xml = (string) $this->app->make(FlowExecutor::class)->executeStep('agent', $flow);
+
+        $this->assertStringNotContainsString('voice="', $xml);
+        $this->assertStringContainsString('welcomeGreeting="¡Hola! ¿En qué puedo ayudarle hoy?"', $xml);
+        $this->assertStringContainsString('language="es-ES"', $xml);
+    }
 }

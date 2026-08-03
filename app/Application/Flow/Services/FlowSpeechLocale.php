@@ -105,6 +105,57 @@ final class FlowSpeechLocale
         return self::bcp47($appLocale);
     }
 
+    /**
+     * Map Twilio BCP-47 (or short code) to Laravel app locale (en, es, …).
+     */
+    public static function appLocale(?string $stored): string
+    {
+        $bcp47 = self::bcp47($stored);
+        $primary = strtolower(explode('-', $bcp47)[0] ?? 'en');
+
+        return $primary !== '' ? $primary : 'en';
+    }
+
+    /**
+     * @param  array<string, mixed>  $replace
+     */
+    public static function speak(?string $stored, string $key, array $replace = []): string
+    {
+        return (string) __($key, $replace, self::appLocale($stored));
+    }
+
+    /** @return array<string, string> */
+    public static function elevenLabsVoices(): array
+    {
+        if (self::configAvailable()) {
+            $configured = config('flow.elevenlabs_voices');
+
+            if (is_array($configured) && $configured !== []) {
+                /** @var array<string, string> $configured */
+                return $configured;
+            }
+        }
+
+        return [];
+    }
+
+    public static function elevenLabsVoice(?string $stored): ?string
+    {
+        $locale = self::bcp47($stored);
+        $voices = self::elevenLabsVoices();
+
+        if (isset($voices[$locale])) {
+            return $voices[$locale];
+        }
+
+        // Twilio has no es-MX CR default; use documented es-US voice ID.
+        if ($locale === 'es-MX' && isset($voices['es-US'])) {
+            return $voices['es-US'];
+        }
+
+        return null;
+    }
+
     /** @return array<string, string> */
     private static function languages(): array
     {

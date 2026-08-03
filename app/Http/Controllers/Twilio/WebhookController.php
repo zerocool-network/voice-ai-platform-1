@@ -49,9 +49,9 @@ class WebhookController extends Controller
                         'numDigits' => 1,
                         'timeout' => 5,
                     ]);
-                    $gather->say($dp['consent_message'] ?? 'This call may be recorded.', $say);
-                    $gather->say('Press 1 to accept, or any other key to decline.', $say);
-                    $response->say('You did not provide consent. Goodbye.', $say);
+                    $gather->say($dp['consent_message'] ?: FlowSpeechLocale::speak($speechLocale, 'speech.consent_default'), $say);
+                    $gather->say(FlowSpeechLocale::speak($speechLocale, 'speech.consent_prompt'), $say);
+                    $response->say(FlowSpeechLocale::speak($speechLocale, 'speech.consent_timeout'), $say);
                     $response->hangup();
 
                     return $this->toResponse($response);
@@ -297,7 +297,7 @@ class WebhookController extends Controller
             ->log('Call recording consent declined');
 
         $response = new VoiceResponse;
-        $response->say('Goodbye.', $say);
+        $response->say(FlowSpeechLocale::speak($speechLocale, 'speech.goodbye'), $say);
         $response->hangup();
 
         return $this->toResponse($response);
@@ -307,7 +307,7 @@ class WebhookController extends Controller
     {
         $response = new VoiceResponse;
         $response->say(
-            'Sorry, this number is not configured. Goodbye.',
+            FlowSpeechLocale::speak($locale, 'speech.not_configured'),
             FlowSpeechLocale::sayAttributes($locale),
         );
         $response->hangup();

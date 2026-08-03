@@ -1,0 +1,19 @@
+<?php
+
+return [
+    'consent_default' => 'Esta chamada pode ser gravada.',
+    'consent_prompt' => 'Pressione 1 para aceitar, ou qualquer outra tecla para recusar.',
+    'consent_timeout' => 'Você não forneceu consentimento. Adeus.',
+    'goodbye' => 'Adeus.',
+    'not_configured' => 'Desculpe, este número não está configurado. Adeus.',
+    'welcome_greeting' => 'Olá! Como posso ajudá-lo hoje?',
+    'ai_trouble' => 'Desculpe, estou com problemas no momento.',
+    'llm_trouble' => 'Desculpe, estou com problemas para processar sua solicitação no momento.',
+    'mcp_not_configured' => 'A ferramenta MCP não está configurada.',
+    'mcp_unavailable' => 'As ferramentas MCP estão indisponíveis.',
+    'mcp_failed' => 'A chamada à ferramenta MCP falhou.',
+    'mcp_success' => 'A ferramenta MCP foi concluída com sucesso.',
+    'webhook_not_configured' => 'A URL do webhook não está configurada.',
+    'webhook_failed' => 'O webhook retornou o status :status',
+    'memory_unavailable' => 'Não foi possível carregar seu perfil.',
+];

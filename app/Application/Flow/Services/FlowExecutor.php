@@ -79,7 +79,7 @@ class FlowExecutor
             'hangup' => $this->hangupStep(),
             'voice_agent' => $this->voiceAgentStep($step, $flow, $call),
             'analyze' => $this->analyzeStep($step, $flow, $call),
-            'memory' => $this->memoryStep($step, $call),
+            'memory' => $this->memoryStep($step, $flow, $call),
             default => throw new \RuntimeException("Unknown step type: {$stepType}"),
         };
     }
@@ -199,7 +199,7 @@ class FlowExecutor
             $llmText = $this->aiService->chat($messages, $temperature);
         } catch (\Throwable $e) {
             $this->logger?->warning('FlowExecutor LLM failed', ['error' => $e->getMessage()]);
-            $llmText = 'I am sorry, I am having trouble processing your request right now.';
+            $llmText = FlowSpeechLocale::speak($flow->language(), 'speech.llm_trouble');
         }
 
         $this->speak($response, $llmText);
@@ -354,7 +354,7 @@ class FlowExecutor
         $bodyRaw = $config['body'] ?? '';
 
         if ($url === '') {
-            $this->speak($response, 'Webhook URL not configured.');
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.webhook_not_configured'));
             $response->redirect(TwilioPublicUrl::to('/twilio/step'));
 
             return $response;
@@ -395,7 +395,7 @@ class FlowExecutor
             if ($status >= 200 && $status < 300) {
                 $this->speak($response, 'Webhook completed successfully.');
             } else {
-                $this->speak($response, 'Webhook returned status '.$status);
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.webhook_failed', ['status' => $status]));
             }
         } catch (\Throwable $e) {
             $this->logger?->warning('FlowExecutor webhook failed', [
@@ -424,7 +424,7 @@ class FlowExecutor
         $parametersRaw = $config['parameters'] ?? '{}';
 
         if ($server === '' || $tool === '') {
-            $this->speak($response, 'MCP tool is not configured.');
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.mcp_not_configured'));
             $next = $step['next'] ?? null;
             if ($next !== null) {
                 $response->redirect(TwilioPublicUrl::to('/twilio/step'));
@@ -434,7 +434,7 @@ class FlowExecutor
         }
 
         if ($this->mcpToolService === null) {
-            $this->speak($response, 'MCP tooling is unavailable.');
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.mcp_unavailable'));
             $next = $step['next'] ?? null;
             if ($next !== null) {
                 $response->redirect(TwilioPublicUrl::to('/twilio/step'));
@@ -468,9 +468,9 @@ class FlowExecutor
         }
 
         if ($result['isError'] ?? false) {
-            $this->speak($response, 'MCP tool call failed.');
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.mcp_failed'));
         } else {
-            $spoken = $text !== '' ? mb_substr($text, 0, 240) : 'MCP tool completed successfully.';
+            $spoken = $text !== '' ? mb_substr($text, 0, 240) : FlowSpeechLocale::speak($flow->language(), 'speech.mcp_success');
             $this->speak($response, $spoken);
         }
 
@@ -499,15 +499,21 @@ class FlowExecutor
         $ttsProvider = $this->normalizeTtsProvider($config['tts_provider'] ?? $config['ttsProvider'] ?? null);
         $language = FlowSpeechLocale::bcp47($flow->language());
 
+        $welcomeGreeting = $config['welcome_greeting'] ?? $config['welcomeGreeting'] ?? null;
+        if (! is_string($welcomeGreeting) || trim($welcomeGreeting) === '') {
+            $welcomeGreeting = FlowSpeechLocale::speak($flow->language(), 'speech.welcome_greeting');
+        }
+
         $connect = $response->connect(['action' => TwilioPublicUrl::to('/twilio/step')]);
         $relay = $connect->conversationRelay([
             'url' => $wsUrl,
-            'welcomeGreeting' => $config['welcome_greeting'] ?? 'Hello! How can I help you today?',
+            'welcomeGreeting' => $welcomeGreeting,
             'ttsProvider' => $ttsProvider,
             'language' => $language,
         ]);
 
-        if ($voice = $config['voice'] ?? null) {
+        $voice = $config['voice'] ?? null;
+        if (is_string($voice) && trim($voice) !== '') {
             $relay->setVoice($voice);
         }
 
@@ -535,6 +541,7 @@ class FlowExecutor
 
         $systemPrompt = $config['system_prompt'] ?? $config['systemPrompt'] ?? 'You are a helpful voice assistant.';
         $relay->parameter(['name' => 'systemPrompt', 'value' => $systemPrompt]);
+        $relay->parameter(['name' => 'language', 'value' => $language]);
 
         if ($call !== null) {
             $relay->parameter(['name' => 'callSid', 'value' => $call->getCallSid()->value()]);
@@ -560,7 +567,7 @@ class FlowExecutor
     }
 
     /** @param FlowStep $step */
-    private function memoryStep(array $step, ?Call $call): VoiceResponse
+    private function memoryStep(array $step, Flow $flow, ?Call $call): VoiceResponse
     {
         $response = new VoiceResponse;
         $config = $step['config'];
@@ -570,7 +577,7 @@ class FlowExecutor
         if (! $phoneNumber) {
             $this->logger?->warning('Memory step: no phone number available');
 
-            return $this->sayAndContinue($response, 'Unable to load your profile.');
+            return $this->sayAndContinue($response, FlowSpeechLocale::speak($flow->language(), 'speech.memory_unavailable'));
         }
 
         $profile = $this->memoryService->searchProfile(

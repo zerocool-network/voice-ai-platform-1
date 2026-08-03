@@ -30,4 +30,45 @@ return [
 
     'default_language' => 'en-US',
     'default_voice' => 'Polly.Joanna',
+
+    /*
+    | Official Twilio ConversationRelay ElevenLabs defaults by language.
+    | Used for Builder preview / docs — runtime omits empty voice so Twilio applies these.
+    | es-MX maps to Twilio's es-US default (no es-MX row in Twilio table).
+    | @see https://www.twilio.com/docs/voice/conversationrelay/voice-configuration
+    */
+    'elevenlabs_voices' => [
+        'bg-BG' => 'AB9XsbSA4eLG12t2myjN',
+        'cs-CZ' => 'uYFJyGaibp4N2VwYQshk',
+        'da-DK' => 'ygiXC2Oa1BiHksD3WkJZ',
+        'de-DE' => 'FTNCalFNG5bRnkkaP5Ug',
+        'en-AU' => '9Ft9sm9dzvprPILZmLJl',
+        'en-GB' => 'Fahco4VZzobUeiPqni1S',
+        'en-IN' => 'mCQMfsqGDT6IDkEKR20a',
+        'en-US' => 'UgBBYS2sOqTuMpoF3BR0',
+        'es-ES' => '6xftrpatV0jGmFHxDjUv',
+        'es-US' => 'CaJslL1xziwefCeTNzHv',
+        'es-MX' => 'CaJslL1xziwefCeTNzHv',
+        'fi-FI' => '6xPz2opT0y5qtoRh1U1Y',
+        'fr-CA' => 'IPgYtHTNLjC7Bq7IPHrm',
+        'fr-FR' => 'a5n9pJUnAhX4fn7lx3uo',
+        'hi-IN' => 'IvLWq57RKibBrqZGpQrC',
+        'hu-HU' => 'TumdjBNWanlT3ysvclWh',
+        'id-ID' => '1k39YpzqXZn52BgyLyGO',
+        'it-IT' => 'uScy1bXtKz8vPzfdFsFw',
+        'ja-JP' => '3JDquces8E8bkmvbh6Bc',
+        'ko-KR' => 'uyVNoMrnUku1dZyVEXwD',
+        'nl-BE' => 's7Z6uboUuE4Nd8Q2nye6',
+        'nl-NL' => 'UNBIyLbtFB9k7FKW8wJv',
+        'pl-PL' => 'W0sqKm1Sfw1EzlCH14FQ',
+        'pt-BR' => 'CstacWqMhJQlnfLPxRG4',
+        'pt-PT' => 'TsZfI8Nbn2Xd7ArC76n9',
+        'ro-RO' => 'OlBp4oyr3FBAGEAtJOnU',
+        'ru-RU' => 'AB9XsbSA4eLG12t2myjN',
+        'sv-SE' => '4xkUqaR9MYOJHoaC1Nak',
+        'ta-IN' => 'ZhJ5LanYnCmLKQUXvsV7',
+        'tr-TR' => 'IuRRIAcbQK5AQk1XevPj',
+        'uk-UA' => 'nCqaTnIbLdME87OuQaZY',
+        'vi-VN' => 'foH7s9fX31wFFH2yqrFa',
+    ],
 ];

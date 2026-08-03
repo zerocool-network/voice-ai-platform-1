@@ -58,6 +58,7 @@ class ConversationRelayHandler
         $this->session = [
             'callSid' => $incoming['callSid'] ?? ($custom['callSid'] ?? null),
             'systemPrompt' => $custom['systemPrompt'] ?? 'You are a helpful voice assistant. Keep replies concise for speech.',
+            'language' => $custom['language'] ?? ($incoming['ttsLanguage'] ?? ($incoming['language'] ?? 'en-US')),
             'history' => [],
         ];
 
@@ -97,7 +98,8 @@ class ConversationRelayHandler
             $reply = $this->aiService->chat($messages);
         } catch (\Throwable $e) {
             $this->logger?->warning('ConversationRelay AI failed', ['error' => $e->getMessage()]);
-            $reply = 'I am sorry, I am having trouble right now.';
+            $locale = is_string($this->session['language'] ?? null) ? $this->session['language'] : 'en-US';
+            $reply = FlowSpeechLocale::speak($locale, 'speech.ai_trouble');
         }
 
         $history[] = ['role' => 'assistant', 'content' => $reply];
