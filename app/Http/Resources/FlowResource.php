@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Application\Flow\Services\FlowSpeechLocale;
 use App\Domain\Flow\Entities\Flow;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,6 +19,7 @@ class FlowResource extends JsonResource
             'name' => $this->getName(),
             'description' => $this->getDescription(),
             'phone_number' => $this->getPhoneNumber(),
+            'language' => FlowSpeechLocale::bcp47($this->getLanguage()),
             'config' => $this->getConfig(),
             'is_active' => $this->isActive(),
             'version' => $this->getVersion(),

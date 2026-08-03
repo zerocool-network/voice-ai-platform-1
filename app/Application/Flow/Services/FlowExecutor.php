@@ -7,7 +7,14 @@ use App\Domain\Flow\Entities\Flow;
 use App\Domain\Flow\Services\AiServiceInterface;
 use App\Domain\Knowledge\Services\KnowledgeRetrievalService;
 use App\Domain\Knowledge\Services\RetrievalType;
+use App\Enums\IntegrationProvider;
+use App\Infrastructure\Persistence\Eloquent\Call\CallModel;
+use App\Infrastructure\Persistence\Eloquent\Tenant\TenantModel;
 use App\Services\ConversationMemoryService;
+use App\Services\Integrations\HubSpot\HubSpotSyncService;
+use App\Services\Integrations\IntegrationConnectionService;
+use App\Services\Integrations\N8n\N8nPublicApiClient;
+use App\Services\McpToolService;
 use Illuminate\Support\Facades\Http;
 use Psr\Log\LoggerInterface;
 use Twilio\TwiML\VoiceResponse;
@@ -17,15 +24,46 @@ use Twilio\TwiML\VoiceResponse;
  */
 class FlowExecutor
 {
+    use SharedFlowLogic {
+        evaluateExpression as private evaluateSharedExpression;
+        resolveVariables as private resolveSharedVariables;
+    }
+
+    /** @var array<string, mixed> */
+    private array $runtimeVariables = [];
+
+    /** @var array{language: string, voice: string} */
+    private array $sayAttributes = [
+        'language' => 'en-US',
+        'voice' => 'Polly.Joanna',
+    ];
+
     public function __construct(
         private readonly AiServiceInterface $aiService,
         private readonly KnowledgeRetrievalService $knowledgeRetrieval,
         private readonly ConversationMemoryService $memoryService,
+        private readonly ?McpToolService $mcpToolService = null,
         private readonly ?LoggerInterface $logger = null,
     ) {}
 
+    /** @return array<string, mixed> */
+    protected function sharedVariables(): array
+    {
+        return $this->runtimeVariables;
+    }
+
     public function executeStep(string $stepId, Flow $flow, ?Call $call = null): VoiceResponse
     {
+        $this->sayAttributes = FlowSpeechLocale::sayAttributes($flow->language());
+        $this->bindRuntimeContext($flow, $call);
+
+        $this->logger?->info('FlowExecutor speech locale', [
+            'flow_id' => $flow->id(),
+            'step_id' => $stepId,
+            'language' => $this->sayAttributes['language'],
+            'voice' => $this->sayAttributes['voice'],
+        ]);
+
         $step = $flow->config()->getStep($stepId);
 
         if ($step === null) {
@@ -36,24 +74,32 @@ class FlowExecutor
 
         return match ($stepType) {
             'say' => $this->sayStep($step, $flow),
-            'gather', 'ask' => $this->askStep($step),
+            'gather', 'ask' => $this->askStep($step, $flow),
             'llm' => $this->llmStep($step, $flow, $call),
             'condition' => $this->conditionStep($step, $flow, $call),
             'goto' => $this->gotoStep($step, $flow),
             'transfer' => $this->transferStep($step),
             'knowledge' => $this->knowledgeStep($step, $flow, $call),
-            'webhook', 'mcp_tool' => $this->webhookStep($step, $flow, $call),
+            'webhook' => $this->webhookStep($step, $flow, $call),
+            'mcp_tool' => $this->mcpToolStep($step, $flow, $call),
+            'n8n_trigger' => $this->n8nTriggerStep($step, $flow, $call),
+            'hubspot' => $this->hubspotStep($step, $flow, $call),
             'hangup' => $this->hangupStep(),
-            'voice_agent' => $this->voiceAgentStep($step),
+            'voice_agent' => $this->voiceAgentStep($step, $flow, $call),
             'analyze' => $this->analyzeStep($step, $flow, $call),
-            'memory' => $this->memoryStep($step, $call),
+            'memory' => $this->memoryStep($step, $flow, $call),
             default => throw new \RuntimeException("Unknown step type: {$stepType}"),
         };
     }
 
-    /** @param FlowStep $step */
-    public function determineNextStep(array $step, ?string $digits): ?string
+    /**
+     * @param  FlowStep  $step
+     * @param  array<string, mixed>  $variables
+     */
+    public function determineNextStep(array $step, ?string $digits, array $variables = []): ?string
     {
+        $this->runtimeVariables = $variables;
+
         $stepType = $step['type'];
         $config = $step['config'];
 
@@ -65,25 +111,40 @@ class FlowExecutor
         };
     }
 
+    protected function evaluateExpression(string $expression): bool
+    {
+        $normalized = trim($expression);
+
+        if ($normalized === '') {
+            return true;
+        }
+
+        if (! str_contains($normalized, '{{')) {
+            $normalized = '{{'.$normalized.'}}';
+        }
+
+        return $this->evaluateSharedExpression($normalized);
+    }
+
     /** @param FlowStep $step */
     private function sayStep(array $step, Flow $flow): VoiceResponse
     {
         $response = new VoiceResponse;
         $text = $step['config']['text'] ?? '';
 
-        $resolved = $this->resolveVariables($text, $flow);
-        $response->say($resolved);
+        $resolved = $this->resolveFlowVariables($text, $flow);
+        $this->speak($response, $resolved);
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
     }
 
     /** @param FlowStep $step */
-    private function askStep(array $step): VoiceResponse
+    private function askStep(array $step, Flow $flow): VoiceResponse
     {
         $response = new VoiceResponse;
         $config = $step['config'];
@@ -91,34 +152,36 @@ class FlowExecutor
         $timeout = (int) ($config['timeoutSec'] ?? $config['timeout_seconds'] ?? 5);
         $inputType = $config['inputType'] ?? 'dtmf';
         $numDigits = (int) ($config['num_digits'] ?? 1);
+        $language = FlowSpeechLocale::bcp47($flow->language());
 
         if ($inputType === 'speech') {
             $gather = $response->gather([
                 'input' => 'speech',
                 'timeout' => $timeout,
-                'action' => '/twilio/step',
+                'action' => TwilioPublicUrl::to('/twilio/step'),
                 'method' => 'POST',
                 'speechTimeout' => 'auto',
+                'language' => $language,
             ]);
 
             if ($prompt !== '') {
-                $gather->say($prompt);
+                $this->speak($gather, $prompt);
             }
 
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         } else {
             $gather = $response->gather([
                 'numDigits' => $numDigits,
                 'timeout' => $timeout,
-                'action' => '/twilio/step',
+                'action' => TwilioPublicUrl::to('/twilio/step'),
                 'method' => 'POST',
             ]);
 
             if ($prompt !== '') {
-                $gather->say($prompt);
+                $this->speak($gather, $prompt);
             }
 
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -144,14 +207,14 @@ class FlowExecutor
             $llmText = $this->aiService->chat($messages, $temperature);
         } catch (\Throwable $e) {
             $this->logger?->warning('FlowExecutor LLM failed', ['error' => $e->getMessage()]);
-            $llmText = 'I am sorry, I am having trouble processing your request right now.';
+            $llmText = FlowSpeechLocale::speak($flow->language(), 'speech.llm_trouble');
         }
 
-        $response->say($llmText);
+        $this->speak($response, $llmText);
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -168,12 +231,12 @@ class FlowExecutor
         if ($redirectStep !== null) {
             $this->logger?->debug("FlowExecutor condition -> {$redirectStep}");
 
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
 
             return $response;
         }
 
-        $response->say('Condition not resolved.');
+        $this->speak($response, 'Condition not resolved.');
         $response->hangup();
 
         return $response;
@@ -187,9 +250,9 @@ class FlowExecutor
         $target = $config['target'] ?? $step['next'] ?? null;
 
         if ($target !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         } else {
-            $response->say('No target specified.');
+            $this->speak($response, 'No target specified.');
             $response->hangup();
         }
 
@@ -205,7 +268,7 @@ class FlowExecutor
         $value = $config['value'] ?? $config['target'] ?? '';
 
         if ($value === '') {
-            $response->say('No destination configured.');
+            $this->speak($response, 'No destination configured.');
             $response->hangup();
         } elseif ($destination === 'sip') {
             $dial = $response->dial('');
@@ -229,16 +292,16 @@ class FlowExecutor
         $systemPrompt = $config['systemPrompt'] ?? 'You are a helpful voice assistant. Use the knowledge context below to answer concisely in a spoken-friendly way.';
 
         if ($queryRaw === '') {
-            $response->say('Knowledge step has no query configured.');
+            $this->speak($response, 'Knowledge step has no query configured.');
             $next = $step['next'] ?? null;
             if ($next !== null) {
-                $response->redirect('/twilio/step');
+                $response->redirect(TwilioPublicUrl::to('/twilio/step'));
             }
 
             return $response;
         }
 
-        $query = $this->resolveVariables($queryRaw, $flow);
+        $query = $this->resolveFlowVariables($queryRaw, $flow);
         $callContext = $call?->context() ?? [];
         $query = preg_replace_callback(
             '/\{\{(\w+)\}\}/',
@@ -258,7 +321,7 @@ class FlowExecutor
             $contextText = $result->contextText;
 
             if (trim($contextText) === '') {
-                $response->say('I could not find any relevant information.');
+                $this->speak($response, 'I could not find any relevant information.');
             } else {
                 $messages = [
                     ['role' => 'system', 'content' => $systemPrompt."\n\n## Knowledge Context\n{$contextText}"],
@@ -267,10 +330,10 @@ class FlowExecutor
 
                 try {
                     $aiResponse = $this->aiService->chat($messages);
-                    $response->say($aiResponse);
+                    $this->speak($response, $aiResponse);
                 } catch (\Throwable $e) {
                     $this->logger?->warning('FlowExecutor knowledge AI failed', ['error' => $e->getMessage()]);
-                    $response->say('I found information but encountered an error processing it.');
+                    $this->speak($response, 'I found information but encountered an error processing it.');
                 }
             }
         } catch (\Throwable $e) {
@@ -278,12 +341,12 @@ class FlowExecutor
                 'query' => $query,
                 'error' => $e->getMessage(),
             ]);
-            $response->say('I encountered an error looking up information.');
+            $this->speak($response, 'I encountered an error looking up information.');
         }
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -299,13 +362,13 @@ class FlowExecutor
         $bodyRaw = $config['body'] ?? '';
 
         if ($url === '') {
-            $response->say('Webhook URL not configured.');
-            $response->redirect('/twilio/step');
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.webhook_not_configured'));
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
 
             return $response;
         }
 
-        $resolvedBody = $this->resolveVariables($bodyRaw, $flow);
+        $resolvedBody = $this->resolveFlowVariables($bodyRaw, $flow);
         $callContext = $call?->context() ?? [];
         $resolvedBody = preg_replace_callback(
             '/\{\{(\w+)\}\}/',
@@ -338,21 +401,275 @@ class FlowExecutor
             ]);
 
             if ($status >= 200 && $status < 300) {
-                $response->say('Webhook completed successfully.');
+                $this->speak($response, 'Webhook completed successfully.');
             } else {
-                $response->say('Webhook returned status '.$status);
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.webhook_failed', ['status' => $status]));
             }
         } catch (\Throwable $e) {
             $this->logger?->warning('FlowExecutor webhook failed', [
                 'url' => $url,
                 'error' => $e->getMessage(),
             ]);
-            $response->say('Webhook request failed.');
+            $this->speak($response, 'Webhook request failed.');
         }
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
+        }
+
+        return $response;
+    }
+
+    /** @param FlowStep $step */
+    private function n8nTriggerStep(array $step, Flow $flow, ?Call $call): VoiceResponse
+    {
+        $response = new VoiceResponse;
+        $config = $step['config'];
+        $workflowId = (string) ($config['workflow_id'] ?? '');
+
+        $tenant = TenantModel::find($flow->tenantId());
+        if ($tenant === null || $workflowId === '') {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_not_configured'));
+            $this->redirectIfNext($response, $step);
+
+            return $response;
+        }
+
+        $connections = app(IntegrationConnectionService::class);
+        $n8n = $connections->get($tenant, IntegrationProvider::N8n);
+        $apiKey = $connections->decryptSecret($n8n['api_key'] ?? null);
+        $baseUrl = $n8n['base_url'] ?? null;
+
+        if (! is_string($apiKey) || ! is_string($baseUrl)) {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_not_configured'));
+            $this->redirectIfNext($response, $step);
+
+            return $response;
+        }
+
+        try {
+            $webhookUrl = (string) ($config['webhook_url'] ?? '');
+            if ($webhookUrl !== '' && ! $this->isAllowedN8nWebhookUrl($webhookUrl, $baseUrl)) {
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+                $this->redirectIfNext($response, $step);
+
+                return $response;
+            }
+
+            $client = N8nPublicApiClient::fromConfig($baseUrl, $apiKey);
+
+            if ($webhookUrl === '') {
+                $workflow = $client->getWorkflow($workflowId);
+                if (! $workflow->successful()) {
+                    $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+                    $this->redirectIfNext($response, $step);
+
+                    return $response;
+                }
+                $webhookUrl = $this->resolveN8nWebhookUrl($baseUrl, $workflow->json());
+            }
+
+            if ($webhookUrl === '' || ! $this->isAllowedN8nWebhookUrl($webhookUrl, $baseUrl)) {
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+                $this->redirectIfNext($response, $step);
+
+                return $response;
+            }
+
+            $payload = [
+                'event' => 'flow.n8n_trigger',
+                'workflow_id' => $workflowId,
+                'call' => $call === null ? null : [
+                    'id' => $call->id(),
+                    'sid' => (string) $call->getCallSid(),
+                    'from' => (string) $call->getFromNumber(),
+                    'to' => (string) $call->getToNumber(),
+                    'context' => $call->context(),
+                ],
+                'flow_id' => $flow->id(),
+                'tenant_id' => $flow->tenantId(),
+            ];
+
+            $httpResponse = Http::timeout(10)
+                ->acceptJson()
+                ->withoutRedirecting()
+                ->post($webhookUrl, $payload);
+            if ($httpResponse->successful()) {
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_triggered'));
+            } else {
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+            }
+        } catch (\Throwable $e) {
+            $this->logger?->warning('n8n_trigger failed', ['error' => $e->getMessage()]);
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+        }
+
+        $this->redirectIfNext($response, $step);
+
+        return $response;
+    }
+
+    private function isAllowedN8nWebhookUrl(string $webhookUrl, string $apiBaseUrl): bool
+    {
+        $webhookHost = parse_url($webhookUrl, PHP_URL_HOST);
+        $apiHost = parse_url($apiBaseUrl, PHP_URL_HOST);
+        $scheme = parse_url($webhookUrl, PHP_URL_SCHEME);
+
+        if (! is_string($webhookHost) || $webhookHost === '' || ! is_string($apiHost) || $apiHost === '') {
+            return false;
+        }
+
+        if (! in_array($scheme, ['https', 'http'], true)) {
+            return false;
+        }
+
+        return strcasecmp($webhookHost, $apiHost) === 0;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $workflow
+     */
+    private function resolveN8nWebhookUrl(string $apiBaseUrl, ?array $workflow): string
+    {
+        if ($workflow === null) {
+            return '';
+        }
+
+        $nodes = $workflow['nodes'] ?? [];
+        if (! is_array($nodes)) {
+            return '';
+        }
+
+        foreach ($nodes as $node) {
+            if (! is_array($node)) {
+                continue;
+            }
+            $type = (string) ($node['type'] ?? '');
+            if (! str_contains(strtolower($type), 'webhook')) {
+                continue;
+            }
+            $path = (string) data_get($node, 'parameters.path', data_get($node, 'webhookId', ''));
+            if ($path === '') {
+                continue;
+            }
+
+            $origin = preg_replace('#/api/v1/?$#', '', rtrim($apiBaseUrl, '/')) ?: rtrim($apiBaseUrl, '/');
+
+            return $origin.'/webhook/'.ltrim($path, '/');
+        }
+
+        return '';
+    }
+
+    /** @param FlowStep $step */
+    private function hubspotStep(array $step, Flow $flow, ?Call $call): VoiceResponse
+    {
+        $response = new VoiceResponse;
+        $tenant = TenantModel::find($flow->tenantId());
+
+        if ($tenant === null || $call === null) {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.hubspot_not_configured'));
+            $this->redirectIfNext($response, $step);
+
+            return $response;
+        }
+
+        $callModel = CallModel::find($call->id());
+        if ($callModel === null) {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.hubspot_failed'));
+            $this->redirectIfNext($response, $step);
+
+            return $response;
+        }
+
+        $result = app(HubSpotSyncService::class)->syncCall($tenant, $callModel);
+        $this->speak(
+            $response,
+            FlowSpeechLocale::speak(
+                $flow->language(),
+                $result['ok'] ? 'speech.hubspot_synced' : 'speech.hubspot_failed'
+            )
+        );
+
+        $this->redirectIfNext($response, $step);
+
+        return $response;
+    }
+
+    /** @param FlowStep $step */
+    private function redirectIfNext(VoiceResponse $response, array $step): void
+    {
+        $next = $step['next'] ?? null;
+        if ($next !== null) {
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
+        }
+    }
+
+    /** @param FlowStep $step */
+    private function mcpToolStep(array $step, Flow $flow, ?Call $call): VoiceResponse
+    {
+        $response = new VoiceResponse;
+        $config = $step['config'];
+        $server = (string) ($config['server'] ?? '');
+        $tool = (string) ($config['tool'] ?? '');
+        $variable = (string) ($config['variable'] ?? 'tool_result');
+        $parametersRaw = $config['parameters'] ?? '{}';
+
+        if ($server === '' || $tool === '') {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.mcp_not_configured'));
+            $next = $step['next'] ?? null;
+            if ($next !== null) {
+                $response->redirect(TwilioPublicUrl::to('/twilio/step'));
+            }
+
+            return $response;
+        }
+
+        if ($this->mcpToolService === null) {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.mcp_unavailable'));
+            $next = $step['next'] ?? null;
+            if ($next !== null) {
+                $response->redirect(TwilioPublicUrl::to('/twilio/step'));
+            }
+
+            return $response;
+        }
+
+        $parametersJson = is_string($parametersRaw)
+            ? $this->resolveFlowVariables($parametersRaw, $flow)
+            : json_encode($parametersRaw);
+
+        $callContext = $call?->context() ?? [];
+        $parametersJson = preg_replace_callback(
+            '/\{\{(\w+)\}\}/',
+            fn ($m) => $callContext[$m[1]] ?? $m[0],
+            (string) $parametersJson,
+        );
+
+        /** @var array<string, mixed> $arguments */
+        $arguments = json_decode((string) $parametersJson, true) ?? [];
+
+        $result = $this->mcpToolService->callTool($server, $tool, $arguments);
+        $text = (string) ($result['text'] ?? '');
+
+        if ($call !== null && $variable !== '') {
+            $context = $call->context();
+            $context[$variable] = $text;
+            $call->setContext($context);
+            $this->runtimeVariables[$variable] = $text;
+        }
+
+        if ($result['isError'] ?? false) {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.mcp_failed'));
+        } else {
+            $spoken = $text !== '' ? mb_substr($text, 0, 240) : FlowSpeechLocale::speak($flow->language(), 'speech.mcp_success');
+            $this->speak($response, $spoken);
+        }
+
+        $next = $step['next'] ?? null;
+        if ($next !== null) {
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -367,28 +684,36 @@ class FlowExecutor
     }
 
     /** @param FlowStep $step */
-    private function voiceAgentStep(array $step): VoiceResponse
+    private function voiceAgentStep(array $step, Flow $flow, ?Call $call): VoiceResponse
     {
         $response = new VoiceResponse;
         $config = $step['config'];
-        $wsUrl = config('app.url').'/twilio/relay';
+        $wsUrl = ConversationRelayUrl::websocket();
+        $ttsProvider = $this->normalizeTtsProvider($config['tts_provider'] ?? $config['ttsProvider'] ?? null);
+        $language = FlowSpeechLocale::bcp47($flow->language());
 
-        $connect = $response->connect(['action' => route('twilio.step')]);
+        $welcomeGreeting = $config['welcome_greeting'] ?? $config['welcomeGreeting'] ?? null;
+        if (! is_string($welcomeGreeting) || trim($welcomeGreeting) === '') {
+            $welcomeGreeting = FlowSpeechLocale::speak($flow->language(), 'speech.welcome_greeting');
+        }
+
+        $connect = $response->connect(['action' => TwilioPublicUrl::to('/twilio/step')]);
         $relay = $connect->conversationRelay([
             'url' => $wsUrl,
-            'welcomeGreeting' => $config['welcome_greeting'] ?? 'Hello! How can I help you today?',
+            'welcomeGreeting' => $welcomeGreeting,
+            'ttsProvider' => $ttsProvider,
+            'language' => $language,
         ]);
 
-        if ($voice = $config['voice'] ?? null) {
+        $voice = $config['voice'] ?? null;
+        if (is_string($voice) && trim($voice) !== '') {
             $relay->setVoice($voice);
         }
 
-        if ($ttsProvider = $config['tts_provider'] ?? null) {
-            $relay->setTtsProvider($ttsProvider);
-        }
-
         if ($intelligenceService = $config['intelligence_service'] ?? null) {
-            $relay->setIntelligenceService($intelligenceService);
+            if ($intelligenceService !== '') {
+                $relay->setIntelligenceService($intelligenceService);
+            }
         }
 
         if ($interruptible = $config['interruptible'] ?? null) {
@@ -407,6 +732,14 @@ class FlowExecutor
             $relay->setDebug($debug);
         }
 
+        $systemPrompt = $config['system_prompt'] ?? $config['systemPrompt'] ?? 'You are a helpful voice assistant.';
+        $relay->parameter(['name' => 'systemPrompt', 'value' => $systemPrompt]);
+        $relay->parameter(['name' => 'language', 'value' => $language]);
+
+        if ($call !== null) {
+            $relay->parameter(['name' => 'callSid', 'value' => $call->getCallSid()->value()]);
+        }
+
         return $response;
     }
 
@@ -420,14 +753,14 @@ class FlowExecutor
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
     }
 
     /** @param FlowStep $step */
-    private function memoryStep(array $step, ?Call $call): VoiceResponse
+    private function memoryStep(array $step, Flow $flow, ?Call $call): VoiceResponse
     {
         $response = new VoiceResponse;
         $config = $step['config'];
@@ -437,7 +770,7 @@ class FlowExecutor
         if (! $phoneNumber) {
             $this->logger?->warning('Memory step: no phone number available');
 
-            return $this->sayAndContinue($response, 'Unable to load your profile.');
+            return $this->sayAndContinue($response, FlowSpeechLocale::speak($flow->language(), 'speech.memory_unavailable'));
         }
 
         $profile = $this->memoryService->searchProfile(
@@ -468,25 +801,14 @@ class FlowExecutor
         return $response;
     }
 
-    /** @param array<string, mixed> $config */
-    private function evaluateCondition(array $config): ?string
+    private function normalizeTtsProvider(mixed $provider): string
     {
-        $branches = $config['branches'] ?? [];
-        $elseNext = $config['elseNext'] ?? null;
-
-        foreach ($branches as $branch) {
-            $expression = $branch['expression'] ?? '';
-            if ($expression === '' || $this->evaluateExpression($expression)) {
-                return $branch['next'] ?? $elseNext;
-            }
-        }
-
-        return $elseNext;
-    }
-
-    private function evaluateExpression(string $expression): bool
-    {
-        return true;
+        return match (strtolower((string) ($provider ?? ''))) {
+            'google' => 'Google',
+            'amazon' => 'Amazon',
+            'elevenlabs', '' => 'ElevenLabs',
+            default => (string) $provider,
+        };
     }
 
     /** @param FlowStep $step */
@@ -499,17 +821,32 @@ class FlowExecutor
         return $step['next'] ?? null;
     }
 
-    private function resolveVariables(string $text, Flow $flow): string
+    private function resolveFlowVariables(string $text, Flow $flow): string
     {
-        return preg_replace_callback(
+        return (string) preg_replace_callback(
             '/\{\{(\w+)\}\}/',
             function ($m) use ($flow) {
+                if (array_key_exists($m[1], $this->runtimeVariables)) {
+                    return (string) $this->runtimeVariables[$m[1]];
+                }
+
                 return match ($m[1]) {
                     'flow_name' => $flow->name(),
                     default => $m[0],
                 };
             },
             $text,
+        );
+    }
+
+    private function bindRuntimeContext(Flow $flow, ?Call $call): void
+    {
+        $this->runtimeVariables = array_merge(
+            [
+                'flow_name' => $flow->name(),
+                'flow_id' => $flow->id(),
+            ],
+            $call?->context() ?? [],
         );
     }
 
@@ -540,7 +877,7 @@ class FlowExecutor
     private function errorResponse(string $message): VoiceResponse
     {
         $response = new VoiceResponse;
-        $response->say($message);
+        $this->speak($response, $message);
         $response->hangup();
 
         return $response;
@@ -548,9 +885,14 @@ class FlowExecutor
 
     private function sayAndContinue(VoiceResponse $response, string $message): VoiceResponse
     {
-        $response->say($message);
-        $response->redirect('/twilio/step');
+        $this->speak($response, $message);
+        $response->redirect(TwilioPublicUrl::to('/twilio/step'));
 
         return $response;
+    }
+
+    private function speak(object $target, string $text): void
+    {
+        $target->say($text, $this->sayAttributes);
     }
 }

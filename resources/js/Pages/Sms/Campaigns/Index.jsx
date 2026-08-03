@@ -1,15 +1,16 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import DataTable from '@/Components/DataTable';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { useState } from 'react';
-import { Heading } from '@/Components/catalyst/heading';
+import { useState, useMemo } from 'react';
 import { Text } from '@/Components/catalyst/text';
 import { Badge } from '@/Components/catalyst/badge';
 import { Button } from '@/Components/catalyst/button';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/Components/catalyst/dialog';
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Input } from '@/Components/catalyst/input';
 import { Textarea } from '@/Components/catalyst/textarea';
+import { useTranslation } from '@/hooks/useTranslation';
 import { ArrowLeft, Megaphone, Send, Trash2 } from 'lucide-react';
 
 const statusColors = {
@@ -19,16 +20,17 @@ const statusColors = {
     failed: 'red',
 };
 
-const statusLabels = {
-    draft: 'Draft',
-    sending: 'Sending',
-    completed: 'Completed',
-    failed: 'Failed',
-};
-
 export default function Index({ campaigns }) {
+    const { t, locale } = useTranslation();
     const [showForm, setShowForm] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
+
+    const statusLabels = useMemo(() => ({
+        draft: t('ui.campaign_status_draft'),
+        sending: t('ui.campaign_status_sending'),
+        completed: t('ui.campaign_status_completed'),
+        failed: t('ui.campaign_status_failed'),
+    }), [t]);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -37,6 +39,75 @@ export default function Index({ campaigns }) {
     });
 
     const actionForm = useForm({});
+
+    function handleSend(campaign) {
+        actionForm.post(`/sms/campaigns/${campaign.id}/send`, {
+            preserveScroll: true,
+        });
+    }
+
+    const columns = useMemo(() => [
+        {
+            id: 'name',
+            header: t('common.name'),
+            cell: (campaign) => <span className="font-medium">{campaign.name}</span>,
+        },
+        {
+            id: 'status',
+            header: t('common.status'),
+            cell: (campaign) => (
+                <Badge color={statusColors[campaign.status] || 'zinc'}>
+                    {statusLabels[campaign.status] || campaign.status}
+                </Badge>
+            ),
+        },
+        {
+            id: 'progress',
+            header: t('ui.progress'),
+            cell: (campaign) => (
+                <div className="flex items-center gap-2">
+                    <div className="h-2 w-24 rounded-full bg-slate-200">
+                        <div
+                            className="h-2 rounded-full bg-emerald-500 transition-all"
+                            style={{
+                                width: campaign.total_count > 0
+                                    ? `${Math.round((campaign.sent_count / campaign.total_count) * 100)}%`
+                                    : '0%',
+                            }}
+                        />
+                    </div>
+                    <Text className="text-xs">
+                        {campaign.sent_count}/{campaign.total_count}
+                    </Text>
+                </div>
+            ),
+        },
+        {
+            id: 'created',
+            header: t('ui.created'),
+            cell: (campaign) => new Date(campaign.created_at).toLocaleDateString(locale || undefined, {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+            }),
+        },
+        {
+            id: 'actions',
+            header: t('common.actions'),
+            cell: (campaign) => (
+                <div className="flex items-center gap-2">
+                    {(campaign.status === 'draft' || campaign.status === 'failed') && (
+                        <Button outline size="sm" onClick={() => handleSend(campaign)}>
+                            <Send className="size-3" />
+                        </Button>
+                    )}
+                    {campaign.status === 'draft' && (
+                        <Button outline size="sm" onClick={() => setDeleteTarget(campaign)}>
+                            <Trash2 className="size-3" />
+                        </Button>
+                    )}
+                </div>
+            ),
+        },
+    ], [t, locale, statusLabels]);
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -49,11 +120,6 @@ export default function Index({ campaigns }) {
         });
     }
 
-    function handleSend(campaign) {
-        actionForm.post(`/sms/campaigns/${campaign.id}/send`, {
-            preserveScroll: true,
-        });
-    }
 
     function handleDelete() {
         if (!deleteTarget) return;
@@ -65,129 +131,70 @@ export default function Index({ campaigns }) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="SMS Campaigns" />
+            <Head title={t('ui.campaigns_heading')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <div className="flex items-center gap-3">
-                        <Link href="/sms">
-                            <Button outline>
-                                <ArrowLeft className="size-4" />
+            <div className="space-y-6">
+                <PageHeader
+                    title={t('ui.campaigns_heading')}
+                    subtitle={t('ui.bulk_sms_desc')}
+                    actions={(
+                        <>
+                            <Link href="/sms">
+                                <Button outline>
+                                    <ArrowLeft className="size-4" />
+                                </Button>
+                            </Link>
+                            <Button onClick={() => setShowForm(true)}>
+                                <Megaphone className="size-4" />
+                                {t('ui.new_campaign')}
                             </Button>
-                        </Link>
-                        <div>
-                            <Heading>Campaigns</Heading>
-                            <Text className="mt-1">Bulk SMS campaigns to multiple recipients.</Text>
-                        </div>
-                    </div>
-                </div>
-                <Button onClick={() => setShowForm(true)}>
-                    <Megaphone className="size-4" />
-                    New Campaign
-                </Button>
+                        </>
+                    )}
+                />
+
+                <DataTable
+                    columns={columns}
+                    data={campaigns}
+                    getRowId={(row) => row.id}
+                    emptyIcon={Megaphone}
+                    emptyTitle={t('ui.no_campaigns')}
+                    emptyDescription={t('ui.create_campaign_desc')}
+                    emptyAction={{ label: t('ui.new_campaign'), onClick: () => setShowForm(true) }}
+                />
             </div>
 
-            {campaigns.length === 0 ? (
-                <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-                    <p className="mt-4 text-base font-semibold text-zinc-950 dark:text-white">No campaigns</p>
-                    <Text className="mt-2">Create a campaign to send bulk SMS messages.</Text>
-                </div>
-            ) : (
-                <div className="mt-6">
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableHeader>Name</TableHeader>
-                                <TableHeader>Status</TableHeader>
-                                <TableHeader>Progress</TableHeader>
-                                <TableHeader>Created</TableHeader>
-                                <TableHeader>Actions</TableHeader>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {campaigns.map((campaign) => (
-                                <TableRow key={campaign.id}>
-                                    <TableCell className="font-medium">{campaign.name}</TableCell>
-                                    <TableCell>
-                                        <Badge color={statusColors[campaign.status] || 'zinc'}>
-                                            {statusLabels[campaign.status] || campaign.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-2 w-24 rounded-full bg-zinc-200 dark:bg-zinc-700">
-                                                <div
-                                                    className="h-2 rounded-full bg-emerald-500 transition-all"
-                                                    style={{
-                                                        width: campaign.total_count > 0
-                                                            ? `${Math.round((campaign.sent_count / campaign.total_count) * 100)}%`
-                                                            : '0%',
-                                                    }}
-                                                />
-                                            </div>
-                                            <Text className="text-xs">
-                                                {campaign.sent_count}/{campaign.total_count}
-                                            </Text>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {new Date(campaign.created_at).toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-                                        })}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            {(campaign.status === 'draft' || campaign.status === 'failed') && (
-                                                <Button outline size="sm" onClick={() => handleSend(campaign)}>
-                                                    <Send className="size-3" />
-                                                </Button>
-                                            )}
-                                            {campaign.status === 'draft' && (
-                                                <Button outline size="sm" onClick={() => setDeleteTarget(campaign)}>
-                                                    <Trash2 className="size-3" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            )}
-
             <Dialog open={showForm} onClose={() => setShowForm(false)} size="md">
-                <DialogTitle>New Campaign</DialogTitle>
+                <DialogTitle>{t('ui.new_campaign')}</DialogTitle>
                 <DialogBody>
                     <form id="campaign-form" onSubmit={handleSubmit} className="space-y-4">
                         <Field>
-                            <Label>Campaign Name</Label>
+                            <Label>{t('ui.campaign_name')}</Label>
                             <Input
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
-                                placeholder="e.g. Welcome Campaign"
+                                placeholder={t('ui.campaign_name_placeholder')}
                                 invalid={errors.name ? true : undefined}
                             />
                             {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
                         </Field>
 
                         <Field>
-                            <Label>Message</Label>
+                            <Label>{t('ui.message')}</Label>
                             <Textarea
                                 value={data.message}
                                 onChange={(e) => setData('message', e.target.value)}
-                                placeholder="Campaign message..."
+                                placeholder={t('ui.campaign_message_placeholder')}
                                 rows={4}
                                 invalid={errors.message ? true : undefined}
                             />
-                            <Text className="mt-1 text-right text-xs text-zinc-500">
+                            <Text className="mt-1 text-right text-xs text-slate-500">
                                 {data.message.length}/1600
                             </Text>
                             {errors.message && <ErrorMessage>{errors.message}</ErrorMessage>}
                         </Field>
 
                         <Field>
-                            <Label>Recipients</Label>
+                            <Label>{t('ui.recipients')}</Label>
                             <Textarea
                                 value={data.recipients}
                                 onChange={(e) => setData('recipients', e.target.value)}
@@ -195,32 +202,32 @@ export default function Index({ campaigns }) {
                                 rows={4}
                                 invalid={errors.recipients ? true : undefined}
                             />
-                            <Text className="mt-1 text-xs text-zinc-500">
-                                One per line or comma-separated phone numbers
+                            <Text className="mt-1 text-xs text-slate-500">
+                                {t('ui.recipients_hint')}
                             </Text>
                             {errors.recipients && <ErrorMessage>{errors.recipients}</ErrorMessage>}
                         </Field>
                     </form>
                 </DialogBody>
                 <DialogActions>
-                    <Button outline onClick={() => setShowForm(false)}>Cancel</Button>
+                    <Button outline onClick={() => setShowForm(false)}>{t('ui.cancel')}</Button>
                     <Button type="submit" form="campaign-form" disabled={processing}>
-                        Save Draft
+                        {t('ui.save_draft')}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} size="sm">
-                <DialogTitle>Delete Campaign</DialogTitle>
+                <DialogTitle>{t('ui.delete_campaign')}</DialogTitle>
                 <DialogBody>
                     <Text>
-                        Delete campaign &ldquo;{deleteTarget?.name}&rdquo;? This cannot be undone.
+                        {t('ui.delete_campaign_confirm', { name: deleteTarget?.name ?? '' })}
                     </Text>
                 </DialogBody>
                 <DialogActions>
-                    <Button outline onClick={() => setDeleteTarget(null)}>Cancel</Button>
+                    <Button outline onClick={() => setDeleteTarget(null)}>{t('ui.cancel')}</Button>
                     <Button color="red" onClick={handleDelete} disabled={actionForm.processing}>
-                        Delete
+                        {t('common.delete')}
                     </Button>
                 </DialogActions>
             </Dialog>

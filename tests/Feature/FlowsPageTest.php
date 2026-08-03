@@ -75,12 +75,14 @@ class FlowsPageTest extends TestCase
         $this->actingAs($this->user)->post('/flows', [
             'name' => 'Test Flow',
             'description' => 'A test flow',
+            'language' => 'es-ES',
         ])->assertRedirect(route('flows.index'));
 
         $this->assertDatabaseHas('flows', [
             'tenant_id' => $this->user->tenant_id,
             'name' => 'Test Flow',
             'description' => 'A test flow',
+            'language' => 'es-ES',
         ]);
     }
 
@@ -120,6 +122,7 @@ class FlowsPageTest extends TestCase
         $this->actingAs($this->user)->patch("/flows/{$flow->id}", [
             'name' => 'Updated Name',
             'description' => 'Updated description',
+            'language' => 'es-MX',
             'is_active' => false,
         ])->assertRedirect(route('flows.index'));
 
@@ -127,8 +130,48 @@ class FlowsPageTest extends TestCase
             'id' => $flow->id,
             'name' => 'Updated Name',
             'description' => 'Updated description',
+            'language' => 'es-MX',
             'is_active' => false,
         ]);
+    }
+
+    public function test_update_persists_step_positions_in_config(): void
+    {
+        $flow = FlowModelFactory::new()->create([
+            'tenant_id' => $this->user->tenant_id,
+            'config' => [
+                'start_step' => 's1',
+                'steps' => [
+                    's1' => ['type' => 'say', 'config' => ['text' => 'Hi'], 'next' => null],
+                ],
+            ],
+        ]);
+
+        $config = [
+            'start_step' => 's1',
+            'steps' => [
+                's1' => [
+                    'id' => 's1',
+                    'type' => 'say',
+                    'config' => ['text' => 'Hi'],
+                    'next' => null,
+                    'position' => ['x' => 320, 'y' => 180],
+                ],
+            ],
+        ];
+
+        $this->actingAs($this->user)->patch("/flows/{$flow->id}", [
+            'name' => $flow->name,
+            'description' => $flow->description,
+            'phone_number' => $flow->phone_number,
+            'language' => $flow->language ?? 'en-US',
+            'is_active' => $flow->is_active,
+            'config' => json_encode($config),
+        ])->assertRedirect(route('flows.index'));
+
+        $flow->refresh();
+
+        $this->assertSame(['x' => 320, 'y' => 180], $flow->config['steps']['s1']['position']);
     }
 
     public function test_update_scoped_to_tenant(): void

@@ -9,16 +9,18 @@ import {
   useEdgesState,
   addEdge,
   useReactFlow,
+  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Undo2, Redo2 } from 'lucide-react';
+import { Undo2, Redo2, LayoutGrid } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 import nodeTypes from './nodes';
 import ConditionEdge from './ConditionEdge';
 import Toolbox from './Toolbox';
 import PropertiesPanel from './PropertiesPanel';
-import { configToReactFlow, reactFlowToConfig, generateId, NODE_DEFAULTS } from './flowConfig';
+import { configToReactFlow, reactFlowToConfig, generateId, NODE_DEFAULTS, layoutReactFlowNodes } from './flowConfig';
 import useUndoRedo from './useUndoRedo';
 import useFlowValidation from './useFlowValidation';
 
@@ -26,9 +28,34 @@ const edgeTypes = {
   'condition-edge': ConditionEdge,
 };
 
+const NODE_COLORS = {
+  say: '#10b981',
+  ask: '#8b5cf6',
+  llm: '#3b82f6',
+  condition: '#f59e0b',
+  goto: '#f97316',
+  transfer: '#f43f5e',
+  webhook: '#06b6d4',
+  mcp_tool: '#a855f7',
+  knowledge: '#14b8a6',
+  hangup: '#ef4444',
+  voice_agent: '#a855f7',
+  analyze: '#6366f1',
+  memory: '#06b6d4',
+};
+
+const defaultEdgeOptions = {
+  type: 'smoothstep',
+  animated: false,
+  style: { stroke: '#94a3b8', strokeWidth: 1.75 },
+  pathOptions: { borderRadius: 16 },
+  markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: '#94a3b8' },
+};
+
 function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
+  const { t } = useTranslation();
   const reactFlowWrapper = useRef(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const [selectedNode, setSelectedNode] = useState(null);
 
   const { nodes: initialNodes, edges: initialEdges } = configToReactFlow(config);
@@ -42,11 +69,16 @@ function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
 
   const { pushState, undo, redo, canUndo, canRedo, reset: resetHistory } = useUndoRedo();
 
+  const markDirty = useCallback(() => {
+    onDirty?.();
+  }, [onDirty]);
+
   const doSyncToConfig = useCallback(() => {
-    const startNodeId = nodesRef.current.length > 0 ? nodesRef.current[0].id : '';
+    const startNodeId = config?.start_step || (nodesRef.current.length > 0 ? nodesRef.current[0].id : '');
     const newConfig = reactFlowToConfig(nodesRef.current, edgesRef.current, startNodeId);
     onConfigChange(newConfig);
-  }, [onConfigChange]);
+    return newConfig;
+  }, [onConfigChange, config?.start_step]);
 
   const doUndo = useCallback(() => {
     const restored = undo(nodesRef.current, edgesRef.current);
@@ -64,17 +96,26 @@ function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
     }
   }, [redo, setNodes, setEdges]);
 
+  const doAutoLayout = useCallback(() => {
+    pushState(nodesRef.current, edgesRef.current);
+    const startId = config?.start_step || nodesRef.current[0]?.id;
+    const laidOut = layoutReactFlowNodes(nodesRef.current, edgesRef.current, startId);
+    setNodes(laidOut);
+    markDirty();
+    requestAnimationFrame(() => {
+      fitView({ padding: 0.2, duration: 300 });
+    });
+  }, [pushState, setNodes, config?.start_step, fitView, markDirty]);
+
   useImperativeHandle(innerRef, () => ({
     syncToConfig: doSyncToConfig,
     undo: doUndo,
     redo: doRedo,
     canUndo,
     canRedo,
-  }), [doSyncToConfig, doUndo, doRedo, canUndo, canRedo]);
+    autoLayout: doAutoLayout,
+  }), [doSyncToConfig, doUndo, doRedo, canUndo, canRedo, doAutoLayout]);
 
-  const markDirty = useCallback(() => {
-    onDirty?.();
-  }, [onDirty]);
 
   useEffect(() => {
     const { nodes: n, edges: e } = configToReactFlow(config);
@@ -143,7 +184,7 @@ function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
   const onConnect = useCallback(
     (params) => {
       pushState(nodesRef.current, edgesRef.current);
-      setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds));
+      setEdges((eds) => addEdge({ ...params, ...defaultEdgeOptions }, eds));
       markDirty();
     },
     [setEdges, pushState, markDirty],
@@ -200,7 +241,7 @@ function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
     [setNodes, pushState, markDirty],
   );
 
-  const { errors: validationErrors, errorCount } = useFlowValidation(nodes, edges);
+  const { errors: validationErrors } = useFlowValidation(nodes, edges);
 
   const displayNodes = nodes.map((n) => ({
     ...n,
@@ -212,24 +253,35 @@ function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
   }));
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full min-h-0">
       <Toolbox />
 
-      <div ref={reactFlowWrapper} className="relative flex-1">
-        <div className="absolute right-3 top-3 z-10 flex gap-1">
+      <div ref={reactFlowWrapper} className="relative min-w-0 flex-1">
+        <div className="absolute right-4 top-4 z-10 flex gap-1.5">
           <button
+            type="button"
+            onClick={doAutoLayout}
+            title={t('ui.auto_layout')}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+          >
+            <LayoutGrid className="size-3.5" />
+            {t('ui.auto_layout')}
+          </button>
+          <button
+            type="button"
             onClick={doUndo}
             disabled={!canUndo}
             title="Undo (Ctrl+Z)"
-            className="rounded-lg border border-zinc-200 bg-white p-1.5 text-zinc-600 shadow-xs transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+            className="flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
           >
             <Undo2 className="size-3.5" />
           </button>
           <button
+            type="button"
             onClick={doRedo}
             disabled={!canRedo}
             title="Redo (Ctrl+Y)"
-            className="rounded-lg border border-zinc-200 bg-white p-1.5 text-zinc-600 shadow-xs transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+            className="flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
           >
             <Redo2 className="size-3.5" />
           </button>
@@ -248,20 +300,36 @@ function FlowCanvas({ config, onConfigChange, onDirty, onSave, innerRef }) {
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
+          defaultEdgeOptions={defaultEdgeOptions}
           fitView
+          fitViewOptions={{ padding: 0.2 }}
+          snapToGrid
+          snapGrid={[16, 16]}
           deleteKeyCode={['Backspace', 'Delete']}
-          className="bg-zinc-50/50 dark:bg-zinc-950/50"
+          className="bg-slate-50"
+          proOptions={{ hideAttribution: true }}
         >
-          <Controls className="!rounded-lg !border !border-zinc-200 !shadow-xs dark:!border-zinc-800" />
+          <Controls
+            showInteractive={false}
+            className="!bottom-4 !left-4 !m-0 !rounded-xl !border !border-slate-200 !bg-white !shadow-card [&_button]:!border-slate-100 [&_button]:!bg-white [&_button]:!text-slate-500 [&_button]:hover:!bg-slate-50 [&_svg]:!size-3.5"
+          />
           <MiniMap
             nodeStrokeWidth={3}
-            className="!rounded-lg !border !border-zinc-200 !shadow-xs dark:!border-zinc-800"
+            nodeColor={(node) => NODE_COLORS[node.type] || '#06b6d4'}
+            maskColor="rgba(15,23,42,0.06)"
+            className="!bottom-4 !right-4 !m-0 !rounded-xl !border !border-slate-200 !bg-white !shadow-card"
           />
-          <Background gap={16} className="!bg-zinc-50/50 dark:!bg-zinc-950/50" />
+          <Background
+            variant="dots"
+            gap={18}
+            size={1.2}
+            color="rgba(148,163,184,0.45)"
+            className="!bg-slate-50"
+          />
         </ReactFlow>
       </div>
 
-      <motion.div key={selectedNode?.id || 'none'} initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.15 }}>
+      <motion.div key={selectedNode?.id || 'none'} initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.15 }} className="shrink-0">
         <PropertiesPanel
           node={selectedNode}
           onUpdate={onNodeUpdate}

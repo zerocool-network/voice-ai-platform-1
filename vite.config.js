@@ -10,7 +10,12 @@ export default defineConfig({
             input: 'resources/js/app.jsx',
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
+                bunny('Figtree', {
+                    alias: 'sans',
+                    weights: [400, 500, 600, 700],
+                }),
+                bunny('IBM Plex Mono', {
+                    alias: 'mono',
                     weights: [400, 500, 600],
                 }),
             ],

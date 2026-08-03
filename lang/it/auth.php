@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'failed' => 'Queste credenziali non corrispondono ai nostri dati.',
+    'password' => 'La password fornita non è corretta.',
+    'throttle' => 'Troppi tentativi di accesso. Riprova tra :seconds secondi.',
+    'login' => 'Accedi',
+    'register' => 'Registrati',
+    'logout' => 'Esci',
+    'email' => 'Email',
+    'password_field' => 'Password',
+    'confirm_password' => 'Conferma Password',
+    'remember_me' => 'Ricordami',
+    'forgot_password' => 'Password dimenticata?',
+    'reset_password' => 'Reimposta Password',
+    'send_reset_link' => 'Invia Link di Reimpostazione',
+    'verify_email' => 'Verifica il Tuo Indirizzo Email',
+    'verification_link_sent' => 'Un nuovo link di verifica è stato inviato alla tua email.',
+    'verify_notice' => 'Prima di procedere, controlla la tua email per il link di verifica.',
+    'verify_resend' => 'Se non hai ricevuto l\'email, clicca qui per richiederne un\'altra.',
+    'name' => 'Nome',
+    'already_registered' => 'Già registrato?',
+    'accept_invite' => 'Accetta Invito',
+    'join_team' => 'Sei stato invitato a unirti a :team.',
+    'register_to_accept' => 'Crea un account per accettare l\'invito.',
+];

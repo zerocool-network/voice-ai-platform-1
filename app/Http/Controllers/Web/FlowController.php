@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Application\Flow\Services\FlowSpeechLocale;
+use App\Application\Flow\Services\TwilioPublicUrl;
 use App\Domain\Flow\Entities\Flow;
 use App\Domain\Flow\Repositories\FlowRepositoryInterface;
 use App\Domain\Flow\Services\FlowTemplates;
@@ -45,6 +47,8 @@ class FlowController extends Controller
     {
         return Inertia::render('Flows/Create', [
             'templates' => FlowTemplates::all(),
+            'languages' => config('flow.languages'),
+            'defaultLanguage' => FlowSpeechLocale::fromAppLocale(app()->getLocale()),
         ]);
     }
 
@@ -94,6 +98,7 @@ class FlowController extends Controller
             phoneNumber: $request->phone_number,
             config: FlowConfig::fromArray($configArray),
             isActive: $request->boolean('is_active'),
+            language: FlowSpeechLocale::bcp47($request->language),
         );
 
         $this->flowRepository->save($flow);
@@ -112,6 +117,7 @@ class FlowController extends Controller
 
         return Inertia::render('Flows/Edit', [
             'flow' => $this->toArray($flow),
+            'languages' => config('flow.languages'),
         ]);
     }
 
@@ -149,6 +155,7 @@ class FlowController extends Controller
             config: FlowConfig::fromArray($configData),
             isActive: $request->boolean('is_active'),
             version: $flow->version() + ($configChanged ? 1 : 0),
+            language: FlowSpeechLocale::bcp47($request->language ?? $flow->language()),
         );
 
         $this->flowRepository->save($updated);
@@ -209,6 +216,7 @@ class FlowController extends Controller
             config: FlowConfig::fromArray($version->config),
             isActive: $flow->isActive(),
             version: $flow->version() + 1,
+            language: $flow->language(),
         );
 
         $this->flowRepository->save($restored);
@@ -241,6 +249,8 @@ class FlowController extends Controller
 
         return Inertia::render('Flows/Builder', [
             'flow' => $this->toArray($flow),
+            'languages' => config('flow.languages'),
+            'speechVoices' => config('flow.voices'),
         ]);
     }
 
@@ -259,6 +269,7 @@ class FlowController extends Controller
             description: $flow->description(),
             phoneNumber: $flow->phoneNumber(),
             config: $flow->config(),
+            language: $flow->language(),
         );
 
         $this->flowRepository->save($duplicate);
@@ -279,6 +290,7 @@ class FlowController extends Controller
             'name' => $flow->name(),
             'description' => $flow->description(),
             'phone_number' => $flow->phoneNumber(),
+            'language' => $flow->language(),
             'config' => $flow->getConfig(),
             'export_version' => 1,
             'exported_at' => now()->toIso8601String(),
@@ -309,6 +321,7 @@ class FlowController extends Controller
             phoneNumber: $content['phone_number'] ?? null,
             config: FlowConfig::fromArray($content['config']),
             isActive: false,
+            language: FlowSpeechLocale::bcp47($content['language'] ?? null),
         );
 
         $this->flowRepository->save($flow);
@@ -332,15 +345,22 @@ class FlowController extends Controller
         $fromNumber = $flow->phoneNumber();
 
         if ($fromNumber === null || $fromNumber === '') {
-            return response()->json(['error' => 'Flow has no phone number configured'], 422);
+            $tenant = TenantModel::find($flow->tenantId());
+            $fromNumber = $tenant?->settings['twilio_phone_number'] ?? null;
+        }
+
+        if (empty($fromNumber)) {
+            return response()->json([
+                'error' => 'No phone number configured for this flow or tenant. Assign one in Flow settings or Tenant Twilio settings.',
+            ], 422);
         }
 
         try {
-            $twilio = new Client(config('twilio.account_sid'), config('twilio.auth_token'));
+            $twilio = app(Client::class);
 
             $voiceResponse = new VoiceResponse;
             $voiceResponse->redirect(
-                url('/twilio/inbound').'?flow_id='.$flow->id(),
+                TwilioPublicUrl::to('/twilio/inbound').'?flow_id='.$flow->id(),
             );
 
             $twilio->calls->create(
@@ -348,7 +368,7 @@ class FlowController extends Controller
                 $fromNumber,
                 [
                     'twiml' => (string) $voiceResponse,
-                    'statusCallback' => url('/twilio/status'),
+                    'statusCallback' => TwilioPublicUrl::to('/twilio/status'),
                 ]
             );
 
@@ -366,6 +386,7 @@ class FlowController extends Controller
             'name' => $flow->name(),
             'description' => $flow->description(),
             'phone_number' => $flow->phoneNumber(),
+            'language' => FlowSpeechLocale::bcp47($flow->language()),
             'config' => $flow->getConfig(),
             'is_active' => $flow->isActive(),
             'version' => $flow->version(),

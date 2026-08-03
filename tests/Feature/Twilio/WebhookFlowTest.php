@@ -4,6 +4,7 @@ namespace Tests\Feature\Twilio;
 
 use App\Application\Call\DTOs\InboundCallData;
 use App\Application\Call\UseCases\HandleInboundCall;
+use App\Application\Flow\Services\TwilioPublicUrl;
 use App\Domain\Flow\Services\AiServiceInterface;
 use App\Http\Middleware\ValidateTwilioRequest;
 use App\Infrastructure\Persistence\Eloquent\Call\CallModel;
@@ -54,9 +55,28 @@ class WebhookFlowTest extends TestCase
 
         $response->assertOk();
         $this->assertStringStartsWith('text/xml', $response->headers->get('Content-Type'));
-        $response->assertSee('<Say>', false);
+        // Twilio 12100: body must start with <?xml (no leading blank line)
+        $this->assertMatchesRegularExpression('/^<\?xml/', $response->getContent());
+        $response->assertSee('<Say', false);
+        $response->assertSee('language="en-US"', false);
+        $response->assertSee('voice="Polly.Joanna"', false);
         $response->assertSee('Hello from AI Voice Platform', false);
-        $response->assertSee('<Redirect>/twilio/step</Redirect>', false);
+        $response->assertSee('<Redirect>'.TwilioPublicUrl::to('/twilio/step').'</Redirect>', false);
+    }
+
+    public function test_inbound_uses_spanish_language_and_polly_lucia_voice(): void
+    {
+        $this->flow->update(['language' => 'es-ES']);
+
+        $response = $this->post('/twilio/inbound', [
+            'CallSid' => 'CA'.str_repeat('e', 32),
+            'From' => '+15551234567',
+            'To' => '+14159309192',
+        ]);
+
+        $response->assertOk();
+        $response->assertSee('language="es-ES"', false);
+        $response->assertSee('voice="Polly.Lucia"', false);
     }
 
     public function test_inbound_returns_not_configured_for_missing_flow(): void
@@ -119,7 +139,8 @@ class WebhookFlowTest extends TestCase
 
         $content = $response->getContent();
         $this->assertStringNotContainsString('not configured', $content ?? '');
-        $this->assertStringContainsString('<Say>', $content ?? '');
+        $this->assertStringContainsString('<Say', $content ?? '');
+        $this->assertStringContainsString('Hello from AI Voice Platform', $content ?? '');
 
         $this->assertDatabaseHas('calls', [
             'call_sid' => $callSid,
@@ -401,7 +422,8 @@ class WebhookFlowTest extends TestCase
         $content = $response->getContent() ?? '';
         $this->assertStringContainsString('input="speech"', $content);
         $this->assertStringContainsString('timeout="10"', $content);
-        $this->assertStringContainsString('<Say>Say your name</Say>', $content);
+        $this->assertStringContainsString('Say your name', $content);
+        $this->assertStringContainsString('<Say', $content);
     }
 
     public function test_llm_step_with_mocked_ai(): void
@@ -473,13 +495,14 @@ class WebhookFlowTest extends TestCase
     public function test_inbound_without_from_number_still_creates_call(): void
     {
         $response = $this->post('/twilio/inbound', [
-            'CallSid' => 'CA'.str_repeat('g', 32),
+            'CallSid' => 'CA'.str_repeat('9', 32),
             'To' => '+14159309192',
         ]);
 
         $response->assertOk();
         $content = $response->getContent() ?? '';
-        $this->assertStringContainsString('<Say>', $content);
+        $this->assertStringContainsString('<Say', $content);
+        $this->assertStringNotContainsString('not configured', $content);
     }
 
     public function test_step_returns_not_configured_without_current_step(): void

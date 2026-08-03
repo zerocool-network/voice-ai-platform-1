@@ -8,8 +8,10 @@ import { Input } from '@/Components/catalyst/input';
 import { Button } from '@/Components/catalyst/button';
 import { Checkbox, CheckboxField } from '@/Components/catalyst/checkbox';
 import { TextLink } from '@/Components/catalyst/text';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Login({ status, canResetPassword }) {
+    const { t } = useTranslation();
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -27,20 +29,20 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <AuthLayout
-            title="Sign in"
-            subtitle="Welcome back. Enter your credentials to continue."
+            title={t('ui.sign_in')}
+            subtitle={t('ui.sign_in_welcome')}
         >
-            <Head title="Sign in" />
+            <Head title={t('ui.sign_in')} />
 
             {status && (
-                <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800/50 dark:bg-green-950/30 dark:text-green-400">
+                <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                     {status}
                 </div>
             )}
 
             <form onSubmit={submit} className="space-y-6">
                 <Field>
-                    <Label>Email address</Label>
+                    <Label>{t('ui.email_address')}</Label>
                     <Input
                         id="email"
                         type="email"
@@ -54,7 +56,7 @@ export default function Login({ status, canResetPassword }) {
                 </Field>
 
                 <Field>
-                    <Label>Password</Label>
+                    <Label>{t('ui.password')}</Label>
                     <div className="relative">
                         <Input
                             id="password"
@@ -62,15 +64,15 @@ export default function Login({ status, canResetPassword }) {
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             autoComplete="current-password"
-                            placeholder="Enter your password"
+                            placeholder={t('ui.password_placeholder')}
                             invalid={errors.password ? true : undefined}
                         />
                         <button
                             type="button"
                             onClick={() => setVisible(!visible)}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-zinc-400 transition-colors hover:text-zinc-600 focus:outline-none dark:hover:text-zinc-300"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none"
                             tabIndex={-1}
-                            aria-label={visible ? 'Hide password' : 'Show password'}
+                            aria-label={visible ? t('ui.hide_password') : t('ui.show_password')}
                         >
                             {visible ? (
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -94,39 +96,39 @@ export default function Login({ status, canResetPassword }) {
                             checked={data.remember}
                             onChange={(e) => setData('remember', e)}
                         />
-                        <Label>Remember me</Label>
+                        <Label>{t('ui.remember_me')}</Label>
                     </CheckboxField>
 
                     {canResetPassword && (
                         <Link
                             href={request().url}
-                            className="text-sm font-medium text-zinc-950 underline decoration-zinc-950/50 transition-colors hover:decoration-zinc-950 dark:text-white dark:decoration-white/50 dark:hover:decoration-white"
+                            className="text-sm font-medium text-slate-950 underline decoration-slate-950/50 transition-colors hover:decoration-slate-950"
                         >
-                            Forgot password?
+                            {t('ui.forgot_password')}
                         </Link>
                     )}
                 </div>
 
                 <Button type="submit" disabled={processing} className="w-full">
-                    {processing ? 'Signing in...' : 'Sign in'}
+                    {processing ? t('ui.signing_in') : t('ui.sign_in')}
                 </Button>
 
                 <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+                        <div className="w-full border-t border-slate-200" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-zinc-50 px-2 text-zinc-500 dark:bg-zinc-950 dark:text-zinc-400">or</span>
+                        <span className="bg-slate-50 px-2 text-slate-500">{t('ui.or_divider')}</span>
                     </div>
                 </div>
 
-                <a href="/sso/login" className="flex w-full items-center justify-center rounded-lg border border-zinc-950/15 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/15 dark:text-zinc-300 dark:hover:bg-zinc-800">
-                    Continue with SSO
+                <a href="/sso/login" className="flex w-full items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100">
+                    {t('ui.continue_with_sso')}
                 </a>
 
-                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-                    Don't have an account?{' '}
-                    <TextLink href={register().url}>Create one</TextLink>
+                <p className="text-center text-sm text-slate-500">
+                    {t('ui.no_account')}{' '}
+                    <TextLink href={register().url}>{t('ui.create_one')}</TextLink>
                 </p>
             </form>
         </AuthLayout>

@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'failed' => 'Ces identifiants ne correspondent pas à nos enregistrements.',
+    'password' => 'Le mot de passe fourni est incorrect.',
+    'throttle' => 'Trop de tentatives de connexion. Veuillez réessayer dans :seconds secondes.',
+    'login' => 'Connexion',
+    'register' => 'Inscription',
+    'logout' => 'Déconnexion',
+    'email' => 'E-mail',
+    'password_field' => 'Mot de passe',
+    'confirm_password' => 'Confirmer le mot de passe',
+    'remember_me' => 'Se souvenir de moi',
+    'forgot_password' => 'Mot de passe oublié ?',
+    'reset_password' => 'Réinitialiser le mot de passe',
+    'send_reset_link' => 'Envoyer le lien de réinitialisation',
+    'verify_email' => 'Vérifier votre adresse e-mail',
+    'verification_link_sent' => 'Un nouveau lien de vérification a été envoyé à votre adresse e-mail.',
+    'verify_notice' => 'Avant de continuer, veuillez vérifier votre e-mail pour le lien de vérification.',
+    'verify_resend' => 'Si vous n\'avez pas reçu l\'e-mail, cliquez ici pour en demander un autre.',
+    'name' => 'Nom',
+    'already_registered' => 'Déjà inscrit ?',
+    'accept_invite' => 'Accepter l\'invitation',
+    'join_team' => 'Vous avez été invité à rejoindre :team.',
+    'register_to_accept' => 'Créez un compte pour accepter l\'invitation.',
+];

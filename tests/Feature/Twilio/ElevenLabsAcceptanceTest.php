@@ -62,7 +62,7 @@ class ElevenLabsAcceptanceTest extends TestCase
 
         $response->assertOk();
         $content = $response->getContent() ?? '';
-        $this->assertStringContainsString('<Say>', $content);
+        $this->assertStringContainsString('<Say', $content);
         $this->assertStringNotContainsString('not configured', $content);
         $this->assertStringNotContainsString('having trouble processing', $content);
     }
@@ -102,7 +102,7 @@ class ElevenLabsAcceptanceTest extends TestCase
 
         $response->assertOk();
         $content = $response->getContent() ?? '';
-        $this->assertStringContainsString('<Say>', $content);
+        $this->assertStringContainsString('<Say', $content);
         $this->assertStringNotContainsString('not configured', $content);
         $this->assertStringNotContainsString('having trouble processing', $content);
     }

@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'consent_default' => 'Dieser Anruf kann aufgezeichnet werden.',
+    'consent_prompt' => 'Drücken Sie die 1 zum Annehmen oder eine andere Taste zum Ablehnen.',
+    'consent_timeout' => 'Sie haben keine Einwilligung erteilt. Auf Wiedersehen.',
+    'goodbye' => 'Auf Wiedersehen.',
+    'not_configured' => 'Entschuldigung, diese Nummer ist nicht konfiguriert. Auf Wiedersehen.',
+    'welcome_greeting' => 'Hallo! Wie kann ich Ihnen heute helfen?',
+    'ai_trouble' => 'Es tut mir leid, ich habe gerade Probleme.',
+    'llm_trouble' => 'Es tut mir leid, ich habe gerade Probleme, Ihre Anfrage zu verarbeiten.',
+    'mcp_not_configured' => 'MCP-Tool ist nicht konfiguriert.',
+    'mcp_unavailable' => 'MCP-Tools sind nicht verfügbar.',
+    'mcp_failed' => 'MCP-Tool-Aufruf fehlgeschlagen.',
+    'mcp_success' => 'MCP-Tool erfolgreich abgeschlossen.',
+    'webhook_not_configured' => 'Webhook-URL ist nicht konfiguriert.',
+    'webhook_failed' => 'Webhook hat Status :status zurückgegeben',
+    'n8n_not_configured' => 'n8n is not configured.',
+    'n8n_triggered' => 'n8n workflow triggered.',
+    'n8n_failed' => 'n8n workflow action failed.',
+    'hubspot_not_configured' => 'HubSpot is not configured.',
+    'hubspot_synced' => 'HubSpot sync completed.',
+    'hubspot_failed' => 'HubSpot sync failed.',
+    'memory_unavailable' => 'Ihr Profil konnte nicht geladen werden.',
+];

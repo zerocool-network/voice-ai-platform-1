@@ -36,6 +36,7 @@ class EloquentCallRepository implements CallRepositoryInterface
     public function save(Call $call): void
     {
         $data = [
+            'id' => $call->id(),
             'tenant_id' => $call->tenantId(),
             'flow_id' => $call->flowId(),
             'call_sid' => $call->callSid()->value(),

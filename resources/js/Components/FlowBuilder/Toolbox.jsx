@@ -1,20 +1,12 @@
 import { useState } from 'react';
-import { motion } from 'motion/react';
-import { Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  MessageSquare,
-  HelpCircle,
-  PhoneOff,
-  GitBranch,
-  ArrowRight,
-  Bot,
-  Webhook,
-  PhoneForwarded,
-  BookOpen,
-  Mic,
-  Activity,
-  Brain,
+  Search, MessageSquare, HelpCircle, PhoneOff,
+  GitBranch, ArrowRight, Bot, Webhook,
+  PhoneForwarded, BookOpen, Mic, Activity, Brain, Cpu,
+  ChevronDown, Workflow, Building2,
 } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const iconMap = {
   say: MessageSquare,
@@ -24,6 +16,9 @@ const iconMap = {
   goto: ArrowRight,
   llm: Bot,
   webhook: Webhook,
+  mcp_tool: Cpu,
+  n8n_trigger: Workflow,
+  hubspot: Building2,
   transfer: PhoneForwarded,
   knowledge: BookOpen,
   voice_agent: Mic,
@@ -33,23 +28,23 @@ const iconMap = {
 
 const CATEGORIES = [
   {
-    label: 'Basic',
+    labelKey: 'ui.basic',
     items: ['say', 'ask', 'hangup'],
   },
   {
-    label: 'AI',
+    labelKey: 'ui.ai',
     items: ['llm', 'knowledge', 'voice_agent'],
   },
   {
-    label: 'Flow Control',
+    labelKey: 'ui.flow_control',
     items: ['condition', 'goto'],
   },
   {
-    label: 'Actions',
-    items: ['transfer', 'webhook'],
+    labelKey: 'ui.actions',
+    items: ['transfer', 'webhook', 'mcp_tool', 'n8n_trigger', 'hubspot'],
   },
   {
-    label: 'Intelligence',
+    labelKey: 'ui.intelligence',
     items: ['analyze', 'memory'],
   },
 ];
@@ -62,6 +57,9 @@ const NODE_ITEMS = [
   { type: 'goto', label: 'Goto', color: 'orange', desc: 'Jump to step' },
   { type: 'transfer', label: 'Transfer', color: 'rose', desc: 'Call transfer' },
   { type: 'webhook', label: 'Webhook', color: 'cyan', desc: 'HTTP request' },
+  { type: 'mcp_tool', label: 'MCP Tool', color: 'purple', desc: 'Call MCP tool' },
+  { type: 'n8n_trigger', label: 'n8n Trigger', color: 'orange', desc: 'Activate n8n workflow' },
+  { type: 'hubspot', label: 'HubSpot', color: 'orange', desc: 'Sync contact / call' },
   { type: 'knowledge', label: 'Knowledge', color: 'teal', desc: 'Query knowledge base' },
   { type: 'voice_agent', label: 'Voice Agent', color: 'purple', desc: 'Conversation Relay AI' },
   { type: 'analyze', label: 'Analyze', color: 'indigo', desc: 'Conversation Intelligence' },
@@ -83,7 +81,21 @@ const colorMap = {
   indigo: 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300',
 };
 
-function DraggableItem({ type, label, color, desc }) {
+const miniColorMap = {
+  emerald: 'bg-emerald-500',
+  violet: 'bg-violet-500',
+  blue: 'bg-blue-500',
+  amber: 'bg-amber-500',
+  orange: 'bg-orange-500',
+  rose: 'bg-rose-500',
+  cyan: 'bg-cyan-500',
+  red: 'bg-red-500',
+  teal: 'bg-teal-500',
+  purple: 'bg-purple-500',
+  indigo: 'bg-indigo-500',
+};
+
+function DraggableItem({ type, label, color, desc, isSearching }) {
   const Icon = iconMap[type];
 
   const onDragStart = (event) => {
@@ -93,22 +105,36 @@ function DraggableItem({ type, label, color, desc }) {
 
   return (
     <div
-      className={`flex cursor-grab items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-medium transition hover:shadow-sm hover:scale-[1.02] active:cursor-grabbing active:scale-[0.98] ${colorMap[color]}`}
+      className={`group flex cursor-grab items-center gap-3 rounded-xl border px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:cursor-grabbing active:scale-[0.98] ${colorMap[color]}`}
       draggable
       onDragStart={onDragStart}
     >
-      {Icon && <Icon className="size-3.5 shrink-0" />}
-      <span className="text-xs">{label}</span>
-      <span className="text-[10px] font-normal opacity-60">{desc}</span>
+      <span className={`size-2.5 shrink-0 rounded-full ${miniColorMap[color]} ring-2 ring-white`} />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[13px] font-semibold leading-tight">{label}</span>
+        {!isSearching && (
+          <span className="text-[11px] leading-tight opacity-55">{desc}</span>
+        )}
+      </div>
+      {Icon && <Icon className="ml-auto size-3.5 shrink-0 opacity-40 transition-opacity group-hover:opacity-70" />}
     </div>
   );
 }
 
 export default function Toolbox() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
+  const [openCategories, setOpenCategories] = useState(CATEGORIES.map((_, i) => i));
+
+  const toggleCategory = (i) => {
+    setOpenCategories((prev) =>
+      prev.includes(i) ? prev.filter((idx) => idx !== i) : [...prev, i]
+    );
+  };
 
   const filteredCategories = CATEGORIES.map((cat) => ({
     ...cat,
+    label: t(cat.labelKey),
     items: cat.items.filter((type) => {
       if (!search.trim()) return true;
       const item = NODE_ITEMS.find((n) => n.type === type);
@@ -121,42 +147,71 @@ export default function Toolbox() {
     }),
   })).filter((cat) => cat.items.length > 0);
 
-  return (
-    <div className="flex w-56 flex-col gap-2 border-r bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Steps</div>
+  const isSearching = search.trim().length > 0;
 
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-zinc-400" />
-        <input
-          type="text"
-          placeholder="Search nodes..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-md border border-zinc-200 bg-white py-1.5 pl-7 pr-2 text-xs text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600 dark:focus:ring-zinc-600"
-        />
+  return (
+    <div className="flex w-[280px] shrink-0 flex-col border-r border-slate-200/80 bg-slate-50/80 p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <span className="size-1.5 rounded-full bg-cyan-500" />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{t('ui.steps_toolbox')}</span>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {filteredCategories.map((cat, i) => (
-          <motion.div
-            key={cat.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05, duration: 0.2 }}
-          >
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-              {cat.label}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {cat.items.map((type) => {
+      <label className="mb-5 flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white py-2.5 pl-3.5 pr-3 shadow-sm focus-within:border-cyan-300 focus-within:ring-2 focus-within:ring-cyan-500/10">
+        <Search className="size-3.5 shrink-0 text-slate-400" />
+        <input
+          type="text"
+          placeholder={t('ui.search_nodes')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 bg-transparent text-[13px] text-slate-700 outline-none placeholder:text-slate-400"
+        />
+      </label>
+
+      <div className="flex flex-col gap-3 overflow-y-auto">
+        {isSearching ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-2">
+            {filteredCategories.flatMap((cat) =>
+              cat.items.map((type) => {
                 const item = NODE_ITEMS.find((n) => n.type === type);
-                return <DraggableItem key={type} {...item} />;
-              })}
-            </div>
+                return <DraggableItem key={type} {...item} isSearching />;
+              })
+            )}
           </motion.div>
-        ))}
+        ) : (
+          filteredCategories.map((cat, i) => {
+            const isOpen = openCategories.includes(i);
+            return (
+              <div key={cat.labelKey} className="flex flex-col gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => toggleCategory(i)}
+                  className="flex w-full items-center gap-1.5 rounded-lg px-1.5 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 hover:bg-slate-100/80 hover:text-slate-600"
+                >
+                  <ChevronDown className={`size-3 transition-transform duration-200 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
+                  {cat.label}
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                      className="flex flex-col gap-2 overflow-hidden pb-0.5"
+                    >
+                      {cat.items.map((type) => {
+                        const item = NODE_ITEMS.find((n) => n.type === type);
+                        return <DraggableItem key={type} {...item} />;
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })
+        )}
         {filteredCategories.length === 0 && (
-          <p className="py-4 text-center text-xs text-zinc-400">No matching nodes</p>
+          <p className="py-8 text-center text-xs text-slate-400">{t('ui.no_matching_nodes')}</p>
         )}
       </div>
     </div>

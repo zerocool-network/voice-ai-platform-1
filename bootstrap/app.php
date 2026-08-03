@@ -14,6 +14,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -47,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'twilio/*',
             'stripe/*',
+            'webhooks/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -72,11 +74,21 @@ return Application::configure(basePath: dirname(__DIR__))
             return null;
         });
 
-        $exceptions->render(function (HttpException $e, Request $request) {
-            if ($e->getStatusCode() === 403 && $request->header('X-Inertia')) {
+        $exceptions->render(function (TokenMismatchException $e, Request $request) {
+            if ($request->header('X-Inertia')) {
                 return Inertia::render('Error', [
-                    'status' => 403,
-                ])->toResponse($request)->setStatusCode(403);
+                    'status' => 419,
+                ])->toResponse($request)->setStatusCode(419);
+            }
+
+            return null;
+        });
+
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if ($request->header('X-Inertia') && in_array($e->getStatusCode(), [403, 419], true)) {
+                return Inertia::render('Error', [
+                    'status' => $e->getStatusCode(),
+                ])->toResponse($request)->setStatusCode($e->getStatusCode());
             }
 
             return null;

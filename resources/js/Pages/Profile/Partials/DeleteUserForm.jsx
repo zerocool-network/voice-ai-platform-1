@@ -6,9 +6,11 @@ import { Button } from '@/Components/catalyst/button';
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Input } from '@/Components/catalyst/input';
 import { Dialog, DialogTitle, DialogDescription, DialogBody, DialogActions } from '@/Components/catalyst/dialog';
+import { useTranslation } from '@/hooks/useTranslation';
 import { destroy as profileDestroy } from '@/routes/profile';
 
 export default function DeleteUserForm({ className = '' }) {
+    const { t } = useTranslation();
     const [confirming, setConfirming] = useState(false);
     const passwordInput = useRef();
 
@@ -44,35 +46,32 @@ export default function DeleteUserForm({ className = '' }) {
     return (
         <section className={`space-y-6 ${className}`}>
             <header>
-                <Subheading>Delete Account</Subheading>
+                <Subheading>{t('ui.delete_account')}</Subheading>
                 <Text className="mt-1">
-                    Once your account is deleted, all of its resources and data will be
-                    permanently deleted. Before deleting your account, please download any
-                    data or information that you wish to retain.
+                    {t('ui.delete_account_desc')}
                 </Text>
             </header>
 
             <Button color="red" onClick={() => setConfirming(true)}>
-                Delete Account
+                {t('ui.delete_account')}
             </Button>
 
             <Dialog open={confirming} onClose={closeModal}>
-                <DialogTitle>Are you sure you want to delete your account?</DialogTitle>
+                <DialogTitle>{t('ui.delete_account_confirm_title')}</DialogTitle>
                 <DialogDescription>
-                    Once your account is deleted, all of its resources and data will be
-                    permanently deleted. Please enter your password to confirm.
+                    {t('ui.delete_account_confirm_desc')}
                 </DialogDescription>
                 <DialogBody>
                     <form onSubmit={deleteUser} id="delete-user-form">
                         <Field>
-                            <Label className="sr-only">Password</Label>
+                            <Label className="sr-only">{t('ui.password')}</Label>
                             <Input
                                 ref={passwordInput}
                                 type="password"
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
                                 autoFocus
-                                placeholder="Password"
+                                placeholder={t('ui.password')}
                                 invalid={errors.password ? true : undefined}
                             />
                             {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
@@ -81,10 +80,10 @@ export default function DeleteUserForm({ className = '' }) {
                 </DialogBody>
                 <DialogActions>
                     <Button plain onClick={closeModal}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button type="submit" form="delete-user-form" color="red" disabled={processing}>
-                        {processing ? 'Deleting...' : 'Delete Account'}
+                        {processing ? t('ui.deleting') : t('ui.delete_account')}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -1,7 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'
+import PageHeader from '@/Components/PageHeader'
+import PageSection from '@/Components/PageSection'
+import DataTable from '@/Components/DataTable'
 import { Head, useForm, router, Link } from '@inertiajs/react'
-import { useState, useEffect, useRef } from 'react'
-import { Heading } from '@/Components/catalyst/heading'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Text } from '@/Components/catalyst/text'
 import { Badge } from '@/Components/catalyst/badge'
 import { Button } from '@/Components/catalyst/button'
@@ -10,9 +12,9 @@ import { Select } from '@/Components/catalyst/select'
 import { Textarea } from '@/Components/catalyst/textarea'
 import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset'
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/Components/catalyst/dialog'
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table'
 import { send } from '@/actions/App/Http/Controllers/Web/SmsController'
 import sms from '@/routes/sms'
+import { useTranslation } from '@/hooks/useTranslation'
 import {
     MessageCircle, MessageSquare, Plus, Reply, Megaphone,
     Search, Send, ArrowLeft, Check, CheckCheck, X,
@@ -35,19 +37,20 @@ const statusIcons = {
     failed: { icon: X, color: 'text-red-500' },
 }
 
-function formatTime(dateStr) {
+function formatTime(dateStr, t, locale) {
     const d = new Date(dateStr)
     const now = new Date()
     const diff = now - d
     const days = Math.floor(diff / 86400000)
 
-    if (days === 0) return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    if (days === 1) return 'Yesterday'
-    if (days < 7) return d.toLocaleDateString('en-US', { weekday: 'short' })
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    if (days === 0) return d.toLocaleTimeString(locale || undefined, { hour: '2-digit', minute: '2-digit' })
+    if (days === 1) return t('ui.yesterday')
+    if (days < 7) return d.toLocaleDateString(locale || undefined, { weekday: 'short' })
+    return d.toLocaleDateString(locale || undefined, { month: 'short', day: 'numeric' })
 }
 
 export default function Index({ messages, conversations, filters, whatsapp_phone_number }) {
+    const { t, locale } = useTranslation()
     const [showSend, setShowSend] = useState(false)
     const [view, setView] = useState('conversations')
     const [selectedContact, setSelectedContact] = useState(null)
@@ -140,76 +143,131 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
 
     const messagesList = view === 'conversations' ? conversations : messages.data
 
+    const messageColumns = useMemo(() => [
+        {
+            id: 'channel',
+            header: t('ui.channel'),
+            cell: (msg) => {
+                const ch = channelConfig[msg.channel] || channelConfig.sms
+                const ChIcon = ch.icon
+                return (
+                    <Badge color={ch.color}>
+                        <ChIcon className="mr-1 size-3" />
+                        {ch.label}
+                    </Badge>
+                )
+            },
+        },
+        {
+            id: 'from',
+            header: t('calls.from'),
+            cell: (msg) => <span className="font-medium">{msg.from_number}</span>,
+        },
+        { id: 'to', header: t('calls.to'), cell: (msg) => msg.to_number },
+        {
+            id: 'body',
+            header: t('ui.message'),
+            className: 'max-w-xs truncate',
+            cell: (msg) => msg.body,
+        },
+        {
+            id: 'direction',
+            header: t('ui.direction'),
+            cell: (msg) => (
+                <Badge color={directionColors[msg.direction] || 'zinc'}>
+                    {msg.direction === 'inbound' ? t('ui.inbound') : msg.direction === 'outbound' ? t('ui.outbound') : msg.direction}
+                </Badge>
+            ),
+        },
+        {
+            id: 'status',
+            header: t('common.status'),
+            cell: (msg) => (
+                <span className={`text-sm font-medium capitalize ${
+                    statusIcons[msg.status]?.color || 'text-zinc-500'
+                }`}>
+                    {msg.status}
+                </span>
+            ),
+        },
+        {
+            id: 'date',
+            header: t('ui.date'),
+            cell: (msg) => new Date(msg.created_at).toLocaleDateString(locale || undefined, {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+            }),
+        },
+    ], [t, locale])
+
     return (
         <AuthenticatedLayout>
-            <Head title="Messages" />
+            <Head title={t('ui.messages')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>Messages</Heading>
-                    <Text className="mt-1">Incoming and outgoing SMS and WhatsApp messages.</Text>
-                    {whatsapp_phone_number && (
-                        <div className="mt-2 flex items-center gap-2">
-                            <Badge color="emerald">
-                                <MessageCircle className="mr-1 size-3" />
-                                WhatsApp: {whatsapp_phone_number}
-                            </Badge>
-                        </div>
+            <div className="space-y-6">
+                <PageHeader
+                    title={t('ui.messages')}
+                    subtitle={t('ui.incoming_outgoing_sms')}
+                    actions={(
+                        <>
+                            {whatsapp_phone_number && (
+                                <Badge color="emerald">
+                                    <MessageCircle className="mr-1 size-3" />
+                                    {t('ui.whatsapp_label', { number: whatsapp_phone_number })}
+                                </Badge>
+                            )}
+                            <Link href={sms.autoReplies.index().url}>
+                                <Button outline>
+                                    <Reply className="size-4" />
+                                    {t('ui.auto_replies')}
+                                </Button>
+                            </Link>
+                            <Link href={sms.campaigns.index().url}>
+                                <Button outline>
+                                    <Megaphone className="size-4" />
+                                    {t('ui.campaigns')}
+                                </Button>
+                            </Link>
+                            {whatsapp_phone_number && (
+                                <Button outline onClick={() => openSend('whatsapp')}>
+                                    <MessageCircle className="size-4" />
+                                    {t('ui.new_whatsapp')}
+                                </Button>
+                            )}
+                            <Button onClick={() => openSend('sms')}>
+                                <Plus className="size-4" />
+                                {t('ui.new_message')}
+                            </Button>
+                        </>
                     )}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Link href={sms.autoReplies.index().url}>
-                        <Button outline>
-                            <Reply className="size-4" />
-                            Auto-Replies
-                        </Button>
-                    </Link>
-                    <Link href={sms.campaigns.index().url}>
-                        <Button outline>
-                            <Megaphone className="size-4" />
-                            Campaigns
-                        </Button>
-                    </Link>
-                    {whatsapp_phone_number && (
-                        <Button outline onClick={() => openSend('whatsapp')}>
-                            <MessageCircle className="size-4" />
-                            New WhatsApp
-                        </Button>
-                    )}
-                    <Button onClick={() => openSend('sms')}>
-                        <Plus className="size-4" />
-                        New Message
-                    </Button>
-                </div>
-            </div>
+                />
 
-            <div className="mt-4 flex items-center gap-3">
-                <div className="flex items-center rounded-lg border border-zinc-200 bg-white p-0.5">
+            <div className="flex items-center gap-3">
+                <div className="flex items-center rounded-lg border border-slate-200/70 bg-white p-0.5">
                     <button
                         onClick={() => { setView('conversations'); setSelectedContact(null) }}
                         className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                             view === 'conversations'
-                                ? 'bg-zinc-950 text-white'
-                                : 'text-zinc-500 hover:text-zinc-950'
+                                ? 'bg-slate-950 text-white'
+                                : 'text-slate-500 hover:text-slate-950'
                         }`}
                     >
-                        Conversations
+                        {t('ui.conversations')}
                     </button>
                     <button
                         onClick={() => { setView('all'); setSelectedContact(null) }}
                         className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                             view === 'all'
-                                ? 'bg-zinc-950 text-white'
-                                : 'text-zinc-500 hover:text-zinc-950'
+                                ? 'bg-slate-950 text-white'
+                                : 'text-slate-500 hover:text-slate-950'
                         }`}
                     >
-                        All Messages
+                        {t('ui.all_messages')}
                     </button>
                 </div>
             </div>
 
             {view === 'conversations' ? (
-                <div className="mt-4 flex h-[calc(100vh-320px)] min-h-[500px] overflow-hidden rounded-xl border border-zinc-200 bg-white">
+                <PageSection padding={false} className="flex h-[calc(100vh-320px)] min-h-[500px] overflow-hidden">
                     {/* Left: Conversation List */}
                     <div className={`flex w-[380px] shrink-0 flex-col border-r border-zinc-200 ${
                         selectedContact ? 'hidden md:flex' : 'flex'
@@ -221,7 +279,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                                     value={convSearch}
                                     onChange={(e) => setConvSearch(e.target.value)}
                                     className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2 pl-10 pr-4 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    placeholder="Search conversations..."
+                                    placeholder={t('ui.search_conversations')}
                                 />
                             </div>
                         </div>
@@ -229,7 +287,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                             {filteredConversations.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-12 text-sm text-zinc-500">
                                     <MessageSquare className="mb-2 size-8 text-zinc-300" />
-                                    <p>No conversations found</p>
+                                    <p>{t('ui.no_conversations_found')}</p>
                                 </div>
                             ) : (
                                 filteredConversations.map((conv) => {
@@ -257,7 +315,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                                                         {conv.contact_number}
                                                     </span>
                                                     <span className="shrink-0 text-[11px] text-zinc-400">
-                                                        {formatTime(conv.last_message_at)}
+                                                        {formatTime(conv.last_message_at, t, locale)}
                                                     </span>
                                                 </div>
                                                 <div className="mt-0.5 flex items-center justify-between gap-2">
@@ -266,7 +324,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                                                             ? (conv.last_body.length > 60
                                                                 ? conv.last_body.slice(0, 60) + '...'
                                                                 : conv.last_body)
-                                                            : `${conv.message_count} messages`}
+                                                            : t('ui.messages_count', { count: conv.message_count })}
                                                     </span>
                                                     {conv.message_count > 1 && (
                                                         <span className="shrink-0 rounded-full bg-zinc-200 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600">
@@ -299,18 +357,18 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                                     </p>
                                     {selectedConv && (
                                         <p className="text-xs text-zinc-500">
-                                            {selectedConv.message_count} messages
+                                            {t('ui.messages_count', { count: selectedConv.message_count })}
                                         </p>
                                     )}
                                 </div>
-                                <Badge color="blue">SMS</Badge>
+                                <Badge color="blue">{t('ui.sms')}</Badge>
                             </div>
 
                             {/* Messages */}
                             <div className="flex-1 overflow-y-auto px-5 py-4">
                                 {threadMessages.length === 0 ? (
                                     <div className="flex h-full items-center justify-center text-sm text-zinc-400">
-                                        No messages in this conversation.
+                                        {t('ui.no_messages_in_conversation')}
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
@@ -334,7 +392,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                                                             msg.direction === 'outbound' ? 'text-white/70' : 'text-zinc-400'
                                                         }`}>
                                                             <span className="text-[10px]">
-                                                                {new Date(msg.created_at).toLocaleTimeString('en-US', {
+                                                                {new Date(msg.created_at).toLocaleTimeString(locale || undefined, {
                                                                     hour: '2-digit',
                                                                     minute: '2-digit',
                                                                 })}
@@ -361,7 +419,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                                         onChange={(e) => setReplyText(e.target.value)}
                                         onKeyDown={handleReplyKeyDown}
                                         className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                        placeholder="Type a reply... (Enter to send)"
+                                        placeholder={t('ui.type_reply_placeholder')}
                                     />
                                     <Button
                                         onClick={sendReply}
@@ -382,132 +440,75 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                             <div className="text-center">
                                 <MessageSquare className="mx-auto size-12 text-zinc-200" />
                                 <p className="mt-4 text-sm font-medium text-zinc-500">
-                                    Select a conversation
+                                    {t('ui.select_conversation')}
                                 </p>
                                 <Text className="mt-1">
-                                    Choose a conversation from the list to view messages.
+                                    {t('ui.choose_conversation_from_list')}
                                 </Text>
                             </div>
                         </div>
                     )}
-                </div>
+                </PageSection>
             ) : (
-                /* All Messages View */
-                <div className="mt-4">
-                    <div className="mb-4 flex items-center gap-3">
-                        <div className="relative flex-1">
-                            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
-                            <Input
-                                className="pl-9"
-                                placeholder="Search number or message..."
-                                value={filters.search ?? ''}
-                                onChange={(e) => router.get('/sms', { search: e.target.value }, { preserveState: true })}
-                            />
-                        </div>
-                        <div className="w-36">
-                            <Select
-                                value={filters.direction ?? ''}
-                                onChange={(e) => router.get('/sms', { direction: e.target.value }, { preserveState: true })}
-                            >
-                                <option value="">All</option>
-                                <option value="inbound">Inbound</option>
-                                <option value="outbound">Outbound</option>
-                            </Select>
-                        </div>
-                    </div>
-
-                    {messagesList.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16">
-                            <p className="mt-4 text-base font-semibold text-zinc-950">No messages</p>
-                            <Text className="mt-2">Messages will appear here when your number receives texts.</Text>
-                        </div>
-                    ) : (
+                <DataTable
+                    columns={messageColumns}
+                    data={messagesList}
+                    getRowId={(row) => row.id}
+                    emptyIcon={MessageSquare}
+                    emptyTitle={t('ui.no_messages')}
+                    emptyDescription={t('ui.messages_appear')}
+                    toolbar={(
                         <>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableHeader>Channel</TableHeader>
-                                        <TableHeader>From</TableHeader>
-                                        <TableHeader>To</TableHeader>
-                                        <TableHeader>Message</TableHeader>
-                                        <TableHeader>Direction</TableHeader>
-                                        <TableHeader>Status</TableHeader>
-                                        <TableHeader>Date</TableHeader>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {messagesList.map((msg) => {
-                                        const ch = channelConfig[msg.channel] || channelConfig.sms
-                                        const ChIcon = ch.icon
-                                        return (
-                                            <TableRow key={msg.id}>
-                                                <TableCell>
-                                                    <Badge color={ch.color}>
-                                                        <ChIcon className="mr-1 size-3" />
-                                                        {ch.label}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="font-medium">{msg.from_number}</TableCell>
-                                                <TableCell>{msg.to_number}</TableCell>
-                                                <TableCell className="max-w-xs truncate">{msg.body}</TableCell>
-                                                <TableCell>
-                                                    <Badge color={directionColors[msg.direction] || 'zinc'}>
-                                                        {msg.direction}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className={`text-sm font-medium capitalize ${
-                                                        statusIcons[msg.status]?.color || 'text-zinc-500'
-                                                    }`}>
-                                                        {msg.status}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {new Date(msg.created_at).toLocaleDateString('en-US', {
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                    })}
-                                                </TableCell>
-                                            </TableRow>
-                                        )
-                                    })}
-                                </TableBody>
-                            </Table>
-                            {messages.links && (
-                                <div className="mt-4">
-                                    <div className="flex items-center gap-1">
-                                        {messages.links.map((link, i) => {
-                                            if (link.url === null) return null
-                                            const label = link.label.replace(/&laquo;|&raquo;|‹|›/g, '').trim()
-                                            return (
-                                                <Link
-                                                    key={link.url}
-                                                    href={link.url}
-                                                    className={`rounded-md px-3 py-1 text-sm ${
-                                                        link.active
-                                                            ? 'bg-zinc-950 text-white'
-                                                            : 'text-zinc-500 hover:text-zinc-950'
-                                                    }`}
-                                                    dangerouslySetInnerHTML={{ __html: label }}
-                                                />
-                                            )
-                                        })}
-                                    </div>
-                                </div>
-                            )}
+                            <div className="relative min-w-[200px] flex-1">
+                                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <Input
+                                    className="pl-9"
+                                    placeholder={t('ui.search_number_or_message')}
+                                    value={filters.search ?? ''}
+                                    onChange={(e) => router.get('/sms', { search: e.target.value }, { preserveState: true })}
+                                />
+                            </div>
+                            <div className="w-36">
+                                <Select
+                                    value={filters.direction ?? ''}
+                                    onChange={(e) => router.get('/sms', { direction: e.target.value }, { preserveState: true })}
+                                >
+                                    <option value="">{t('ui.all')}</option>
+                                    <option value="inbound">{t('ui.inbound')}</option>
+                                    <option value="outbound">{t('ui.outbound')}</option>
+                                </Select>
+                            </div>
                         </>
                     )}
-                </div>
+                    footer={messages.links ? (
+                        <div className="flex items-center gap-1">
+                            {messages.links.map((link) => {
+                                if (link.url === null) return null
+                                const label = link.label.replace(/&laquo;|&raquo;|‹|›/g, '').trim()
+                                return (
+                                    <Link
+                                        key={link.url}
+                                        href={link.url}
+                                        className={`rounded-md px-3 py-1 text-sm ${
+                                            link.active
+                                                ? 'bg-zinc-950 text-white'
+                                                : 'text-zinc-500 hover:text-zinc-950'
+                                        }`}
+                                        dangerouslySetInnerHTML={{ __html: label }}
+                                    />
+                                )
+                            })}
+                        </div>
+                    ) : null}
+                />
             )}
 
             <Dialog open={showSend} onClose={() => setShowSend(false)} size="md">
-                <DialogTitle>Send Message</DialogTitle>
+                <DialogTitle>{t('ui.send_message')}</DialogTitle>
                 <DialogBody>
                     <form id="send-form" onSubmit={handleSend} className="space-y-4">
                         <Field>
-                            <Label>Channel</Label>
+                            <Label>{t('ui.channel')}</Label>
                             <Select
                                 value={data.channel}
                                 onChange={(e) => setData('channel', e.target.value)}
@@ -519,7 +520,7 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                             {errors.channel && <ErrorMessage>{errors.channel}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>Phone Number</Label>
+                            <Label>{t('ui.phone_number')}</Label>
                             <Input
                                 value={data.to}
                                 onChange={(e) => setData('to', e.target.value)}
@@ -529,11 +530,11 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                             {errors.to && <ErrorMessage>{errors.to}</ErrorMessage>}
                         </Field>
                         <Field>
-                            <Label>Message</Label>
+                            <Label>{t('ui.message')}</Label>
                             <Textarea
                                 value={data.body}
                                 onChange={(e) => setData('body', e.target.value)}
-                                placeholder="Type your message..."
+                                placeholder={t('ui.type_message')}
                                 rows={4}
                                 invalid={errors.body ? true : undefined}
                             />
@@ -545,12 +546,13 @@ export default function Index({ messages, conversations, filters, whatsapp_phone
                     </form>
                 </DialogBody>
                 <DialogActions>
-                    <Button outline onClick={() => setShowSend(false)}>Cancel</Button>
+                    <Button outline onClick={() => setShowSend(false)}>{t('ui.cancel')}</Button>
                     <Button type="submit" form="send-form" disabled={processing}>
-                        {processing ? 'Sending...' : 'Send'}
+                        {processing ? t('ui.sending') : t('ui.send')}
                     </Button>
                 </DialogActions>
             </Dialog>
+            </div>
         </AuthenticatedLayout>
     )
 }

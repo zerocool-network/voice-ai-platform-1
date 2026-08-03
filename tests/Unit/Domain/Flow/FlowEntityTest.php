@@ -38,6 +38,7 @@ class FlowEntityTest extends TestCase
         $this->assertEquals('+12345678901', $this->flow->getPhoneNumber());
         $this->assertTrue($this->flow->isActive());
         $this->assertEquals(1, $this->flow->getVersion());
+        $this->assertEquals('en-US', $this->flow->language());
     }
 
     public function test_shorthand_getters(): void

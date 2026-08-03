@@ -125,6 +125,30 @@ class FlowSimulator
                 'output' => 'Evaluating branches (first branch taken)',
                 'status' => 'ok',
             ],
+            'mcp_tool' => [
+                'output' => '(MCP tool: '.($config['server'] ?? '?').'/'.($config['tool'] ?? '?').') — simulated',
+                'status' => 'ok',
+            ],
+            'n8n_trigger' => [
+                'output' => '(n8n trigger: '.($config['workflow_id'] ?? '?').') — simulated',
+                'status' => 'ok',
+            ],
+            'hubspot' => [
+                'output' => '(HubSpot: '.($config['action'] ?? 'sync_call').') — simulated',
+                'status' => 'ok',
+            ],
+            'voice_agent' => [
+                'output' => '(Voice agent: '.($config['welcome_greeting'] ?? $config['welcomeGreeting'] ?? 'Hello').') — simulated',
+                'status' => 'ok',
+            ],
+            'analyze' => [
+                'output' => '(Analyze step) — simulated',
+                'status' => 'ok',
+            ],
+            'memory' => [
+                'output' => '(Memory recall) — simulated',
+                'status' => 'ok',
+            ],
             default => [
                 'output' => "Unknown step type: {$type}",
                 'status' => 'error',

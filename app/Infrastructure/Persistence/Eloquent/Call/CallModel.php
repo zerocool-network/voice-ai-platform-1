@@ -45,6 +45,7 @@ class CallModel extends Model
     protected $table = 'calls';
 
     protected $fillable = [
+        'id',
         'tenant_id',
         'flow_id',
         'call_sid',

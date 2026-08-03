@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
+use Twilio\Rest\Client;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -78,6 +79,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(KnowledgeRetrievalService::class);
         $this->app->singleton(TwilioOAuthService::class);
         $this->app->singleton(TenantEncryptionService::class);
+
+        $this->app->bind(Client::class, function () {
+            return new Client(
+                config('twilio.account_sid'),
+                config('twilio.auth_token'),
+            );
+        });
 
         $this->app->bind(AiServiceInterface::class, function () {
             $assistantSid = config('twilio.ai_assistant_sid');

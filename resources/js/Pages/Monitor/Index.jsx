@@ -1,14 +1,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import PageSection from '@/Components/PageSection';
+import DataTable from '@/Components/DataTable';
 import { Head, Link } from '@inertiajs/react';
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { Heading } from '@/Components/catalyst/heading';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Text } from '@/Components/catalyst/text';
 import { Badge } from '@/Components/catalyst/badge';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/Components/catalyst/table';
+import { Input } from '@/Components/catalyst/input';
 import { show } from '@/actions/App/Http/Controllers/Web/CallController';
 import { active } from '@/actions/App/Http/Controllers/Web/MonitorController';
 import { transcript } from '@/routes/monitor';
-import { Headphones, ChevronDown, ChevronRight } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
+import { callStatusLabel } from '@/utils/callStatusLabel';
+import { Headphones, ChevronDown, ChevronRight, Radio, Search, X } from 'lucide-react';
 
 const statusColors = {
     initiated: 'blue',
@@ -16,21 +20,30 @@ const statusColors = {
     ringing: 'blue',
 };
 
+const STATUS_FILTERS = ['', 'in_progress', 'ringing', 'initiated'];
+
 function elapsed(startedAt, now) {
-    const diff = Math.floor((now - new Date(startedAt).getTime()) / 1000);
-    if (diff < 0) return '0s';
-    const m = Math.floor(diff / 60);
+    const diff = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+    const d = Math.floor(diff / 86400);
+    const h = Math.floor((diff % 86400) / 3600);
+    const m = Math.floor((diff % 3600) / 60);
     const s = diff % 60;
-    return m > 0 ? m + 'm ' + s + 's' : s + 's';
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
 }
 
 export default function Monitor({ activeCalls: initial, tenantId }) {
+    const { t, locale } = useTranslation();
     const [calls, setCalls] = useState(initial ?? []);
     const [now, setNow] = useState(Date.now());
     const [expandedId, setExpandedId] = useState(null);
     const [transcripts, setTranscripts] = useState({});
     const [fetchingId, setFetchingId] = useState(null);
     const [wsConnected, setWsConnected] = useState(true);
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
     const pollRef = useRef(null);
 
     const upsertCall = useCallback((call) => {
@@ -87,8 +100,8 @@ export default function Monitor({ activeCalls: initial, tenantId }) {
     }, []);
 
     useEffect(() => {
-        const t = setInterval(() => setNow(Date.now()), 1000);
-        return () => clearInterval(t);
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
     }, []);
 
     const toggleExpand = useCallback(async (call) => {
@@ -112,192 +125,306 @@ export default function Monitor({ activeCalls: initial, tenantId }) {
         }
     }, [expandedId, transcripts]);
 
+    const filteredCalls = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return calls.filter((call) => {
+            if (statusFilter && call.status !== statusFilter) return false;
+            if (!q) return true;
+            const hay = [
+                call.from_number,
+                call.to_number,
+                call.flow_name,
+                call.call_sid,
+            ].filter(Boolean).join(' ').toLowerCase();
+            return hay.includes(q);
+        });
+    }, [calls, search, statusFilter]);
+
+    const hasFilters = Boolean(search.trim() || statusFilter);
+
     const avgDuration = calls.length > 0
         ? Math.round(calls.reduce((s, c) => s + (c.duration_seconds || 0), 0) / calls.length)
         : 0;
 
-    const completedInLast24h = calls.filter(
-        (c) => c.status === 'completed' && new Date(c.started_at) > Date.now() - 86400000
-    ).length;
+    const columns = useMemo(() => [
+        {
+            id: 'expand',
+            header: '',
+            headerClassName: 'w-12',
+            className: 'w-12',
+            cell: (call) => (
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpand(call);
+                    }}
+                    aria-expanded={expandedId === call.id}
+                    aria-label={t('ui.view')}
+                    className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-800 hover:shadow-sm"
+                >
+                    {expandedId === call.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </button>
+            ),
+        },
+        {
+            id: 'from',
+            header: t('calls.from'),
+            cell: (call) => (
+                <span className="font-mono text-[13px] font-medium tabular-nums text-slate-900">
+                    {call.from_number}
+                </span>
+            ),
+        },
+        {
+            id: 'to',
+            header: t('calls.to'),
+            cell: (call) => (
+                <span className="font-mono text-[13px] tabular-nums text-slate-700">
+                    {call.to_number}
+                </span>
+            ),
+        },
+        {
+            id: 'flow',
+            header: t('calls.flow'),
+            cell: (call) => call.flow_name
+                ? <span className="font-medium text-slate-800">{call.flow_name}</span>
+                : <span className="text-slate-400">&mdash;</span>,
+        },
+        {
+            id: 'status',
+            header: t('calls.status'),
+            cell: (call) => (
+                <span className="inline-flex items-center gap-2">
+                    <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                    </span>
+                    <Badge color={statusColors[call.status] || 'zinc'}>
+                        {callStatusLabel(t, call.status)}
+                    </Badge>
+                </span>
+            ),
+        },
+        {
+            id: 'elapsed',
+            header: t('ui.elapsed'),
+            meta: { mono: true },
+            cell: (call) => (
+                <span className="font-metric text-[13px] text-slate-700">{elapsed(call.started_at, now)}</span>
+            ),
+        },
+        {
+            id: 'started',
+            header: t('ui.started'),
+            cell: (call) => (
+                <span className="text-slate-600">
+                    {call.started_at
+                        ? new Date(call.started_at).toLocaleString(locale || undefined, {
+                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit',
+                        })
+                        : '\u2014'}
+                </span>
+            ),
+        },
+        {
+            id: 'actions',
+            header: t('common.actions'),
+            meta: { align: 'right' },
+            cell: (call) => (
+                <div className="flex items-center justify-end gap-2">
+                    {call.recording_url && (
+                        <a
+                            href={call.recording_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-cyan-700 hover:shadow-sm"
+                            title={t('ui.listen_to_recording')}
+                        >
+                            <Headphones size={15} />
+                        </a>
+                    )}
+                    <Link
+                        href={show({ call: call.id }).url}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex h-8 items-center rounded-lg px-2.5 text-[13px] font-semibold text-cyan-700 transition hover:bg-cyan-50"
+                    >
+                        {t('ui.view')}
+                    </Link>
+                </div>
+            ),
+        },
+    ], [t, locale, now, expandedId, toggleExpand]);
 
     return (
         <AuthenticatedLayout>
-            <Head title="Live Monitor" />
+            <Head title={t('ui.live_monitor')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>Live Monitor</Heading>
-                    <Text className="mt-1">Real-time view of active calls via WebSocket.</Text>
-                </div>
-                {!wsConnected && (
-                    <Badge color="red" className="text-xs">
-                        Connection lost
-                    </Badge>
-                )}
-            </div>
+            <div className="space-y-8">
+                <PageHeader
+                    eyebrow={(
+                        <>
+                            <span className={`size-1.5 rounded-full ${wsConnected ? 'animate-pulse bg-emerald-500' : 'bg-rose-500'}`} />
+                            {wsConnected ? t('ui.live_ops') : t('ui.connection_lost')}
+                        </>
+                    )}
+                    title={t('ui.live_monitor')}
+                    subtitle={t('ui.realtime_view_active_calls')}
+                    actions={!wsConnected ? (
+                        <Badge color="red" className="text-xs">
+                            {t('ui.connection_lost')}
+                        </Badge>
+                    ) : null}
+                />
 
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-5">
-                <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-white/5">
-                    <Text className="text-sm">Active Calls</Text>
-                    <p className="mt-1 text-[28px] font-bold text-zinc-950 dark:text-white">{calls.length}</p>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
+                    {[
+                        { label: t('ui.active_calls'), value: calls.length, live: true },
+                        { label: t('ui.in_progress'), value: calls.filter((c) => c.status === 'in_progress').length },
+                        { label: t('ui.ringing_initiated'), value: calls.filter((c) => c.status === 'ringing' || c.status === 'initiated').length },
+                        { label: t('ui.avg_duration_card'), value: avgDuration > 0 ? elapsed(Date.now() - avgDuration * 1000, Date.now()) : '0s' },
+                        { label: t('ui.peak_today'), value: calls.length },
+                    ].map((kpi) => (
+                        <PageSection key={kpi.label} className="!p-5">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                                {kpi.label}
+                            </p>
+                            <p className="font-metric mt-3 text-[28px] font-semibold leading-none tracking-tight text-slate-950">
+                                {kpi.value}
+                            </p>
+                            {kpi.live && (
+                                <span className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-600">
+                                    <span className="size-1.5 animate-pulse rounded-full bg-cyan-500" />
+                                    {t('ui.live')}
+                                </span>
+                            )}
+                        </PageSection>
+                    ))}
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-white/5">
-                    <Text className="text-sm">In Progress</Text>
-                    <p className="mt-1 text-[28px] font-bold text-zinc-950 dark:text-white">
-                        {calls.filter((c) => c.status === 'in_progress').length}
-                    </p>
-                </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-white/5">
-                    <Text className="text-sm">Ringing / Initiated</Text>
-                    <p className="mt-1 text-[28px] font-bold text-zinc-950 dark:text-white">
-                        {calls.filter((c) => c.status === 'ringing' || c.status === 'initiated').length}
-                    </p>
-                </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-white/5">
-                    <Text className="text-sm">Avg Duration</Text>
-                    <p className="mt-1 text-[28px] font-bold text-zinc-950 dark:text-white">{avgDuration}s</p>
-                </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-white/5">
-                    <Text className="text-sm">Peak Today</Text>
-                    <p className="mt-1 text-[28px] font-bold text-zinc-950 dark:text-white">{calls.length}</p>
-                </div>
-            </div>
 
-            {calls.length === 0 ? (
-                <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
-                    <p className="mt-4 text-base font-semibold text-zinc-950 dark:text-white">No active calls</p>
-                    <Text className="mt-2">Active calls will appear here in real time.</Text>
-                </div>
-            ) : (
-                <div className="mt-6">
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableHeader />
-                                <TableHeader>From</TableHeader>
-                                <TableHeader>To</TableHeader>
-                                <TableHeader>Flow</TableHeader>
-                                <TableHeader>Status</TableHeader>
-                                <TableHeader>Elapsed</TableHeader>
-                                <TableHeader>Started</TableHeader>
-                                <TableHeader className="text-right" />
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {calls.map((call) => (
-                                <TableRow key={call.id}>
-                                    <TableCell>
+                <DataTable
+                    columns={columns}
+                    data={filteredCalls}
+                    getRowId={(row) => row.id}
+                    expandedId={expandedId}
+                    emptyIcon={Radio}
+                    emptyTitle={hasFilters ? t('ui.monitor_no_match') : t('ui.no_active_calls')}
+                    emptyDescription={hasFilters ? t('ui.monitor_no_match_desc') : t('ui.active_calls_appear')}
+                    toolbar={(
+                        <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center">
+                            <div className="relative min-w-0 flex-1">
+                                <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <Input
+                                    className="h-10 pl-10"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder={t('ui.monitor_search_placeholder')}
+                                />
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {STATUS_FILTERS.map((status) => {
+                                    const activeChip = statusFilter === status;
+                                    const label = status ? callStatusLabel(t, status) : t('ui.monitor_filter_all');
+                                    return (
                                         <button
+                                            key={status || 'all'}
                                             type="button"
-                                            onClick={() => toggleExpand(call)}
-                                            className="flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:hover:text-white"
+                                            onClick={() => setStatusFilter(status)}
+                                            className={`h-9 rounded-full px-3.5 text-[12px] font-semibold transition ${
+                                                activeChip
+                                                    ? 'bg-slate-950 text-white shadow-sm'
+                                                    : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'
+                                            }`}
                                         >
-                                            {expandedId === call.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                            {label}
                                         </button>
-                                    </TableCell>
-                                    <TableCell className="font-medium">{call.from_number}</TableCell>
-                                    <TableCell>{call.to_number}</TableCell>
-                                    <TableCell>{call.flow_name || <span className="italic">&mdash;</span>}</TableCell>
-                                    <TableCell>
-                                        <span className="flex items-center gap-2">
-                                            <span className="relative flex h-2 w-2">
-                                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                                                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                                            </span>
-                                            <Badge color={statusColors[call.status] || 'zinc'}>
-                                                {call.status.replace('_', ' ')}
-                                            </Badge>
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>{elapsed(call.started_at, now)}</TableCell>
-                                    <TableCell>
-                                        {call.started_at
-                                            ? new Date(call.started_at).toLocaleDateString('en-US', {
-                                                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit',
-                                              })
-                                            : '\u2014'}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            {call.recording_url && (
-                                                <a
-                                                    href={call.recording_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-zinc-500 hover:text-zinc-950 dark:hover:text-white"
-                                                    title="Listen to recording"
-                                                >
-                                                    <Headphones size={16} />
-                                                </a>
-                                            )}
-                                            <Link
-                                                href={show({ call: call.id }).url}
-                                                className="text-sm font-medium text-zinc-950 underline decoration-zinc-950/50 hover:decoration-zinc-950 dark:text-white dark:decoration-white/50 dark:hover:decoration-white"
-                                            >
-                                                View
-                                            </Link>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-
-                    {expandedId && (
+                                    );
+                                })}
+                            </div>
+                            <div className="flex items-center gap-3 lg:ml-auto">
+                                <span className="font-metric text-[12px] font-medium text-slate-500">
+                                    {t('ui.monitor_results_count', { count: filteredCalls.length })}
+                                </span>
+                                {hasFilters && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSearch('');
+                                            setStatusFilter('');
+                                        }}
+                                        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                                    >
+                                        <X className="size-3.5" />
+                                        {t('ui.monitor_clear_filters')}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    renderExpandedRow={(call) => (
                         <CallDetailPanel
-                            call={calls.find((c) => c.id === expandedId)}
-                            transcript={transcripts[expandedId]}
-                            loading={fetchingId === expandedId}
+                            call={call}
+                            transcript={transcripts[call.id]}
+                            loading={fetchingId === call.id}
                             now={now}
+                            t={t}
                         />
                     )}
-                </div>
-            )}
+                />
+            </div>
         </AuthenticatedLayout>
     );
 }
 
-function CallDetailPanel({ call, transcript, loading, now }) {
+function CallDetailPanel({ call, transcript: transcriptData, loading, now, t }) {
     if (!call) return null;
 
     return (
-        <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-white/5">
-            <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-zinc-950 dark:text-white">
-                    Call Detail — {call.call_sid}
+        <div className="border-t border-slate-200/70 px-5 py-6 sm:px-6">
+            <div className="flex items-center justify-between gap-3">
+                <h3 className="text-[13px] font-semibold text-slate-950">
+                    {t('ui.call_detail_sid', { sid: call.call_sid })}
                 </h3>
-                <Text className="text-sm">
-                    Elapsed: {elapsed(call.started_at, now)}
+                <Text className="font-metric text-sm text-slate-500">
+                    {t('ui.elapsed_colon')} {elapsed(call.started_at, now)}
                 </Text>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div>
-                    <h4 className="text-sm font-medium text-zinc-950 dark:text-white">Context / Step Data</h4>
+                    <h4 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                        {t('ui.context_step_data')}
+                    </h4>
                     {call.context ? (
-                        <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-zinc-50 p-3 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                        <pre className="mt-2.5 max-h-64 overflow-auto rounded-xl border border-slate-100 bg-white p-4 font-mono text-xs text-slate-700">
                             {JSON.stringify(call.context, null, 2)}
                         </pre>
                     ) : (
-                        <Text className="mt-2 text-sm">No context data available.</Text>
+                        <Text className="mt-2.5 text-sm">{t('ui.no_context_data')}</Text>
                     )}
                 </div>
 
                 <div>
-                    <h4 className="text-sm font-medium text-zinc-950 dark:text-white">Transcript</h4>
+                    <h4 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                        {t('ui.transcript')}
+                    </h4>
                     {loading ? (
-                        <Text className="mt-2 text-sm">Loading transcript...</Text>
-                    ) : transcript && transcript.call_logs && transcript.call_logs.length > 0 ? (
-                        <ul className="mt-2 max-h-64 space-y-2 overflow-auto rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800">
-                            {transcript.call_logs.map((log) => (
-                                <li key={log.id} className="text-xs text-zinc-700 dark:text-zinc-300">
-                                    <span className="font-medium capitalize">{log.direction || 'system'}:</span>{' '}
+                        <Text className="mt-2.5 text-sm">{t('ui.loading_transcript')}</Text>
+                    ) : transcriptData && transcriptData.call_logs && transcriptData.call_logs.length > 0 ? (
+                        <ul className="mt-2.5 max-h-64 space-y-2.5 overflow-auto rounded-xl border border-slate-100 bg-white p-4">
+                            {transcriptData.call_logs.map((log) => (
+                                <li key={log.id} className="text-xs leading-relaxed text-slate-700">
+                                    <span className="font-semibold capitalize text-slate-900">
+                                        {log.direction || t('ui.role_system')}:
+                                    </span>{' '}
                                     {log.content || log.event || JSON.stringify(log)}
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <Text className="mt-2 text-sm">No transcript lines available.</Text>
+                        <Text className="mt-2.5 text-sm">{t('ui.no_transcript_lines')}</Text>
                     )}
                 </div>
             </div>

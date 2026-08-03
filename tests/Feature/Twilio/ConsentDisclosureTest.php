@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Twilio;
 
+use App\Application\Flow\Services\TwilioPublicUrl;
 use App\Http\Middleware\ValidateTwilioRequest;
+use App\Infrastructure\Persistence\Eloquent\Flow\FlowModel;
 use App\Infrastructure\Persistence\Eloquent\Tenant\TenantModel;
 use Database\Factories\FlowModelFactory;
 use Database\Factories\TenantFactory;
@@ -52,7 +54,30 @@ class ConsentDisclosureTest extends TestCase
 
         $this->assertStringContainsString('<Gather', $content);
         $this->assertStringContainsString('This call may be recorded.', $content);
+        $this->assertStringContainsString('language="en-US"', $content);
+        $this->assertStringContainsString('voice="Polly.Joanna"', $content);
+        $this->assertStringContainsString('action="'.TwilioPublicUrl::to('/twilio/consent-callback').'"', $content);
         $this->assertStringContainsString('<Hangup', $content);
+    }
+
+    public function test_inbound_consent_uses_spanish_voice_when_flow_language_is_es(): void
+    {
+        FlowModel::query()
+            ->where('phone_number', '+15551234567')
+            ->update(['language' => 'es-ES']);
+
+        $response = $this->post('twilio/inbound', [
+            'CallSid' => 'CA'.str_repeat('a', 32),
+            'From' => '+1234567890',
+            'To' => '+15551234567',
+        ]);
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        $this->assertStringContainsString('<Gather', $content);
+        $this->assertStringContainsString('language="es-ES"', $content);
+        $this->assertStringContainsString('voice="Polly.Lucia"', $content);
     }
 
     public function test_inbound_call_without_consent_required_skips_gather(): void
@@ -103,6 +128,8 @@ class ConsentDisclosureTest extends TestCase
         $this->assertStringStartsWith('text/xml', $response->headers->get('Content-Type'));
         $content = $response->getContent();
         $this->assertStringContainsString('Goodbye', $content);
+        $this->assertStringContainsString('language="en-US"', $content);
+        $this->assertStringContainsString('voice="Polly.Joanna"', $content);
         $this->assertStringContainsString('<Hangup', $content);
 
         $this->assertDatabaseHas('activity_log', [

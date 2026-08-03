@@ -44,6 +44,9 @@ class GettingStartedController extends Controller
             'elevenlabsConnected' => ! empty($settings['elevenlabs_api_key'] ?? null),
             'hasPhone' => $hasPhone,
             'hasFlow' => $hasFlow,
+            'n8nConnected' => ($settings['integrations']['n8n']['status'] ?? null) === 'connected',
+            'hubspotConnected' => ($settings['integrations']['hubspot']['status'] ?? null) === 'connected',
+            'lookerConnected' => ($settings['integrations']['looker_studio']['status'] ?? null) === 'connected',
         ]);
     }
 

@@ -30,25 +30,26 @@ class HandleInertiaRequests extends Middleware
                 'message' => $request->session()->get('message'),
                 'token' => $request->session()->get('token'),
                 'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
             ],
             'locale' => $locale,
-            'availableLocales' => ['en' => 'English', 'es' => 'Español'],
+            'availableLocales' => config('locales'),
             'translations' => $translations,
             'isImpersonating' => session()->has('impersonator_id'),
             'impersonatedUser' => session()->has('impersonator_id') ? $request->user()?->name : null,
         ];
     }
 
-    /** @return array<string, array<string, string>> */
+    /** @return array<string, array<string, mixed>> */
     private function loadTranslations(string $locale): array
     {
-        $namespaces = ['common', 'navigation', 'dashboard', 'flows', 'calls', 'settings', 'team', 'api-tokens', 'auth'];
+        $namespaces = ['common', 'navigation', 'dashboard', 'flows', 'calls', 'settings', 'team', 'api-tokens', 'auth', 'ui', 'integrations'];
 
         $translations = [];
         foreach ($namespaces as $ns) {
-            $path = lang_path("{$locale}/{$ns}.php");
-            if (file_exists($path)) {
-                $translations[$ns] = require $path;
+            $lines = trans($ns, [], $locale);
+            if (is_array($lines)) {
+                $translations[$ns] = $lines;
             }
         }
 

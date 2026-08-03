@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
 import AuthLayout from '@/Layouts/AuthLayout';
@@ -6,8 +6,10 @@ import { Field, Label, ErrorMessage } from '@/Components/catalyst/fieldset';
 import { Input } from '@/Components/catalyst/input';
 import { Button } from '@/Components/catalyst/button';
 import { TextLink } from '@/Components/catalyst/text';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ForgotPassword({ status }) {
+    const { t } = useTranslation();
     const { data, setData, post, processing, errors } = useForm({
         email: '',
     });
@@ -19,20 +21,20 @@ export default function ForgotPassword({ status }) {
 
     return (
         <AuthLayout
-            title="Reset your password"
-            subtitle="Enter your email and we'll send you a reset link."
+            title={t('ui.reset_your_password')}
+            subtitle={t('ui.forgot_password_subtitle')}
         >
-            <Head title="Forgot Password" />
+            <Head title={t('ui.forgot_password_title')} />
 
             {status && (
-                <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800/50 dark:bg-green-950/30 dark:text-green-400">
+                <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                     {status}
                 </div>
             )}
 
             <form onSubmit={submit} className="space-y-6">
                 <Field>
-                    <Label>Email address</Label>
+                    <Label>{t('ui.email_address')}</Label>
                     <Input
                         id="email"
                         type="email"
@@ -45,12 +47,12 @@ export default function ForgotPassword({ status }) {
                 </Field>
 
                 <Button type="submit" disabled={processing} className="w-full">
-                    {processing ? 'Sending...' : 'Send reset link'}
+                    {processing ? t('ui.sending') : t('ui.send_reset_link')}
                 </Button>
 
-                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-                    Remember your password?{' '}
-                    <TextLink href={login().url}>Sign in</TextLink>
+                <p className="text-center text-sm text-slate-500">
+                    {t('ui.remember_password')}{' '}
+                    <TextLink href={login().url}>{t('ui.sign_in')}</TextLink>
                 </p>
             </form>
         </AuthLayout>

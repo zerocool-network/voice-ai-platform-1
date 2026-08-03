@@ -1,13 +1,17 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PageHeader from '@/Components/PageHeader';
+import PageSection from '@/Components/PageSection';
 import { Head, useForm } from '@inertiajs/react';
-import { Heading, Subheading } from '@/Components/catalyst/heading';
+import { Subheading } from '@/Components/catalyst/heading';
 import { Text } from '@/Components/catalyst/text';
 import { Button } from '@/Components/catalyst/button';
 import { Switch } from '@/Components/catalyst/switch';
 import { Select } from '@/Components/catalyst/select';
 import { Textarea } from '@/Components/catalyst/textarea';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Index({ dataProtection }) {
+    const { t } = useTranslation();
     const { data, setData, patch, processing, errors } = useForm({
         consent_required: dataProtection.consent_required ?? false,
         retention_days: dataProtection.retention_days ?? 90,
@@ -23,25 +27,23 @@ export default function Index({ dataProtection }) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Data Protection" />
+            <Head title={t('ui.data_protection')} />
 
-            <div className="flex items-end justify-between">
-                <div>
-                    <Heading>Data Protection</Heading>
-                    <Text className="mt-1">Manage consent and data retention settings.</Text>
-                </div>
-            </div>
+            <div className="max-w-2xl space-y-6">
+                <PageHeader
+                    title={t('ui.data_protection')}
+                    subtitle={t('ui.manage_consent_retention')}
+                />
 
-            <div className="mt-8 max-w-2xl">
                 <form onSubmit={submit} className="space-y-6">
-                    <div className="rounded-xl border border-zinc-950/5 bg-white p-8 dark:border-white/10 dark:bg-zinc-900">
-                        <Subheading>Call Recording Consent</Subheading>
+                    <PageSection>
+                        <Subheading>{t('ui.call_recording_consent')}</Subheading>
 
                         <div className="mt-4 flex items-center justify-between">
                             <div>
-                                <Text className="font-medium">Require caller consent</Text>
-                                <Text className="text-sm text-zinc-500">
-                                    Play a disclosure message and require DTMF acceptance before recording.
+                                <Text className="font-medium">{t('ui.require_caller_consent')}</Text>
+                                <Text className="text-sm text-slate-500">
+                                    {t('ui.consent_description')}
                                 </Text>
                             </div>
                             <Switch
@@ -53,8 +55,8 @@ export default function Index({ dataProtection }) {
                         {data.consent_required && (
                             <>
                                 <div className="mt-4">
-                                    <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                        Disclosure message
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        {t('ui.disclosure_message')}
                                     </label>
                                     <Textarea
                                         value={data.consent_message}
@@ -68,7 +70,7 @@ export default function Index({ dataProtection }) {
 
                                 <div className="mt-4 flex items-center justify-between">
                                     <div>
-                                        <Text className="font-medium">Apply consent to recordings</Text>
+                                        <Text className="font-medium">{t('ui.apply_consent_recordings')}</Text>
                                     </div>
                                     <Switch
                                         checked={data.consent_recordings}
@@ -78,7 +80,7 @@ export default function Index({ dataProtection }) {
 
                                 <div className="mt-4 flex items-center justify-between">
                                     <div>
-                                        <Text className="font-medium">Apply consent to transcripts</Text>
+                                        <Text className="font-medium">{t('ui.apply_consent_transcripts')}</Text>
                                     </div>
                                     <Switch
                                         checked={data.consent_transcripts}
@@ -87,34 +89,34 @@ export default function Index({ dataProtection }) {
                                 </div>
                             </>
                         )}
-                    </div>
+                    </PageSection>
 
-                    <div className="rounded-xl border border-zinc-950/5 bg-white p-8 dark:border-white/10 dark:bg-zinc-900">
-                        <Subheading>Data Retention</Subheading>
+                    <PageSection>
+                        <Subheading>{t('ui.data_retention')}</Subheading>
 
                         <div className="mt-4">
-                            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                Retention period
+                            <label className="mb-1 block text-sm font-medium text-slate-700">
+                                {t('ui.retention_period')}
                             </label>
                             <Select
                                 value={data.retention_days}
                                 onChange={(e) => setData('retention_days', parseInt(e.target.value))}
                             >
-                                <option value={30}>30 days</option>
-                                <option value={60}>60 days</option>
-                                <option value={90}>90 days</option>
-                                <option value={180}>180 days</option>
-                                <option value={365}>365 days</option>
+                                <option value={30}>{t('ui.days_30')}</option>
+                                <option value={60}>60 {t('ui.days')}</option>
+                                <option value={90}>{t('ui.days_90')}</option>
+                                <option value={180}>180 {t('ui.days')}</option>
+                                <option value={365}>365 {t('ui.days')}</option>
                             </Select>
                             {errors.retention_days && (
                                 <p className="mt-1 text-xs text-red-600">{errors.retention_days}</p>
                             )}
                         </div>
-                    </div>
+                    </PageSection>
 
                     <div className="flex justify-end">
                         <Button type="submit" disabled={processing}>
-                            Save Settings
+                            {t('ui.save_settings')}
                         </Button>
                     </div>
                 </form>

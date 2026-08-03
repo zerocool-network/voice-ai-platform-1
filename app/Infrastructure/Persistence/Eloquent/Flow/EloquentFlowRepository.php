@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Eloquent\Flow;
 
+use App\Application\Flow\Services\FlowSpeechLocale;
 use App\Domain\Flow\Entities\Flow;
 use App\Domain\Flow\Repositories\FlowRepositoryInterface;
 use App\Domain\Flow\ValueObjects\FlowConfig;
@@ -42,6 +43,7 @@ class EloquentFlowRepository implements FlowRepositoryInterface
                 'name' => $flow->name(),
                 'description' => $flow->description(),
                 'phone_number' => $flow->phoneNumber(),
+                'language' => FlowSpeechLocale::bcp47($flow->language()),
                 'config' => $flow->config()->toArray(),
                 'is_active' => $flow->isActive(),
                 'version' => $flow->version(),
@@ -77,6 +79,7 @@ class EloquentFlowRepository implements FlowRepositoryInterface
             config: FlowConfig::fromArray((array) $model->config),
             isActive: $model->is_active,
             version: $model->version,
+            language: FlowSpeechLocale::bcp47($model->language),
         );
     }
 }

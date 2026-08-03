@@ -44,6 +44,21 @@ export default function useFlowValidation(nodes, edges) {
             nodeErrors.push({ field: 'url', message: 'URL must start with http:// or https://' });
           }
           break;
+        case 'mcp_tool':
+          if (!data.server || data.server.trim() === '') {
+            nodeErrors.push({ field: 'server', message: 'Server is required' });
+          }
+          if (!data.tool || data.tool.trim() === '') {
+            nodeErrors.push({ field: 'tool', message: 'Tool name is required' });
+          }
+          break;
+        case 'n8n_trigger':
+          if (!data.workflow_id || data.workflow_id.trim() === '') {
+            nodeErrors.push({ field: 'workflow_id', message: 'Workflow ID is required' });
+          }
+          break;
+        case 'hubspot':
+          break;
         case 'llm':
           if (!data.systemPrompt || data.systemPrompt.trim() === '') {
             nodeErrors.push({ field: 'systemPrompt', message: 'System prompt is required' });
