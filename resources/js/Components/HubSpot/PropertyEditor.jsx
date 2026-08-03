@@ -1,4 +1,5 @@
-import { Checkbox, Field, Label } from '@/Components/catalyst/fieldset';
+import { Field, Label } from '@/Components/catalyst/fieldset';
+import { Checkbox } from '@/Components/catalyst/checkbox';
 import { Input } from '@/Components/catalyst/input';
 import { Select } from '@/Components/catalyst/select';
 import { Textarea } from '@/Components/catalyst/textarea';

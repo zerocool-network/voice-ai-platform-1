@@ -88,7 +88,7 @@ export default function Index({
     {
       id: 'avg_score',
       header: t('ui.avg_sentiment'),
-      cell: (c) => c.avg_score.toFixed(3),
+      cell: (c) => Number(c.avg_score ?? 0).toFixed(3),
     },
     {
       id: 'calls',

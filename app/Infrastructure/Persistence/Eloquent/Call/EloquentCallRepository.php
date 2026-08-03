@@ -175,7 +175,14 @@ class EloquentCallRepository implements CallRepositoryInterface
             ->groupBy('flows.name')
             ->orderBy('total_calls', 'desc')
             ->get()
-            ->toArray();
+            ->map(fn ($row) => [
+                'flow_name' => (string) $row->flow_name,
+                'total_calls' => (int) $row->total_calls,
+                'avg_duration' => (float) $row->avg_duration,
+                'success_rate' => (float) $row->success_rate,
+            ])
+            ->values()
+            ->all();
     }
 
     public function countInRange(string $tenantId, ?string $start = null, ?string $end = null): int

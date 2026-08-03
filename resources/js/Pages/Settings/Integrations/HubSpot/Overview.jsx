@@ -115,9 +115,15 @@ export default function Overview({ integration, platform_configured, scopes, acc
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <Button outline href="/settings/integrations/hubspot/voice-sync">{t('hubspot.modules.voice-sync')}</Button>
-                        <Button outline href="/settings/integrations/hubspot/modules/webhooks">{t('hubspot.modules.webhooks')}</Button>
-                        <Button outline href="/settings/integrations/hubspot/search">{t('hubspot.modules.search')}</Button>
+                        <Link href="/settings/integrations/hubspot/voice-sync">
+                            <Button outline type="button">{t('hubspot.modules.voice-sync')}</Button>
+                        </Link>
+                        <Link href="/settings/integrations/hubspot/modules/webhooks">
+                            <Button outline type="button">{t('hubspot.modules.webhooks')}</Button>
+                        </Link>
+                        <Link href="/settings/integrations/hubspot/search">
+                            <Button outline type="button">{t('hubspot.modules.search')}</Button>
+                        </Link>
                     </div>
                 </div>
             </HubSpotConsoleLayout>

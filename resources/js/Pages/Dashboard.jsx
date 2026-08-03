@@ -516,7 +516,7 @@ export default function Dashboard({
                         <td className="px-4 py-3 pr-4 font-medium text-slate-900">{f.flow_name}</td>
                         <td className="font-metric px-4 py-3 pr-4 text-slate-600">{f.total_calls}</td>
                         <td className="font-metric px-4 py-3 pr-4 text-slate-600">{formatDuration(f.avg_duration)}</td>
-                        <td className="font-metric px-4 py-3 pr-4 text-slate-600">{f.success_rate.toFixed(1)}%</td>
+                        <td className="font-metric px-4 py-3 pr-4 text-slate-600">{Number(f.success_rate ?? 0).toFixed(1)}%</td>
                       </tr>
                     ))}
                   </tbody>

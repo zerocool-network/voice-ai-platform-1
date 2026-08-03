@@ -136,4 +136,36 @@ class DashboardPageTest extends TestCase
             )
         );
     }
+
+    public function test_dashboard_flow_metrics_expose_numeric_success_rate(): void
+    {
+        $flow = FlowModelFactory::new()->create([
+            'tenant_id' => $this->user->tenant_id,
+            'name' => 'Reception',
+        ]);
+        CallModelFactory::new()->count(2)->create([
+            'tenant_id' => $this->user->tenant_id,
+            'flow_id' => $flow->id,
+            'status' => 'completed',
+            'duration_seconds' => 90,
+        ]);
+        CallModelFactory::new()->create([
+            'tenant_id' => $this->user->tenant_id,
+            'flow_id' => $flow->id,
+            'status' => 'failed',
+            'duration_seconds' => 30,
+        ]);
+
+        $response = $this->actingAs($this->user)->get('/dashboard');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Dashboard')
+            ->has('callsByFlowWithMetrics', 1)
+            ->where('callsByFlowWithMetrics.0.flow_name', 'Reception')
+            ->where('callsByFlowWithMetrics.0.total_calls', 3)
+            ->where('callsByFlowWithMetrics.0.success_rate', fn ($rate) => is_float($rate) || is_int($rate))
+            ->where('callsByFlowWithMetrics.0.avg_duration', fn ($duration) => is_float($duration) || is_int($duration))
+        );
+    }
 }
