@@ -57,11 +57,15 @@ class ElevenLabsAgentPageTest extends TestCase
 
         $response = $this->actingAs($this->user)->get('/settings/agents');
 
+        $response->assertOk();
         $response->assertSee('Test Agent');
         $response->assertSee('Support Agent');
         $response->assertSee('abc123');
         $response->assertSee('def456');
-        $response->assertDontSee('No agents');
+        $response->assertInertia(fn ($page) => $page
+            ->component('Settings/Agents/Index')
+            ->has('agents', 2)
+        );
     }
 
     public function test_create_requires_api_key(): void

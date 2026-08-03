@@ -30,6 +30,7 @@ class HandleInertiaRequests extends Middleware
                 'message' => $request->session()->get('message'),
                 'token' => $request->session()->get('token'),
                 'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
             ],
             'locale' => $locale,
             'availableLocales' => config('locales'),
@@ -42,7 +43,7 @@ class HandleInertiaRequests extends Middleware
     /** @return array<string, array<string, mixed>> */
     private function loadTranslations(string $locale): array
     {
-        $namespaces = ['common', 'navigation', 'dashboard', 'flows', 'calls', 'settings', 'team', 'api-tokens', 'auth', 'ui'];
+        $namespaces = ['common', 'navigation', 'dashboard', 'flows', 'calls', 'settings', 'team', 'api-tokens', 'auth', 'ui', 'integrations'];
 
         $translations = [];
         foreach ($namespaces as $ns) {

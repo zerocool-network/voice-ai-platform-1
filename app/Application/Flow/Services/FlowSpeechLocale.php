@@ -121,7 +121,49 @@ final class FlowSpeechLocale
      */
     public static function speak(?string $stored, string $key, array $replace = []): string
     {
+        if (! function_exists('app') || ! app()->bound('translator')) {
+            return self::fallbackSpeak($key, $replace);
+        }
+
         return (string) __($key, $replace, self::appLocale($stored));
+    }
+
+    /**
+     * @param  array<string, mixed>  $replace
+     */
+    private static function fallbackSpeak(string $key, array $replace = []): string
+    {
+        $lines = [
+            'speech.consent_default' => 'This call may be recorded.',
+            'speech.consent_prompt' => 'Press 1 to accept, or any other key to decline.',
+            'speech.consent_timeout' => 'You did not provide consent. Goodbye.',
+            'speech.goodbye' => 'Goodbye.',
+            'speech.not_configured' => 'Sorry, this number is not configured. Goodbye.',
+            'speech.welcome_greeting' => 'Hello! How can I help you today?',
+            'speech.ai_trouble' => 'I am sorry, I am having trouble right now.',
+            'speech.llm_trouble' => 'I am sorry, I am having trouble processing your request right now.',
+            'speech.mcp_not_configured' => 'MCP tool is not configured.',
+            'speech.mcp_unavailable' => 'MCP tooling is unavailable.',
+            'speech.mcp_failed' => 'MCP tool call failed.',
+            'speech.mcp_success' => 'MCP tool completed successfully.',
+            'speech.webhook_not_configured' => 'Webhook URL not configured.',
+            'speech.webhook_failed' => 'Webhook returned status :status',
+            'speech.n8n_not_configured' => 'n8n is not configured.',
+            'speech.n8n_triggered' => 'n8n workflow triggered.',
+            'speech.n8n_failed' => 'n8n workflow action failed.',
+            'speech.hubspot_not_configured' => 'HubSpot is not configured.',
+            'speech.hubspot_synced' => 'HubSpot sync completed.',
+            'speech.hubspot_failed' => 'HubSpot sync failed.',
+            'speech.memory_unavailable' => 'Unable to load your profile.',
+        ];
+
+        $text = $lines[$key] ?? $key;
+
+        foreach ($replace as $name => $value) {
+            $text = str_replace(':'.$name, (string) $value, $text);
+        }
+
+        return $text;
     }
 
     /** @return array<string, string> */

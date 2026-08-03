@@ -15,5 +15,11 @@ return [
     'mcp_success' => 'L\'outil MCP s\'est terminé avec succès.',
     'webhook_not_configured' => 'L\'URL du webhook n\'est pas configurée.',
     'webhook_failed' => 'Le webhook a renvoyé le statut :status',
+    'n8n_not_configured' => 'n8n is not configured.',
+    'n8n_triggered' => 'n8n workflow triggered.',
+    'n8n_failed' => 'n8n workflow action failed.',
+    'hubspot_not_configured' => 'HubSpot is not configured.',
+    'hubspot_synced' => 'HubSpot sync completed.',
+    'hubspot_failed' => 'HubSpot sync failed.',
     'memory_unavailable' => 'Impossible de charger votre profil.',
 ];

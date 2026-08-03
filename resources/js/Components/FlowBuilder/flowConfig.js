@@ -1,6 +1,6 @@
 import { computeAutoLayout } from './layoutFlow'
 
-const NODE_TYPES = ['say', 'ask', 'llm', 'condition', 'goto', 'transfer', 'webhook', 'mcp_tool', 'knowledge', 'hangup', 'voice_agent', 'analyze', 'memory'];
+const NODE_TYPES = ['say', 'ask', 'llm', 'condition', 'goto', 'transfer', 'webhook', 'mcp_tool', 'n8n_trigger', 'hubspot', 'knowledge', 'hangup', 'voice_agent', 'analyze', 'memory'];
 
 const NODE_DEFAULTS = {
   say: { type: 'say', config: { text: '' }, next: null },
@@ -11,6 +11,8 @@ const NODE_DEFAULTS = {
   transfer: { type: 'transfer', config: { destination: 'number', value: '' } },
   webhook: { type: 'webhook', config: { url: '', method: 'POST', headers: [], body: '' }, next: null },
   mcp_tool: { type: 'mcp_tool', config: { server: '', tool: '', parameters: '', variable: 'tool_result' }, next: null },
+  n8n_trigger: { type: 'n8n_trigger', config: { workflow_id: '' }, next: null },
+  hubspot: { type: 'hubspot', config: { action: 'sync_call' }, next: null },
   knowledge: { type: 'knowledge', config: { query: '', topK: 5, retrievalType: 'semantic', resourceType: '', systemPrompt: '' }, next: null },
   hangup: { type: 'hangup', config: {} },
   voice_agent: { type: 'voice_agent', config: { welcome_greeting: 'Hello! How can I help you today?', system_prompt: 'You are a helpful voice assistant.', voice: '21m00Tcm4TlvDq8ikWAM', tts_provider: 'ElevenLabs', intelligence_service: '' }, next: null },

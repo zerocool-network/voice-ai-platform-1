@@ -6,10 +6,10 @@ import { Badge } from '@/Components/catalyst/badge'
 import { complete } from '@/actions/App/Http/Controllers/Web/GettingStartedController'
 import { tenant as settingsTenant, phoneNumbers } from '@/routes/settings'
 import { index as flowsIndex } from '@/actions/App/Http/Controllers/Web/FlowController'
-import { Phone, MessageSquare, Headphones, GitBranch, Play, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Phone, MessageSquare, Headphones, GitBranch, Play, CheckCircle2, ArrowRight, Plug, Workflow, BarChart3 } from 'lucide-react'
 import { useTranslation } from '@/hooks/useTranslation'
 
-export default function Index({ twilioConnected, elevenlabsConnected, hasPhone, hasFlow }) {
+export default function Index({ twilioConnected, elevenlabsConnected, hasPhone, hasFlow, n8nConnected, hubspotConnected, lookerConnected }) {
     const { t } = useTranslation()
     const [currentStep, setCurrentStep] = useState(0)
     const [direction, setDirection] = useState('next')
@@ -52,6 +52,33 @@ export default function Index({ twilioConnected, elevenlabsConnected, hasPhone, 
             doneMessage: t('ui.flow_created'),
         },
         {
+            key: 'n8n',
+            title: t('integrations.n8n_title'),
+            details: t('integrations.n8n_desc'),
+            icon: Workflow,
+            link: '/settings/integrations/n8n',
+            linkLabel: t('integrations.configure'),
+            doneMessage: t('integrations.n8n_title'),
+        },
+        {
+            key: 'hubspot',
+            title: t('integrations.hubspot_title'),
+            details: t('integrations.hubspot_desc'),
+            icon: Plug,
+            link: '/settings/integrations/hubspot',
+            linkLabel: t('integrations.configure'),
+            doneMessage: t('integrations.hubspot_title'),
+        },
+        {
+            key: 'looker',
+            title: t('integrations.looker_title'),
+            details: t('integrations.looker_desc'),
+            icon: BarChart3,
+            link: '/settings/integrations/looker-studio',
+            linkLabel: t('integrations.configure'),
+            doneMessage: t('integrations.looker_title'),
+        },
+        {
             key: 'test',
             title: t('ui.step_test_call'),
             details: t('ui.step_test_details'),
@@ -62,7 +89,7 @@ export default function Index({ twilioConnected, elevenlabsConnected, hasPhone, 
         },
     ], [t])
 
-    const stepStatus = [twilioConnected, elevenlabsConnected, hasPhone, hasFlow, false]
+    const stepStatus = [twilioConnected, elevenlabsConnected, hasPhone, hasFlow, n8nConnected, hubspotConnected, lookerConnected, false]
     const completedCount = stepStatus.filter(Boolean).length
     const allDone = completedCount >= 3
 

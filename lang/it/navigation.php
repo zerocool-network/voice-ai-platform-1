@@ -26,6 +26,7 @@ return [
     'webhooks' => 'Webhook',
     'webhook_deliveries' => 'Consegne webhook',
     'phone_numbers' => 'Numeri',
+    'integrations' => 'Integrations',
     'settings' => 'Impostazioni',
     'roles' => 'Ruoli',
     'system' => 'Sistema',

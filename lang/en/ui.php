@@ -103,6 +103,8 @@ return [
     'field_tool_name' => 'Tool Name',
     'field_parameters_json' => 'Parameters (JSON)',
     'field_save_result' => 'Save result to variable',
+    'field_workflow_id' => 'n8n workflow ID',
+    'field_hubspot_action' => 'HubSpot action',
     'field_query' => 'Query',
     'field_top_k' => 'Top K Results',
     'field_retrieval_type' => 'Retrieval Type',

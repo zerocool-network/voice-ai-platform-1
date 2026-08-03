@@ -5,7 +5,7 @@ import {
     LayoutDashboard, Radio, Phone, FileText, GitBranch, Mic, BarChart3,
     BookOpen, Webhook, Settings, Bell, LogOut, User, Users, Key, Smartphone,
     Globe, CreditCard, Activity, Bot, Server, Shield, Award, AlertTriangle,
-    UserCheck, MessageSquare, MessageSquareText, ChevronDown, Hexagon,
+    UserCheck, MessageSquare, MessageSquareText, ChevronDown, Hexagon, Plug,
 } from 'lucide-react'
 import CommandPalette from '@/Components/CommandPalette'
 import LanguageSwitcher from '@/Components/LanguageSwitcher'
@@ -68,6 +68,7 @@ const NAV_GROUPS = [
         defaultOpen: false,
         items: [
             { labelKey: 'navigation.analytics', href: analyticsIndex().url, icon: BarChart3, active: 'analytics.*' },
+            { labelKey: 'navigation.integrations', href: '/settings/integrations', icon: Plug, active: 'settings.integrations.*' },
             { labelKey: 'navigation.team', href: teamIndex().url, icon: Users, active: 'team.*' },
             { labelKey: 'navigation.billing', href: billingIndex().url, icon: CreditCard, active: 'billing.*' },
             { labelKey: 'navigation.api_tokens', href: apiTokensIndex().url, icon: Key, active: 'api-tokens.*' },

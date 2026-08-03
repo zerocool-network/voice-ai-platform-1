@@ -8,6 +8,7 @@ use App\Http\Controllers\Twilio\WebhookController;
 use App\Http\Controllers\Web\AcceptInviteController;
 use App\Http\Controllers\Web\ActivityLogController;
 use App\Http\Controllers\Web\AnalyticsController;
+use App\Http\Controllers\Web\AnalyticsStudioController;
 use App\Http\Controllers\Web\ApiTokenController;
 use App\Http\Controllers\Web\BillingController;
 use App\Http\Controllers\Web\CallController;
@@ -22,6 +23,10 @@ use App\Http\Controllers\Web\FlowController;
 use App\Http\Controllers\Web\FlowTestController;
 use App\Http\Controllers\Web\GettingStartedController;
 use App\Http\Controllers\Web\ImpersonationController;
+use App\Http\Controllers\Web\Integrations\HubSpotIntegrationController;
+use App\Http\Controllers\Web\Integrations\IntegrationsController;
+use App\Http\Controllers\Web\Integrations\LookerStudioIntegrationController;
+use App\Http\Controllers\Web\Integrations\N8nIntegrationController;
 use App\Http\Controllers\Web\MonitorController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\PhoneNumberController;
@@ -45,6 +50,8 @@ use App\Http\Controllers\Web\VoiceController;
 use App\Http\Controllers\Web\VoiceSettingsController;
 use App\Http\Controllers\Web\WebhookDeliveryController;
 use App\Http\Controllers\Web\WebhookDestinationController;
+use App\Http\Controllers\Webhooks\HubSpotWebhookController;
+use App\Http\Controllers\Webhooks\N8nWebhookController;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -74,6 +81,12 @@ Route::post('twilio/consent-callback', [WebhookController::class, 'consentCallba
 Route::post('twilio/sms/inbound', [TwilioSmsController::class, 'inbound'])->middleware('throttle:twilio');
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
+Route::post('/webhooks/n8n/{tenant}', N8nWebhookController::class)
+    ->middleware('throttle:60,1')
+    ->name('webhooks.n8n');
+Route::post('/webhooks/hubspot', HubSpotWebhookController::class)
+    ->middleware('throttle:60,1')
+    ->name('webhooks.hubspot');
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -163,6 +176,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/settings/tenant', [TenantSettingsController::class, 'edit'])->name('settings.tenant');
     Route::patch('/settings/tenant', [TenantSettingsController::class, 'update'])->name('settings.tenant.update');
+
+    Route::get('/settings/integrations', [IntegrationsController::class, 'index'])->name('settings.integrations.index');
+    Route::get('/settings/integrations/n8n', [N8nIntegrationController::class, 'show'])->name('settings.integrations.n8n');
+    Route::post('/settings/integrations/n8n/connect', [N8nIntegrationController::class, 'connect'])->name('settings.integrations.n8n.connect');
+    Route::post('/settings/integrations/n8n/disconnect', [N8nIntegrationController::class, 'disconnect'])->name('settings.integrations.n8n.disconnect');
+    Route::post('/settings/integrations/n8n/test', [N8nIntegrationController::class, 'test'])->name('settings.integrations.n8n.test');
+    Route::post('/settings/integrations/n8n/workflows/{workflowId}/activate', [N8nIntegrationController::class, 'activateWorkflow'])->name('settings.integrations.n8n.activate');
+    Route::post('/settings/integrations/n8n/workflows/{workflowId}/deactivate', [N8nIntegrationController::class, 'deactivateWorkflow'])->name('settings.integrations.n8n.deactivate');
+
+    Route::get('/settings/integrations/hubspot', [HubSpotIntegrationController::class, 'show'])->name('settings.integrations.hubspot');
+    Route::post('/settings/integrations/hubspot/connect', [HubSpotIntegrationController::class, 'connect'])->name('settings.integrations.hubspot.connect');
+    Route::get('/settings/integrations/hubspot/callback', [HubSpotIntegrationController::class, 'callback'])->name('settings.integrations.hubspot.callback');
+    Route::post('/settings/integrations/hubspot/disconnect', [HubSpotIntegrationController::class, 'disconnect'])->name('settings.integrations.hubspot.disconnect');
+    Route::post('/settings/integrations/hubspot/sync', [HubSpotIntegrationController::class, 'updateSync'])->name('settings.integrations.hubspot.sync');
+
+    Route::get('/settings/integrations/looker-studio', [LookerStudioIntegrationController::class, 'show'])->name('settings.integrations.looker-studio');
+    Route::post('/settings/integrations/looker-studio/connect', [LookerStudioIntegrationController::class, 'connect'])->name('settings.integrations.looker-studio.connect');
+    Route::post('/settings/integrations/looker-studio/disconnect', [LookerStudioIntegrationController::class, 'disconnect'])->name('settings.integrations.looker-studio.disconnect');
+    Route::post('/settings/integrations/looker-studio/bigquery', [LookerStudioIntegrationController::class, 'updateBigQuery'])->name('settings.integrations.looker-studio.bigquery');
+
+    Route::get('/analytics/studio', AnalyticsStudioController::class)->name('analytics.studio');
 
     Route::get('/twilio/oauth/callback', [TwilioOAuthController::class, 'callback'])
         ->name('twilio.oauth.callback');

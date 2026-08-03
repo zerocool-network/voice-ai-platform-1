@@ -7,7 +7,13 @@ use App\Domain\Flow\Entities\Flow;
 use App\Domain\Flow\Services\AiServiceInterface;
 use App\Domain\Knowledge\Services\KnowledgeRetrievalService;
 use App\Domain\Knowledge\Services\RetrievalType;
+use App\Enums\IntegrationProvider;
+use App\Infrastructure\Persistence\Eloquent\Call\CallModel;
+use App\Infrastructure\Persistence\Eloquent\Tenant\TenantModel;
 use App\Services\ConversationMemoryService;
+use App\Services\Integrations\HubSpot\HubSpotSyncService;
+use App\Services\Integrations\IntegrationConnectionService;
+use App\Services\Integrations\N8n\N8nPublicApiClient;
 use App\Services\McpToolService;
 use Illuminate\Support\Facades\Http;
 use Psr\Log\LoggerInterface;
@@ -76,6 +82,8 @@ class FlowExecutor
             'knowledge' => $this->knowledgeStep($step, $flow, $call),
             'webhook' => $this->webhookStep($step, $flow, $call),
             'mcp_tool' => $this->mcpToolStep($step, $flow, $call),
+            'n8n_trigger' => $this->n8nTriggerStep($step, $flow, $call),
+            'hubspot' => $this->hubspotStep($step, $flow, $call),
             'hangup' => $this->hangupStep(),
             'voice_agent' => $this->voiceAgentStep($step, $flow, $call),
             'analyze' => $this->analyzeStep($step, $flow, $call),
@@ -411,6 +419,103 @@ class FlowExecutor
         }
 
         return $response;
+    }
+
+    /** @param FlowStep $step */
+    private function n8nTriggerStep(array $step, Flow $flow, ?Call $call): VoiceResponse
+    {
+        $response = new VoiceResponse;
+        $config = $step['config'];
+        $workflowId = (string) ($config['workflow_id'] ?? '');
+
+        $tenant = TenantModel::find($flow->tenantId());
+        if ($tenant === null || $workflowId === '') {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_not_configured'));
+            $this->redirectIfNext($response, $step);
+
+            return $response;
+        }
+
+        $connections = app(IntegrationConnectionService::class);
+        $n8n = $connections->get($tenant, IntegrationProvider::N8n);
+        $apiKey = $connections->decryptSecret($n8n['api_key'] ?? null);
+        $baseUrl = $n8n['base_url'] ?? null;
+
+        if (! is_string($apiKey) || ! is_string($baseUrl)) {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_not_configured'));
+            $this->redirectIfNext($response, $step);
+
+            return $response;
+        }
+
+        try {
+            $client = N8nPublicApiClient::fromConfig($baseUrl, $apiKey);
+            $workflow = $client->getWorkflow($workflowId);
+            if (! $workflow->successful()) {
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+                $this->redirectIfNext($response, $step);
+
+                return $response;
+            }
+
+            $activate = $client->activateWorkflow($workflowId);
+            if ($activate->successful() || $activate->status() === 409) {
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_triggered'));
+            } else {
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+            }
+        } catch (\Throwable $e) {
+            $this->logger?->warning('n8n_trigger failed', ['error' => $e->getMessage()]);
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+        }
+
+        $this->redirectIfNext($response, $step);
+
+        return $response;
+    }
+
+    /** @param FlowStep $step */
+    private function hubspotStep(array $step, Flow $flow, ?Call $call): VoiceResponse
+    {
+        $response = new VoiceResponse;
+        $tenant = TenantModel::find($flow->tenantId());
+
+        if ($tenant === null || $call === null) {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.hubspot_not_configured'));
+            $this->redirectIfNext($response, $step);
+
+            return $response;
+        }
+
+        $callModel = CallModel::find($call->id());
+        if ($callModel === null) {
+            $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.hubspot_failed'));
+            $this->redirectIfNext($response, $step);
+
+            return $response;
+        }
+
+        $result = app(HubSpotSyncService::class)->syncCall($tenant, $callModel);
+        $this->speak(
+            $response,
+            FlowSpeechLocale::speak(
+                $flow->language(),
+                $result['ok'] ? 'speech.hubspot_synced' : 'speech.hubspot_failed'
+            )
+        );
+
+        $this->redirectIfNext($response, $step);
+
+        return $response;
+    }
+
+    /** @param FlowStep $step */
+    private function redirectIfNext(VoiceResponse $response, array $step): void
+    {
+        $next = $step['next'] ?? null;
+        if ($next !== null) {
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
+        }
     }
 
     /** @param FlowStep $step */

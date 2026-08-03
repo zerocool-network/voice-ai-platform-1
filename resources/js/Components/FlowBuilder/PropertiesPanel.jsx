@@ -82,6 +82,17 @@ const FIELDS = {
     { key: 'parameters', labelKey: 'ui.field_parameters_json', type: 'textarea', placeholder: '{"query": "SELECT 1"}' },
     { key: 'variable', labelKey: 'ui.field_save_result', type: 'input', placeholder: 'tool_result' },
   ],
+  n8n_trigger: [
+    { key: 'workflow_id', labelKey: 'ui.field_workflow_id', type: 'input', placeholder: 'n8n workflow id' },
+  ],
+  hubspot: [
+    {
+      key: 'action', labelKey: 'ui.field_hubspot_action', type: 'select',
+      options: [
+        { value: 'sync_call', label: 'Sync call' },
+      ],
+    },
+  ],
   knowledge: [
     { key: 'query', labelKey: 'ui.field_query', type: 'textarea', placeholder: 'What information to look up? Use {{variable}} for dynamic values.' },
     { key: 'topK', labelKey: 'ui.field_top_k', type: 'input', placeholder: '5' },

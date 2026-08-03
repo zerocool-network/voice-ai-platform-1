@@ -27,6 +27,7 @@ return [
     'webhook_deliveries' => 'Webhook Deliveries',
     'phone_numbers' => 'Phone Numbers',
     'settings' => 'Settings',
+    'integrations' => 'Integrations',
     'roles' => 'Roles',
     'system' => 'System',
     'activity_log' => 'Activity Log',

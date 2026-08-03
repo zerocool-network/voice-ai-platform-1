@@ -4,7 +4,7 @@ import {
   Search, MessageSquare, HelpCircle, PhoneOff,
   GitBranch, ArrowRight, Bot, Webhook,
   PhoneForwarded, BookOpen, Mic, Activity, Brain, Cpu,
-  ChevronDown,
+  ChevronDown, Workflow, Building2,
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -17,6 +17,8 @@ const iconMap = {
   llm: Bot,
   webhook: Webhook,
   mcp_tool: Cpu,
+  n8n_trigger: Workflow,
+  hubspot: Building2,
   transfer: PhoneForwarded,
   knowledge: BookOpen,
   voice_agent: Mic,
@@ -39,7 +41,7 @@ const CATEGORIES = [
   },
   {
     labelKey: 'ui.actions',
-    items: ['transfer', 'webhook', 'mcp_tool'],
+    items: ['transfer', 'webhook', 'mcp_tool', 'n8n_trigger', 'hubspot'],
   },
   {
     labelKey: 'ui.intelligence',
@@ -56,6 +58,8 @@ const NODE_ITEMS = [
   { type: 'transfer', label: 'Transfer', color: 'rose', desc: 'Call transfer' },
   { type: 'webhook', label: 'Webhook', color: 'cyan', desc: 'HTTP request' },
   { type: 'mcp_tool', label: 'MCP Tool', color: 'purple', desc: 'Call MCP tool' },
+  { type: 'n8n_trigger', label: 'n8n Trigger', color: 'orange', desc: 'Activate n8n workflow' },
+  { type: 'hubspot', label: 'HubSpot', color: 'orange', desc: 'Sync contact / call' },
   { type: 'knowledge', label: 'Knowledge', color: 'teal', desc: 'Query knowledge base' },
   { type: 'voice_agent', label: 'Voice Agent', color: 'purple', desc: 'Conversation Relay AI' },
   { type: 'analyze', label: 'Analyze', color: 'indigo', desc: 'Conversation Intelligence' },

@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Call\CallModel;
 use App\Infrastructure\Persistence\Eloquent\Tenant\TenantModel;
 use App\Jobs\DownloadAndEncryptRecording;
+use App\Jobs\Integrations\SyncCallToHubSpotJob;
 use App\Jobs\TranscribeRecording;
 use App\Services\UsageTrackingService;
 use Illuminate\Http\Request;
@@ -201,6 +202,10 @@ class WebhookController extends Controller
 
                 if ($callModel !== null) {
                     CallUpdated::dispatch($callModel);
+
+                    if ($callStatus === 'completed') {
+                        SyncCallToHubSpotJob::dispatch($callModel->tenant_id, $callModel->id);
+                    }
                 }
             }
         }
