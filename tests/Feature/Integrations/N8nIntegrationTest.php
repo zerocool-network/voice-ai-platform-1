@@ -44,7 +44,8 @@ class N8nIntegrationTest extends TestCase
                 'api_key' => 'n8n-api-key-123456',
             ])
             ->assertRedirect(route('settings.integrations.n8n'))
-            ->assertSessionHas('success');
+            ->assertSessionHas('success')
+            ->assertSessionHas('n8n_webhook_secret');
 
         $this->tenant->refresh();
         $this->assertSame(

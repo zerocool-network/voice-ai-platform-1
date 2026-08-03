@@ -52,6 +52,7 @@ class N8nIntegrationController extends Controller
                 'projects' => $projects,
             ],
             'inbound_webhook_url' => url('/webhooks/n8n/'.$tenant->id),
+            'plain_webhook_secret' => $request->session()->pull('n8n_webhook_secret'),
         ]);
     }
 
@@ -107,8 +108,10 @@ class N8nIntegrationController extends Controller
             ->performedOn($tenant)
             ->log('n8n integration connected');
 
+        $request->session()->flash('n8n_webhook_secret', $webhookSecret);
+
         return redirect()->route('settings.integrations.n8n')
-            ->with('success', 'n8n connected successfully.');
+            ->with('success', 'n8n connected successfully. Copy the inbound webhook secret now — it will not be shown again.');
     }
 
     public function disconnect(Request $request): RedirectResponse

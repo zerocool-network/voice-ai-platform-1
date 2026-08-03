@@ -46,8 +46,8 @@ class HubSpotIntegrationTest extends TestCase
                 'expires_in' => 21600,
                 'scope' => 'crm.objects.contacts.read crm.objects.contacts.write',
             ]),
-            'api.hubapi.com/oauth/v1/access-tokens/*' => Http::response([
-                'hub_id' => 12345,
+            'api.hubapi.com/account-info/v3/details' => Http::response([
+                'portalId' => 12345,
             ]),
         ]);
 
@@ -96,5 +96,50 @@ class HubSpotIntegrationTest extends TestCase
         $this->actingAs($this->user)
             ->get(route('settings.integrations.hubspot'))
             ->assertOk();
+    }
+
+    public function test_webhook_rejects_invalid_signature(): void
+    {
+        config(['hubspot.client_secret' => 'test-secret']);
+
+        $this->postJson(route('webhooks.hubspot'), [
+            ['portalId' => 12345, 'subscriptionType' => 'contact.creation'],
+        ])->assertUnauthorized();
+    }
+
+    public function test_webhook_accepts_valid_v1_signature(): void
+    {
+        config(['hubspot.client_secret' => 'test-secret']);
+
+        app(IntegrationConnectionService::class)->put(
+            $this->tenant,
+            IntegrationProvider::HubSpot,
+            [
+                'status' => IntegrationStatus::Connected->value,
+                'portal_id' => '12345',
+            ]
+        );
+
+        $body = json_encode([[
+            'portalId' => 12345,
+            'subscriptionType' => 'contact.creation',
+            'objectId' => 1,
+        ]], JSON_THROW_ON_ERROR);
+
+        $signature = hash('sha256', 'test-secret'.$body);
+
+        $this->call(
+            'POST',
+            route('webhooks.hubspot'),
+            [],
+            [],
+            [],
+            [
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_X_HUBSPOT_SIGNATURE' => $signature,
+                'HTTP_X_HUBSPOT_SIGNATURE_VERSION' => 'v1',
+            ],
+            $body
+        )->assertOk();
     }
 }

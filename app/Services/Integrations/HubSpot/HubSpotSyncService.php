@@ -38,7 +38,7 @@ class HubSpotSyncService
 
         try {
             $hubspot = $this->oauth->clientFor($tenant);
-            $phone = $call->from_number;
+            $phone = $this->normalizePhone($call->from_number);
             $contactId = $this->findContactIdByPhone($hubspot, $phone);
 
             if ($contactId === null && ($sync['create_contact'] ?? true)) {
@@ -173,5 +173,15 @@ class HubSpotSyncService
         ]);
 
         $hubspot->crm()->tickets()->basicApi()->create($input);
+    }
+
+    private function normalizePhone(string $phone): string
+    {
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+        if ($digits === '') {
+            return $phone;
+        }
+
+        return str_starts_with($phone, '+') ? '+'.$digits : '+'.$digits;
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Webhooks;
 use App\Enums\IntegrationProvider;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Tenant\TenantModel;
+use App\Services\Integrations\HubSpot\HubSpotWebhookSignature;
 use App\Services\Integrations\IntegrationConnectionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,10 +15,16 @@ class HubSpotWebhookController extends Controller
 {
     public function __construct(
         private readonly IntegrationConnectionService $connections,
+        private readonly HubSpotWebhookSignature $signatures,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
+        $clientSecret = (string) config('hubspot.client_secret', '');
+        if (! $this->signatures->isValid($request, $clientSecret)) {
+            return response()->json(['message' => 'Invalid signature'], 401);
+        }
+
         $events = $request->all();
         if (! is_array($events)) {
             return response()->json(['message' => 'Invalid payload'], 422);
@@ -36,7 +43,7 @@ class HubSpotWebhookController extends Controller
             return response()->json(['message' => 'Unknown portal'], 404);
         }
 
-        $config = app(IntegrationConnectionService::class)->get($tenant, IntegrationProvider::HubSpot);
+        $config = $this->connections->get($tenant, IntegrationProvider::HubSpot);
         if (($config['status'] ?? null) !== 'connected') {
             return response()->json(['message' => 'Not connected'], 422);
         }
@@ -44,7 +51,7 @@ class HubSpotWebhookController extends Controller
         Log::info('HubSpot webhook received', [
             'tenant_id' => $tenant->id,
             'portal_id' => $portalId,
-            'count' => count($events),
+            'count' => is_array($events) ? count($events) : 0,
         ]);
 
         activity()

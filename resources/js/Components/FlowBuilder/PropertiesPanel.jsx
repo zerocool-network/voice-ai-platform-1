@@ -84,6 +84,7 @@ const FIELDS = {
   ],
   n8n_trigger: [
     { key: 'workflow_id', labelKey: 'ui.field_workflow_id', type: 'input', placeholder: 'n8n workflow id' },
+    { key: 'webhook_url', labelKey: 'ui.url', type: 'input', placeholder: 'https://n8n.example/webhook/...' },
   ],
   hubspot: [
     {

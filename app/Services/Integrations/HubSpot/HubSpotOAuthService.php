@@ -67,9 +67,11 @@ class HubSpotOAuthService
         }
 
         $portalId = null;
-        $tokenInfo = Http::get('https://api.hubapi.com/oauth/v1/access-tokens/'.$accessToken);
-        if ($tokenInfo->successful()) {
-            $portalId = (string) ($tokenInfo->json('hub_id') ?? '');
+        $accountInfo = Http::withToken($accessToken)
+            ->acceptJson()
+            ->get('https://api.hubapi.com/account-info/v3/details');
+        if ($accountInfo->successful()) {
+            $portalId = (string) ($accountInfo->json('portalId') ?? $accountInfo->json('hub_id') ?? '');
         }
 
         $this->connections->put($tenant, IntegrationProvider::HubSpot, [

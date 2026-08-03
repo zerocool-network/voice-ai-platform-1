@@ -26,6 +26,10 @@ class SyncCallToHubSpotJob implements ShouldQueue
             return;
         }
 
+        if ($call->tenant_id !== $this->tenantId) {
+            return;
+        }
+
         $sync->syncCall($tenant, $call);
     }
 }

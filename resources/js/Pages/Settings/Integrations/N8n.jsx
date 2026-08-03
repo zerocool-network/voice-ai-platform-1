@@ -12,7 +12,7 @@ import { Badge } from '@/Components/catalyst/badge';
 import { useTranslation } from '@/hooks/useTranslation';
 import DataTable from '@/Components/DataTable';
 
-export default function N8n({ integration, templates, console: consoleData, inbound_webhook_url }) {
+export default function N8n({ integration, templates, console: consoleData, inbound_webhook_url, plain_webhook_secret }) {
     const { t } = useTranslation();
     const connected = integration?.is_connected;
     const { data, setData, post, processing, errors } = useForm({
@@ -131,6 +131,13 @@ export default function N8n({ integration, templates, console: consoleData, inbo
                         <PageSection>
                             <Text className="mb-2 font-medium">{t('integrations.inbound_webhook')}</Text>
                             <code className="block break-all rounded bg-slate-50 p-2 text-xs">{inbound_webhook_url}</code>
+                            {plain_webhook_secret && (
+                                <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-3">
+                                    <Text className="font-medium text-amber-900">{t('integrations.copy_token_now')}</Text>
+                                    <code className="mt-2 block break-all text-xs">{plain_webhook_secret}</code>
+                                    <Text className="mt-2 text-xs">Header: X-Voice-Signature = HMAC-SHA256(body, secret)</Text>
+                                </div>
+                            )}
                         </PageSection>
                         <PageSection>
                             <Text className="mb-3 font-medium">{t('integrations.workflows')}</Text>

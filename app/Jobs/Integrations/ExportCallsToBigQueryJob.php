@@ -38,16 +38,22 @@ class ExportCallsToBigQueryJob implements ShouldQueue
 
         $projectId = $bq['project_id'] ?? null;
         $dataset = $bq['dataset'] ?? null;
-        $oauth = $bq['google_oauth'] ?? null;
+        $oauth = is_array($bq['google_oauth'] ?? null) ? $bq['google_oauth'] : null;
+        $accessToken = is_array($oauth)
+            ? $connections->decryptSecret($oauth['access_token'] ?? null)
+            : null;
 
-        if (! is_string($projectId) || ! is_string($dataset) || ! is_array($oauth)) {
-            Log::warning('BigQuery export skipped: incomplete config', ['tenant_id' => $tenant->id]);
+        if (! is_string($projectId) || $projectId === ''
+            || ! is_string($dataset) || $dataset === ''
+            || $accessToken === null || $accessToken === '') {
+            Log::warning('BigQuery export skipped: Google OAuth or project/dataset not configured', [
+                'tenant_id' => $tenant->id,
+            ]);
+            $connections->put($tenant, IntegrationProvider::LookerStudio, [
+                'bigquery' => array_merge($bq, ['enabled' => false]),
+                'last_error' => 'BigQuery requires Google OAuth + project/dataset',
+            ]);
 
-            return;
-        }
-
-        $accessToken = $connections->decryptSecret($oauth['access_token'] ?? null);
-        if ($accessToken === null) {
             return;
         }
 

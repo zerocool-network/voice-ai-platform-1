@@ -449,17 +449,53 @@ class FlowExecutor
         }
 
         try {
-            $client = N8nPublicApiClient::fromConfig($baseUrl, $apiKey);
-            $workflow = $client->getWorkflow($workflowId);
-            if (! $workflow->successful()) {
+            $webhookUrl = (string) ($config['webhook_url'] ?? '');
+            if ($webhookUrl !== '' && ! $this->isAllowedN8nWebhookUrl($webhookUrl, $baseUrl)) {
                 $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
                 $this->redirectIfNext($response, $step);
 
                 return $response;
             }
 
-            $activate = $client->activateWorkflow($workflowId);
-            if ($activate->successful() || $activate->status() === 409) {
+            $client = N8nPublicApiClient::fromConfig($baseUrl, $apiKey);
+
+            if ($webhookUrl === '') {
+                $workflow = $client->getWorkflow($workflowId);
+                if (! $workflow->successful()) {
+                    $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+                    $this->redirectIfNext($response, $step);
+
+                    return $response;
+                }
+                $webhookUrl = $this->resolveN8nWebhookUrl($baseUrl, $workflow->json());
+            }
+
+            if ($webhookUrl === '' || ! $this->isAllowedN8nWebhookUrl($webhookUrl, $baseUrl)) {
+                $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
+                $this->redirectIfNext($response, $step);
+
+                return $response;
+            }
+
+            $payload = [
+                'event' => 'flow.n8n_trigger',
+                'workflow_id' => $workflowId,
+                'call' => $call === null ? null : [
+                    'id' => $call->id(),
+                    'sid' => (string) $call->getCallSid(),
+                    'from' => (string) $call->getFromNumber(),
+                    'to' => (string) $call->getToNumber(),
+                    'context' => $call->context(),
+                ],
+                'flow_id' => $flow->id(),
+                'tenant_id' => $flow->tenantId(),
+            ];
+
+            $httpResponse = Http::timeout(10)
+                ->acceptJson()
+                ->withoutRedirecting()
+                ->post($webhookUrl, $payload);
+            if ($httpResponse->successful()) {
                 $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_triggered'));
             } else {
                 $this->speak($response, FlowSpeechLocale::speak($flow->language(), 'speech.n8n_failed'));
@@ -472,6 +508,58 @@ class FlowExecutor
         $this->redirectIfNext($response, $step);
 
         return $response;
+    }
+
+    private function isAllowedN8nWebhookUrl(string $webhookUrl, string $apiBaseUrl): bool
+    {
+        $webhookHost = parse_url($webhookUrl, PHP_URL_HOST);
+        $apiHost = parse_url($apiBaseUrl, PHP_URL_HOST);
+        $scheme = parse_url($webhookUrl, PHP_URL_SCHEME);
+
+        if (! is_string($webhookHost) || $webhookHost === '' || ! is_string($apiHost) || $apiHost === '') {
+            return false;
+        }
+
+        if (! in_array($scheme, ['https', 'http'], true)) {
+            return false;
+        }
+
+        return strcasecmp($webhookHost, $apiHost) === 0;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $workflow
+     */
+    private function resolveN8nWebhookUrl(string $apiBaseUrl, ?array $workflow): string
+    {
+        if ($workflow === null) {
+            return '';
+        }
+
+        $nodes = $workflow['nodes'] ?? [];
+        if (! is_array($nodes)) {
+            return '';
+        }
+
+        foreach ($nodes as $node) {
+            if (! is_array($node)) {
+                continue;
+            }
+            $type = (string) ($node['type'] ?? '');
+            if (! str_contains(strtolower($type), 'webhook')) {
+                continue;
+            }
+            $path = (string) data_get($node, 'parameters.path', data_get($node, 'webhookId', ''));
+            if ($path === '') {
+                continue;
+            }
+
+            $origin = preg_replace('#/api/v1/?$#', '', rtrim($apiBaseUrl, '/')) ?: rtrim($apiBaseUrl, '/');
+
+            return $origin.'/webhook/'.ltrim($path, '/');
+        }
+
+        return '';
     }
 
     /** @param FlowStep $step */

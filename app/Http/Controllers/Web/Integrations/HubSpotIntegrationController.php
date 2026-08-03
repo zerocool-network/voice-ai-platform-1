@@ -67,6 +67,12 @@ class HubSpotIntegrationController extends Controller
                 ->with('error', 'Invalid authorization request.');
         }
 
+        $createdAt = (int) ($state['created_at'] ?? 0);
+        if ($createdAt < now()->subMinutes(10)->timestamp) {
+            return redirect()->route('settings.integrations.hubspot')
+                ->with('error', 'Authorization expired. Please try again.');
+        }
+
         if (! $request->user()->isOwner() && ! $request->user()->isAdmin()) {
             abort(403);
         }

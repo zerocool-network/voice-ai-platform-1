@@ -11,7 +11,7 @@ const NODE_DEFAULTS = {
   transfer: { type: 'transfer', config: { destination: 'number', value: '' } },
   webhook: { type: 'webhook', config: { url: '', method: 'POST', headers: [], body: '' }, next: null },
   mcp_tool: { type: 'mcp_tool', config: { server: '', tool: '', parameters: '', variable: 'tool_result' }, next: null },
-  n8n_trigger: { type: 'n8n_trigger', config: { workflow_id: '' }, next: null },
+  n8n_trigger: { type: 'n8n_trigger', config: { workflow_id: '', webhook_url: '' }, next: null },
   hubspot: { type: 'hubspot', config: { action: 'sync_call' }, next: null },
   knowledge: { type: 'knowledge', config: { query: '', topK: 5, retrievalType: 'semantic', resourceType: '', systemPrompt: '' }, next: null },
   hangup: { type: 'hangup', config: {} },

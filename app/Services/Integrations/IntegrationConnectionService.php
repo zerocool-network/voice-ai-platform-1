@@ -129,7 +129,7 @@ class IntegrationConnectionService
                 continue;
             }
 
-            if (in_array($key, self::SECRET_KEYS, true)) {
+            if (in_array($key, self::SECRET_KEYS, true) || str_ends_with((string) $key, '_hash')) {
                 $data[$key.'_set'] = is_string($value) && $value !== '';
                 unset($data[$key]);
             }
