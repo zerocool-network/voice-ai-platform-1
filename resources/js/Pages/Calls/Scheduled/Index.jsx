@@ -34,20 +34,6 @@ export default function Index({ calls, flows, stats }) {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     });
 
-    const frequencyLabels = {
-        once: t('ui.once'),
-        daily: t('ui.daily'),
-        weekly: t('ui.weekly'),
-        monthly: t('ui.monthly'),
-    };
-
-    function formatDate(date) {
-        if (!date) return '\u2014';
-        return new Date(date).toLocaleString(locale || undefined, {
-            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
-        });
-    }
-
     function handleSubmit(e) {
         e.preventDefault();
         post('/calls/scheduled', {
@@ -58,7 +44,22 @@ export default function Index({ calls, flows, stats }) {
         });
     }
 
-    const columns = useMemo(() => [
+    const columns = useMemo(() => {
+        const frequencyLabels = {
+            once: t('ui.once'),
+            daily: t('ui.daily'),
+            weekly: t('ui.weekly'),
+            monthly: t('ui.monthly'),
+        };
+
+        const formatDate = (date) => {
+            if (!date) return '\u2014';
+            return new Date(date).toLocaleString(locale || undefined, {
+                month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
+            });
+        };
+
+        return [
         {
             id: 'phone',
             header: t('ui.phone'),
@@ -125,7 +126,8 @@ export default function Index({ calls, flows, stats }) {
                 </div>
             ),
         },
-    ], [t, locale, frequencyLabels]);
+    ];
+    }, [t, locale]);
 
     return (
         <AuthenticatedLayout>

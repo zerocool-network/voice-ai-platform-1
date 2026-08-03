@@ -66,26 +66,25 @@ export default function CommandPalette() {
 
     const close = useCallback(() => {
         setOpen(false)
+    }, [])
+
+    useEffect(() => {
+        if (open) {
+            return
+        }
+
         setQuery('')
         setResults([])
         setError(null)
         setSelectedIndex(0)
         setLoading(false)
-    }, [])
+    }, [open])
 
     useEffect(() => {
         function onKeyDown(e) {
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault()
-                setOpen((prev) => {
-                    if (prev) {
-                        setQuery('')
-                        setResults([])
-                        setError(null)
-                        return false
-                    }
-                    return true
-                })
+                setOpen((prev) => !prev)
             }
         }
         window.addEventListener('keydown', onKeyDown)
@@ -381,6 +380,7 @@ export default function CommandPalette() {
         <>
             <button
                 type="button"
+                aria-label={t('ui.search_workspace')}
                 onClick={() => setOpen(true)}
                 className="group flex w-full max-w-[300px] items-center gap-2.5 rounded-full border border-slate-200/90 bg-white px-3.5 py-2 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-cyan-300/70 hover:shadow-[0_0_0_3px_rgba(6,182,212,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30"
             >

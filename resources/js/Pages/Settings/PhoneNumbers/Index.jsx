@@ -38,13 +38,6 @@ export default function Index({ connected, numbers, flows, error }) {
     const [searching, setSearching] = useState(false)
     const [searchError, setSearchError] = useState(null)
 
-    const flowMap = {}
-    flows.forEach((flow) => {
-        if (flow.phone_number) {
-            flowMap[flow.phone_number] = flow.name
-        }
-    })
-
     const [copied, setCopied] = useState(null)
 
     function copyNumber(phoneNumber) {
@@ -78,7 +71,15 @@ export default function Index({ connected, numbers, flows, error }) {
             .finally(() => setSearching(false))
     }
 
-    const ownedColumns = useMemo(() => [
+    const ownedColumns = useMemo(() => {
+        const flowMap = {}
+        flows.forEach((flow) => {
+            if (flow.phone_number) {
+                flowMap[flow.phone_number] = flow.name
+            }
+        })
+
+        return [
         {
             id: 'phone',
             header: t('ui.phone_number'),
@@ -90,6 +91,7 @@ export default function Index({ connected, numbers, flows, error }) {
                         onClick={() => copyNumber(number.phone_number)}
                         className="shrink-0 text-zinc-300 hover:text-zinc-500"
                         title={t('ui.copy_number')}
+                        aria-label={t('ui.copy_number')}
                         type="button"
                     >
                         {copied === number.phone_number
@@ -150,7 +152,8 @@ export default function Index({ connected, numbers, flows, error }) {
                 </Button>
             ),
         },
-    ], [t, copied, flowMap])
+    ]
+    }, [t, copied, flows])
 
     const searchColumns = useMemo(() => [
         {
