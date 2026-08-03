@@ -77,9 +77,9 @@ class McpToolService
             ]);
 
             return [
-                'content' => [['type' => 'text', 'text' => "Error: {$e->getMessage()}"]],
+                'content' => [['type' => 'text', 'text' => 'MCP tool call failed.']],
                 'isError' => true,
-                'text' => "Error: {$e->getMessage()}",
+                'text' => 'MCP tool call failed.',
             ];
         }
     }
@@ -105,7 +105,7 @@ class McpToolService
         $transport = $config['transport'] ?? 'stdio';
 
         $client = match ($transport) {
-            'http' => Client::web($config['url'] ?? ''),
+            'http' => $this->createHttpClient($config),
             default => Client::local($config['command'] ?? '', $config['args'] ?? []),
         };
 
@@ -114,6 +114,20 @@ class McpToolService
         }
 
         return $this->clients[$name] = $client;
+    }
+
+    /** @param array<string, mixed> $config */
+    private function createHttpClient(array $config): Client
+    {
+        $client = Client::web($config['url'] ?? '');
+
+        $token = $config['token'] ?? null;
+
+        if (is_string($token) && $token !== '') {
+            $client->withToken($token);
+        }
+
+        return $client;
     }
 
     public function __destruct()

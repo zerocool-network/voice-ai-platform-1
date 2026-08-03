@@ -6,6 +6,7 @@ use App\Application\Call\DTOs\InboundCallData;
 use App\Application\Call\UseCases\HandleInboundCall;
 use App\Application\Flow\Services\FlowExecutor;
 use App\Application\Flow\Services\FlowSpeechLocale;
+use App\Application\Flow\Services\TwilioPublicUrl;
 use App\Application\Webhook\Services\WebhookDispatcher;
 use App\Domain\Call\Repositories\CallRepositoryInterface;
 use App\Domain\Flow\Repositories\FlowRepositoryInterface;
@@ -35,11 +36,7 @@ class WebhookController extends Controller
     public function inbound(Request $request): Response
     {
         try {
-            $toNumber = $request->input('To');
-            $tenantModel = is_string($toNumber) && $toNumber !== ''
-                ? TenantModel::where('settings->twilio_phone_number', $toNumber)->first()
-                : null;
-
+            $tenantModel = $this->resolveTenant($request);
             $speechLocale = $this->resolveSpeechLocale($request, $tenantModel);
 
             if ($tenantModel !== null) {
@@ -48,7 +45,7 @@ class WebhookController extends Controller
                     $say = FlowSpeechLocale::sayAttributes($speechLocale);
                     $response = new VoiceResponse;
                     $gather = $response->gather([
-                        'action' => '/twilio/consent-callback',
+                        'action' => $this->consentCallbackUrl($request),
                         'numDigits' => 1,
                         'timeout' => 5,
                     ]);
@@ -75,8 +72,10 @@ class WebhookController extends Controller
             }
 
             $startStep = $flow->config()->startStep();
+            $twiml = $this->flowExecutor->executeStep($startStep, $flow, $call);
+            $this->callRepository->save($call);
 
-            return $this->toResponse($this->flowExecutor->executeStep($startStep, $flow, $call));
+            return $this->toResponse($twiml);
         } catch (\Throwable $e) {
             Log::warning('Inbound call failed', [
                 'error' => $e->getMessage(),
@@ -140,6 +139,9 @@ class WebhookController extends Controller
                 $variables['input'] = $speech;
             }
 
+            $call->setContext($variables);
+            $this->callRepository->save($call);
+
             $nextStepId = $this->flowExecutor->determineNextStep($currentStep, $digits, $variables);
 
             if ($nextStepId === null) {
@@ -155,7 +157,10 @@ class WebhookController extends Controller
             $call->setCurrentStep($nextStepId);
             $this->callRepository->save($call);
 
-            return $this->toResponse($this->flowExecutor->executeStep($nextStepId, $flow, $call));
+            $twiml = $this->flowExecutor->executeStep($nextStepId, $flow, $call);
+            $this->callRepository->save($call);
+
+            return $this->toResponse($twiml);
         } catch (\Throwable $e) {
             Log::warning('Step processing failed', [
                 'error' => $e->getMessage(),
@@ -252,10 +257,7 @@ class WebhookController extends Controller
 
     public function consentCallback(Request $request): Response
     {
-        $toNumber = $request->input('To');
-        $tenantModel = is_string($toNumber) && $toNumber !== ''
-            ? TenantModel::where('settings->twilio_phone_number', $toNumber)->first()
-            : null;
+        $tenantModel = $this->resolveTenant($request);
         $speechLocale = $this->resolveSpeechLocale($request, $tenantModel);
         $say = FlowSpeechLocale::sayAttributes($speechLocale);
 
@@ -280,8 +282,10 @@ class WebhookController extends Controller
             }
 
             $startStep = $flow->config()->startStep();
+            $twiml = $this->flowExecutor->executeStep($startStep, $flow, $call);
+            $this->callRepository->save($call);
 
-            return $this->toResponse($this->flowExecutor->executeStep($startStep, $flow, $call));
+            return $this->toResponse($twiml);
         }
 
         activity()
@@ -311,6 +315,45 @@ class WebhookController extends Controller
         return $this->toResponse($response);
     }
 
+    private function resolveTenant(Request $request): ?TenantModel
+    {
+        foreach (['To', 'From'] as $field) {
+            $number = $request->input($field);
+
+            if (is_string($number) && $number !== '') {
+                $tenant = TenantModel::where('settings->twilio_phone_number', $number)->first();
+
+                if ($tenant !== null) {
+                    return $tenant;
+                }
+            }
+        }
+
+        $flowId = $request->input('flow_id');
+
+        if (is_string($flowId) && $flowId !== '') {
+            $flow = $this->flowRepository->findById($flowId);
+
+            if ($flow !== null) {
+                return TenantModel::find($flow->tenantId());
+            }
+        }
+
+        return null;
+    }
+
+    private function consentCallbackUrl(Request $request): string
+    {
+        $url = TwilioPublicUrl::to('/twilio/consent-callback');
+        $flowId = $request->input('flow_id');
+
+        if (is_string($flowId) && $flowId !== '') {
+            return $url.'?flow_id='.urlencode($flowId);
+        }
+
+        return $url;
+    }
+
     private function resolveSpeechLocale(Request $request, ?TenantModel $tenantModel): string
     {
         $flowId = $request->input('flow_id');
@@ -327,6 +370,16 @@ class WebhookController extends Controller
 
         if (is_string($toNumber) && $toNumber !== '') {
             $flow = $this->flowRepository->findByPhoneNumber($toNumber);
+
+            if ($flow !== null) {
+                return $flow->language();
+            }
+        }
+
+        $fromNumber = $request->input('From');
+
+        if (is_string($fromNumber) && $fromNumber !== '') {
+            $flow = $this->flowRepository->findByPhoneNumber($fromNumber);
 
             if ($flow !== null) {
                 return $flow->language();

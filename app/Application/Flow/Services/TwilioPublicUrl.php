@@ -9,6 +9,10 @@ class TwilioPublicUrl
 {
     public static function base(): string
     {
+        if (! self::configAvailable()) {
+            return '';
+        }
+
         $configured = config('twilio.webhook_base_url');
 
         if (is_string($configured) && $configured !== '') {
@@ -20,6 +24,15 @@ class TwilioPublicUrl
 
     public static function to(string $path): string
     {
-        return self::base().'/'.ltrim($path, '/');
+        $base = self::base();
+        $normalized = '/'.ltrim($path, '/');
+
+        return $base === '' ? $normalized : $base.$normalized;
+    }
+
+    private static function configAvailable(): bool
+    {
+        return function_exists('app')
+            && app()->bound('config');
     }
 }

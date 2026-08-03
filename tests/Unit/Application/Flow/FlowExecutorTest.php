@@ -3,6 +3,7 @@
 namespace Tests\Unit\Application\Flow;
 
 use App\Application\Flow\Services\FlowExecutor;
+use App\Application\Flow\Services\TwilioPublicUrl;
 use App\Domain\Call\Entities\Call;
 use App\Domain\Call\ValueObjects\CallSid;
 use App\Domain\Call\ValueObjects\PhoneNumber;
@@ -83,7 +84,7 @@ class FlowExecutorTest extends TestCase
         $this->assertStringContainsString('Hello world', $xml);
         $this->assertStringContainsString('language="en-US"', $xml);
         $this->assertStringContainsString('voice="Polly.Joanna"', $xml);
-        $this->assertStringContainsString('<Redirect>/twilio/step</Redirect>', $xml);
+        $this->assertStringContainsString('<Redirect>'.TwilioPublicUrl::to('/twilio/step').'</Redirect>', $xml);
     }
 
     public function test_say_step_uses_flow_language_bcp47(): void
@@ -123,7 +124,7 @@ class FlowExecutorTest extends TestCase
 
         $xml = (string) $response;
         $this->assertStringContainsString('Welcome to Test Flow', $xml);
-        $this->assertStringContainsString('<Redirect>/twilio/step</Redirect>', $xml);
+        $this->assertStringContainsString('<Redirect>'.TwilioPublicUrl::to('/twilio/step').'</Redirect>', $xml);
     }
 
     public function test_say_step_no_next_omits_redirect(): void
@@ -267,7 +268,7 @@ class FlowExecutorTest extends TestCase
         $response = $this->executor->executeStep('s1', $flow);
 
         $xml = (string) $response;
-        $this->assertStringContainsString('<Redirect>/twilio/step</Redirect>', $xml);
+        $this->assertStringContainsString('<Redirect>'.TwilioPublicUrl::to('/twilio/step').'</Redirect>', $xml);
     }
 
     public function test_goto_step_no_target_says_error(): void
@@ -294,7 +295,7 @@ class FlowExecutorTest extends TestCase
         $response = $this->executor->executeStep('s1', $flow);
 
         $xml = (string) $response;
-        $this->assertStringContainsString('<Redirect>/twilio/step</Redirect>', $xml);
+        $this->assertStringContainsString('<Redirect>'.TwilioPublicUrl::to('/twilio/step').'</Redirect>', $xml);
     }
 
     public function test_condition_step_no_branches_says_error(): void

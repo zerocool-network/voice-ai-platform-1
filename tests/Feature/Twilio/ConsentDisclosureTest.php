@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Twilio;
 
+use App\Application\Flow\Services\TwilioPublicUrl;
 use App\Http\Middleware\ValidateTwilioRequest;
 use App\Infrastructure\Persistence\Eloquent\Flow\FlowModel;
 use App\Infrastructure\Persistence\Eloquent\Tenant\TenantModel;
@@ -55,6 +56,7 @@ class ConsentDisclosureTest extends TestCase
         $this->assertStringContainsString('This call may be recorded.', $content);
         $this->assertStringContainsString('language="en-US"', $content);
         $this->assertStringContainsString('voice="Polly.Joanna"', $content);
+        $this->assertStringContainsString('action="'.TwilioPublicUrl::to('/twilio/consent-callback').'"', $content);
         $this->assertStringContainsString('<Hangup', $content);
     }
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Twilio;
 
 use App\Application\Flow\Services\FlowExecutor;
+use App\Application\Flow\Services\TwilioPublicUrl;
 use App\Domain\Call\Entities\Call;
 use App\Domain\Call\ValueObjects\CallSid;
 use App\Domain\Call\ValueObjects\PhoneNumber;
@@ -69,7 +70,7 @@ class McpToolStepTest extends TestCase
         $xml = (string) $executor->executeStep('s1', $flow, $call);
 
         $this->assertStringContainsString('users, orders', $xml);
-        $this->assertStringContainsString('<Redirect>/twilio/step</Redirect>', $xml);
+        $this->assertStringContainsString('<Redirect>'.TwilioPublicUrl::to('/twilio/step').'</Redirect>', $xml);
         $this->assertSame('users, orders', $call->context()['tables']);
     }
 

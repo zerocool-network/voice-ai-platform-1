@@ -40,8 +40,8 @@ class HandleInboundCall
             tenantId: $tenantId,
             flowId: $flow?->getId(),
             callSid: new CallSid($data->callSid),
-            fromNumber: new PhoneNumber($data->fromNumber),
-            toNumber: new PhoneNumber($data->toNumber),
+            fromNumber: new PhoneNumber($this->normalizePhone($data->fromNumber)),
+            toNumber: new PhoneNumber($this->normalizePhone($data->toNumber)),
             status: 'initiated',
             context: []
         );
@@ -57,5 +57,16 @@ class HandleInboundCall
         Event::dispatch(new CallStarted($call));
 
         return $call;
+    }
+
+    private function normalizePhone(string $number): string
+    {
+        $cleaned = preg_replace('/[^+\d]/', '', $number) ?? '';
+
+        if ($cleaned !== '' && preg_match('/^\+[1-9]\d{6,14}$/', $cleaned)) {
+            return $cleaned;
+        }
+
+        return '+10000000000';
     }
 }

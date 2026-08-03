@@ -129,7 +129,7 @@ class FlowExecutor
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -150,7 +150,7 @@ class FlowExecutor
             $gather = $response->gather([
                 'input' => 'speech',
                 'timeout' => $timeout,
-                'action' => '/twilio/step',
+                'action' => TwilioPublicUrl::to('/twilio/step'),
                 'method' => 'POST',
                 'speechTimeout' => 'auto',
                 'language' => $language,
@@ -160,12 +160,12 @@ class FlowExecutor
                 $this->speak($gather, $prompt);
             }
 
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         } else {
             $gather = $response->gather([
                 'numDigits' => $numDigits,
                 'timeout' => $timeout,
-                'action' => '/twilio/step',
+                'action' => TwilioPublicUrl::to('/twilio/step'),
                 'method' => 'POST',
             ]);
 
@@ -173,7 +173,7 @@ class FlowExecutor
                 $this->speak($gather, $prompt);
             }
 
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -206,7 +206,7 @@ class FlowExecutor
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -223,7 +223,7 @@ class FlowExecutor
         if ($redirectStep !== null) {
             $this->logger?->debug("FlowExecutor condition -> {$redirectStep}");
 
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
 
             return $response;
         }
@@ -242,7 +242,7 @@ class FlowExecutor
         $target = $config['target'] ?? $step['next'] ?? null;
 
         if ($target !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         } else {
             $this->speak($response, 'No target specified.');
             $response->hangup();
@@ -287,7 +287,7 @@ class FlowExecutor
             $this->speak($response, 'Knowledge step has no query configured.');
             $next = $step['next'] ?? null;
             if ($next !== null) {
-                $response->redirect('/twilio/step');
+                $response->redirect(TwilioPublicUrl::to('/twilio/step'));
             }
 
             return $response;
@@ -338,7 +338,7 @@ class FlowExecutor
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -355,7 +355,7 @@ class FlowExecutor
 
         if ($url === '') {
             $this->speak($response, 'Webhook URL not configured.');
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
 
             return $response;
         }
@@ -407,7 +407,7 @@ class FlowExecutor
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -427,7 +427,7 @@ class FlowExecutor
             $this->speak($response, 'MCP tool is not configured.');
             $next = $step['next'] ?? null;
             if ($next !== null) {
-                $response->redirect('/twilio/step');
+                $response->redirect(TwilioPublicUrl::to('/twilio/step'));
             }
 
             return $response;
@@ -437,7 +437,7 @@ class FlowExecutor
             $this->speak($response, 'MCP tooling is unavailable.');
             $next = $step['next'] ?? null;
             if ($next !== null) {
-                $response->redirect('/twilio/step');
+                $response->redirect(TwilioPublicUrl::to('/twilio/step'));
             }
 
             return $response;
@@ -476,7 +476,7 @@ class FlowExecutor
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -553,7 +553,7 @@ class FlowExecutor
 
         $next = $step['next'] ?? null;
         if ($next !== null) {
-            $response->redirect('/twilio/step');
+            $response->redirect(TwilioPublicUrl::to('/twilio/step'));
         }
 
         return $response;
@@ -686,7 +686,7 @@ class FlowExecutor
     private function sayAndContinue(VoiceResponse $response, string $message): VoiceResponse
     {
         $this->speak($response, $message);
-        $response->redirect('/twilio/step');
+        $response->redirect(TwilioPublicUrl::to('/twilio/step'));
 
         return $response;
     }
